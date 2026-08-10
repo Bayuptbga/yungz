@@ -759,6 +759,13 @@
   function initials(username){
     return (username || '?').slice(0,2).toUpperCase();
   }
+  // Cegah stored XSS: semua data yang berasal dari user lain (username,
+  // isi pesan) WAJIB lewat sini sebelum disisipkan ke innerHTML.
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : String(str);
+    return d.innerHTML;
+  }
   function timeLabel(iso){
     const d = new Date(iso);
     const today = new Date();
@@ -795,16 +802,16 @@
       return;
     }
     list.innerHTML = chats.map(chat => `
-      <div class="chat-item" data-uid="${chat.uid}" data-uname="${chat.uname}">
-        <div class="avatar" style="background:${colorFor(chat.uid)}">${initials(chat.uname)}</div>
+      <div class="chat-item" data-uid="${escapeHtml(chat.uid)}" data-uname="${escapeHtml(chat.uname)}">
+        <div class="avatar" style="background:${colorFor(chat.uid)}">${escapeHtml(initials(chat.uname))}</div>
         <div class="chat-main">
           <div class="chat-top">
-            <div class="chat-name" style="${chat.unread ? 'font-weight:700;' : ''}">@${chat.uname}</div>
-            <div style="font-size:11.5px;color:var(--muted);flex-shrink:0;">${timeLabel(chat.time)}</div>
+            <div class="chat-name" style="${chat.unread ? 'font-weight:700;' : ''}">@${escapeHtml(chat.uname)}</div>
+            <div style="font-size:11.5px;color:var(--muted);flex-shrink:0;">${escapeHtml(timeLabel(chat.time))}</div>
           </div>
           <div class="chat-bottom">
             ${statusIconHTML(chat)}
-            <div class="chat-msg" style="${chat.unread ? 'color:var(--ink);font-weight:600;' : ''}">${chat.preview}</div>
+            <div class="chat-msg" style="${chat.unread ? 'color:var(--ink);font-weight:600;' : ''}">${escapeHtml(chat.preview)}</div>
           </div>
         </div>
       </div>
@@ -1070,9 +1077,9 @@
     contactList.innerHTML = otherIds.map(id => {
       const uname = profileMap[id] || 'Pengguna';
       return `
-        <div class="contact-item" data-uid="${id}" data-uname="${uname}">
-          <div class="avatar" style="background:${colorFor(id)}">${initials(uname)}</div>
-          <div class="uname">@${uname}</div>
+        <div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml(uname)}">
+          <div class="avatar" style="background:${colorFor(id)}">${escapeHtml(initials(uname))}</div>
+          <div class="uname">@${escapeHtml(uname)}</div>
         </div>
       `;
     }).join('');
@@ -1122,10 +1129,10 @@
     reqList.innerHTML = rows.map(r => {
       const uname = profileMap[r.requester_id] || 'Pengguna';
       return `
-        <div class="req-item" data-contact-id="${r.id}">
-          <div class="avatar" style="background:${colorFor(r.requester_id)}">${initials(uname)}</div>
+        <div class="req-item" data-contact-id="${escapeHtml(r.id)}">
+          <div class="avatar" style="background:${colorFor(r.requester_id)}">${escapeHtml(initials(uname))}</div>
           <div class="info">
-            <div class="uname">@${uname}</div>
+            <div class="uname">@${escapeHtml(uname)}</div>
             <div class="sub">Ingin menambahkanmu sebagai kontak</div>
           </div>
           <div class="req-actions">
@@ -1208,10 +1215,10 @@
         : `menolak permintaan pertemananmu`;
       return `
         <div class="notif-item ${r.seen_by_requester ? '' : 'unseen'}">
-          <div class="avatar" style="background:${colorFor(r.addressee_id)}">${initials(uname)}</div>
+          <div class="avatar" style="background:${colorFor(r.addressee_id)}">${escapeHtml(initials(uname))}</div>
           <div class="info">
-            <div class="uname">@${uname}</div>
-            <div class="sub">${isAccepted ? '✅' : '❌'} ${text}</div>
+            <div class="uname">@${escapeHtml(uname)}</div>
+            <div class="sub">${isAccepted ? '✅' : '❌'} ${escapeHtml(text)}</div>
           </div>
           ${r.seen_by_requester ? '' : '<span class="status-dot new"></span>'}
         </div>
