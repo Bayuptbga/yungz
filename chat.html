@@ -328,6 +328,26 @@
     d.textContent = str;
     return d.innerHTML;
   }
+  // Merapikan teks pesan: hilangkan spasi nyasar di ujung tiap baris, dan
+  // gabungkan baris kosong/berisi-spasi-saja yang berurutan jadi maksimal
+  // satu baris kosong. Ini menangkap pola seperti "enter-spasi-enter-spasi"
+  // yang sering muncul dari keyboard Android, tidak cuma newline dobel murni.
+  function normalizeText(str){
+    if(!str) return '';
+    const lines = str.split('\n').map(l => l.replace(/[ \t]+$/,''));
+    const out = [];
+    let blankRun = 0;
+    for(const line of lines){
+      if(line.trim() === ''){
+        blankRun++;
+        if(blankRun <= 1) out.push('');
+      } else {
+        blankRun = 0;
+        out.push(line);
+      }
+    }
+    return out.join('\n').trim();
+  }
   function timeLabel(iso){
     const d = new Date(iso);
     return d.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
@@ -461,9 +481,8 @@
         </div>
       </div>
     `;
-    // Rapikan baris kosong berlebih (mis. dari keyboard mobile yang menyisipkan
-    // enter ganda) supaya bubble tidak melar tinggi karena baris kosong tersembunyi.
-    row.querySelector('.txt').textContent = (m.content || '').replace(/\n{2,}/g, '\n');
+    // Rapikan baris kosong/spasi nyasar supaya bubble tidak melar tinggi.
+    row.querySelector('.txt').textContent = normalizeText(m.content);
     msgArea.appendChild(row);
   }
 
@@ -514,9 +533,9 @@
   }
 
   async function sendMessage(){
-    // Gabungkan enter ganda jadi satu baris sebelum dikirim, supaya pesan yang
-    // tersimpan tidak membawa banyak baris kosong (bisa terjadi di keyboard mobile).
-    const text = msgInput.value.replace(/\n{2,}/g, '\n').trim();
+    // Rapikan dulu sebelum dikirim, supaya pesan baru tidak ikut membawa
+    // baris kosong/spasi nyasar dari keyboard mobile.
+    const text = normalizeText(msgInput.value);
     if(!text) return;
     msgInput.value = '';
     autoResize();
