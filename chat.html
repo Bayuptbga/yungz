@@ -19,7 +19,7 @@
     --border:#e6ebee;
   }
   *{box-sizing:border-box;}
-  html,body{height:100%;}
+  html,body{height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
   body{
     margin:0;
     font-family:'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;
@@ -150,10 +150,11 @@
     max-width:78%;
     width:fit-content;
     height:auto;
+    min-height:0;
     padding:8px 11px 6px;
     border-radius:16px;
     font-size:14.5px;
-    line-height:1.4;
+    line-height:1.35;
     word-wrap:break-word;
     overflow-wrap:break-word;
     white-space:pre-wrap;
@@ -334,6 +335,9 @@
   // yang sering muncul dari keyboard Android, tidak cuma newline dobel murni.
   function normalizeText(str){
     if(!str) return '';
+    // Buang karakter kontrol/spasi aneh (selain \n) yang kadang nyelip dari
+    // keyboard mobile, supaya tidak ikut bikin bubble melar.
+    str = str.replace(/[\r\u000B\u000C\u2028\u2029]/g, '\n');
     const lines = str.split('\n').map(l => l.replace(/[ \t]+$/,''));
     const out = [];
     let blankRun = 0;
