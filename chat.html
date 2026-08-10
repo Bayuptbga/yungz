@@ -145,19 +145,22 @@
   .bubble-row.mine{justify-content:flex-end;}
   .bubble-row.theirs{justify-content:flex-start;}
   .bubble{
-    display:inline-block;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
     align-self:auto;
     max-width:78%;
     width:fit-content;
     height:auto;
     min-height:0;
+    max-height:none;
     padding:8px 11px 6px;
     border-radius:16px;
     font-size:14.5px;
-    line-height:1.35;
+    line-height:20px;
     word-wrap:break-word;
     overflow-wrap:break-word;
-    white-space:pre-wrap;
+    overflow:visible;
     box-shadow:0 1px 2px rgba(20,40,50,0.08);
   }
   .bubble-row.mine .bubble{
@@ -172,7 +175,12 @@
     border-top-left-radius:4px;
   }
   .bubble .txt{
+    align-self:stretch;
     min-width:36px;
+    text-align:left;
+    white-space:pre-wrap;
+    word-wrap:break-word;
+    overflow-wrap:break-word;
   }
   .bubble .meta{
     display:flex;
