@@ -279,10 +279,10 @@
     </div>
     <div class="tabitem" id="tabKontak">
       <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>
-      <span class="badge" id="reqBadge" style="display:none;"></span>
     </div>
-    <div class="tabitem" id="tabGrup">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><path d="M15 14.2c2.7.5 4.5 2.6 4.5 5.8"/></svg>
+    <div class="tabitem" id="tabNotif">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <span class="badge" id="notifBadge" style="display:none;"></span>
     </div>
   </div>
 
@@ -360,16 +360,25 @@
       document.getElementById('currentUsername').textContent = '@' + profile.username;
     }
 
-    // Hitung permintaan pertemanan yang belum dijawab, tampilkan di badge
-    const { count } = await supabaseClient
+    // Hitung notifikasi: permintaan pertemanan masuk yang belum dijawab
+    // + notifikasi diterima/ditolak yang belum dilihat, tampilkan di badge
+    const { count: pendingCount } = await supabaseClient
       .from('contacts')
       .select('id', { count: 'exact', head: true })
       .eq('addressee_id', session.user.id)
       .eq('status', 'pending');
 
-    if(count && count > 0){
-      const badge = document.getElementById('reqBadge');
-      badge.textContent = count;
+    const { count: unseenCount } = await supabaseClient
+      .from('contacts')
+      .select('id', { count: 'exact', head: true })
+      .eq('requester_id', session.user.id)
+      .in('status', ['accepted', 'declined'])
+      .eq('seen_by_requester', false);
+
+    const totalNotif = (pendingCount || 0) + (unseenCount || 0);
+    if(totalNotif > 0){
+      const badge = document.getElementById('notifBadge');
+      badge.textContent = totalNotif;
       badge.style.display = 'flex';
     }
   })();
@@ -380,8 +389,8 @@
   document.getElementById('tabKontak').addEventListener('click', () => {
     window.location.href = 'kontak.html';
   });
-  document.getElementById('tabGrup').addEventListener('click', () => {
-    alert('Fitur grup belum tersedia.');
+  document.getElementById('tabNotif').addEventListener('click', () => {
+    window.location.href = 'notifikasi.html';
   });
 
   document.getElementById('logoutBtn').addEventListener('click', async () => {
