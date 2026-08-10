@@ -5,7 +5,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Bang Bayu Message</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0092d1">
@@ -27,6 +27,20 @@
     --ok:#1f9d55;
   }
   *{box-sizing:border-box;}
+  html{
+    overscroll-behavior:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  body{
+    overscroll-behavior:none;
+    touch-action:pan-y;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  input, textarea{
+    -webkit-user-select:text;
+    user-select:text;
+  }
   body{
     margin:0;
     font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
