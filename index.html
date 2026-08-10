@@ -625,7 +625,6 @@
       </div>
       <div>
         <h1>BBM Chats</h1>
-        <div class="username" id="currentUsername"></div>
       </div>
     </div>
     <div class="right">
@@ -912,7 +911,6 @@
 
     if(profile){
       currentUserPin = profile.pin;
-      document.getElementById('currentUsername').textContent = '@' + profile.username;
       document.getElementById('drawerUname').textContent = '@' + profile.username;
       document.getElementById('drawerPin').textContent = 'PIN: ' + profile.pin;
       document.getElementById('drawerAvatar').textContent = initials(profile.username);
@@ -1283,7 +1281,6 @@
 
     const def = tabDefs[name];
     document.querySelector('.appbar h1').textContent = def.title;
-    document.getElementById('currentUsername').style.display = def.showSub ? '' : 'none';
     document.getElementById('fabNewChat').style.display = def.showFab ? 'flex' : 'none';
 
     if(name === 'status'){
