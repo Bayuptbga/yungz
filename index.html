@@ -313,11 +313,21 @@
     return d.toLocaleDateString('id-ID', { day:'numeric', month:'short' });
   }
 
+  // Ikon centang gaya BBM/WhatsApp:
+  // 1 centang abu = terkirim, 2 centang abu = diterima, 2 centang biru = dibaca
+  function tickSvg(deliveredAt, readAt){
+    if(readAt){
+      return `<svg viewBox="0 0 20 15" width="15" height="11" fill="none" stroke="#2b8fe0" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
+    }
+    if(deliveredAt){
+      return `<svg viewBox="0 0 20 15" width="15" height="11" fill="none" stroke="#93a1a8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
+    }
+    return `<svg viewBox="0 0 16 15" width="12" height="11" fill="none" stroke="#93a1a8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L14 3"/></svg>`;
+  }
+
   function statusIconHTML(chat){
     if(!chat.mine) return '';
-    return chat.read
-      ? `<span class="status-icon read">R</span>`
-      : `<span class="status-icon sent" style="width:8px;height:8px;"></span>`;
+    return `<span class="status-icon" style="background:none;">${tickSvg(chat.deliveredAt, chat.readAt)}</span>`;
   }
 
   function render(chats){
@@ -376,7 +386,7 @@
     // terakhir per lawan bicara (pesan sudah terurut dari yang terbaru).
     const { data: msgRows } = await supabaseClient
       .from('messages')
-      .select('sender_id, receiver_id, content, created_at, read_at')
+      .select('sender_id, receiver_id, content, created_at, delivered_at, read_at')
       .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
       .order('created_at', { ascending: false })
       .limit(300);
@@ -411,12 +421,23 @@
         preview: (mine ? 'Kamu: ' : '') + m.content,
         time: m.created_at,
         mine,
-        read: !!m.read_at,
+        deliveredAt: m.delivered_at,
+        readAt: m.read_at,
         unread: !mine && !m.read_at
       };
     });
 
     render(chats);
+  }
+
+  // Tandai semua pesan masuk sebagai "diterima" begitu aplikasi dibuka
+  // (menandakan pesan sudah sampai di perangkat penerima).
+  async function markInboxDelivered(userId){
+    await supabaseClient
+      .from('messages')
+      .update({ delivered_at: new Date().toISOString() })
+      .eq('receiver_id', userId)
+      .is('delivered_at', null);
   }
 
   // Proteksi halaman: kalau belum login, lempar ke login.html
@@ -462,6 +483,7 @@
     }
 
     loadChats(session.user.id);
+    markInboxDelivered(session.user.id);
   }
 
   refreshNotifBadge();
