@@ -315,7 +315,14 @@
 
 <script>
   const params = new URLSearchParams(window.location.search);
-  const peerId = params.get('uid');
+  const rawUid = params.get('uid');
+  // Validasi ketat: peerId disisipkan mentah ke dalam string filter
+  // PostgREST (.or(...)) di beberapa query di bawah. Kalau tidak divalidasi,
+  // parameter URL ?uid= bisa dipakai untuk menyuntik/mengubah logika filter
+  // (mis. melewati pengecekan status pertemanan atau membaca pesan orang
+  // lain). ID Supabase selalu berformat UUID, jadi kita paksa formatnya.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const peerId = (rawUid && UUID_RE.test(rawUid)) ? rawUid : null;
 
   let currentUserId = null;
   let peerUsername = params.get('uname') || '';
