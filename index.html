@@ -91,6 +91,89 @@
     justify-content:center;
   }
 
+  /* side drawer */
+  .drawer-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.4);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s ease;
+    z-index:40;
+  }
+  .drawer-overlay.open{
+    opacity:1;
+    pointer-events:auto;
+  }
+  .drawer{
+    position:fixed;
+    top:0;
+    bottom:0;
+    left:0;
+    width:78%;
+    max-width:300px;
+    background:#fff;
+    display:flex;
+    flex-direction:column;
+    transform:translateX(-100%);
+    transition:transform .25s ease;
+    z-index:41;
+    box-shadow:2px 0 20px rgba(0,0,0,0.15);
+  }
+  .drawer.open{
+    transform:translateX(0);
+  }
+  .drawer-header{
+    background:var(--bbm-blue);
+    color:#fff;
+    padding:28px 18px 20px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-shrink:0;
+  }
+  .drawer-header .d-avatar{
+    width:46px;height:46px;border-radius:50%;
+    background:rgba(255,255,255,0.2);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:16px;
+    flex-shrink:0;
+  }
+  .drawer-header .d-uname{
+    font-size:15px;
+    font-weight:600;
+    word-break:break-word;
+  }
+  .drawer-body{
+    flex:1;
+    overflow-y:auto;
+    padding:6px 0;
+  }
+  .drawer-item{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:13px 18px;
+    cursor:pointer;
+    color:var(--ink);
+    font-size:14.5px;
+  }
+  .drawer-item:active{
+    background:#f2f5f7;
+  }
+  .drawer-item svg{
+    width:20px;height:20px;
+    flex-shrink:0;
+  }
+  .drawer-footer{
+    flex-shrink:0;
+    border-top:1px solid var(--border);
+    padding:6px 0;
+  }
+  .drawer-footer .drawer-item{
+    color:#e0433d;
+  }
+
   /* tabs */
   .tabbar{
     display:flex;
@@ -262,7 +345,7 @@
 
   <div class="appbar">
     <div class="left">
-      <div class="hamburger">
+      <div class="hamburger" id="hamburgerBtn">
         <span></span><span></span><span></span>
       </div>
       <div>
@@ -271,11 +354,42 @@
       </div>
     </div>
     <div class="right">
-      <div class="icon-btn logout-btn" id="logoutBtn" title="Keluar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/></svg>
-      </div>
       <div class="icon-btn" title="Menu lainnya">
         <svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div class="d-avatar" id="drawerAvatar">?</div>
+      <div>
+        <div class="d-uname" id="drawerUname">@—</div>
+      </div>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-item" id="drawerChats">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#4a5a63" stroke-width="2"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+        <span>Chat</span>
+      </div>
+      <div class="drawer-item" id="drawerStatus">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#4a5a63" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4.5 9a8 8 0 0114-4.5M19.5 15a8 8 0 01-14 4.5"/></svg>
+        <span>Status</span>
+      </div>
+      <div class="drawer-item" id="drawerKontak">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#4a5a63" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>
+        <span>Kontak</span>
+      </div>
+      <div class="drawer-item" id="drawerNotif">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#4a5a63" stroke-width="2"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span>Notifikasi</span>
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <div class="drawer-item" id="logoutBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#e0433d" stroke-width="2"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/></svg>
+        <span>Keluar</span>
       </div>
     </div>
   </div>
@@ -466,6 +580,9 @@
 
     if(profile){
       document.getElementById('currentUsername').textContent = '@' + profile.username;
+      document.getElementById('drawerUname').textContent = '@' + profile.username;
+      document.getElementById('drawerAvatar').textContent = initials(profile.username);
+      document.getElementById('drawerAvatar').style.background = colorFor(session.user.id);
     }
 
     // Hitung notifikasi: permintaan pertemanan masuk yang belum dijawab
@@ -525,6 +642,34 @@
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await supabaseClient.auth.signOut();
     window.location.href = 'login.html';
+  });
+
+  // Side drawer (menu garis tiga)
+  const hamburgerBtn = document.getElementById('hamburgerBtn');
+  const drawer = document.getElementById('drawer');
+  const drawerOverlay = document.getElementById('drawerOverlay');
+
+  function openDrawer(){
+    drawer.classList.add('open');
+    drawerOverlay.classList.add('open');
+  }
+  function closeDrawer(){
+    drawer.classList.remove('open');
+    drawerOverlay.classList.remove('open');
+  }
+
+  hamburgerBtn.addEventListener('click', openDrawer);
+  drawerOverlay.addEventListener('click', closeDrawer);
+
+  document.getElementById('drawerChats').addEventListener('click', closeDrawer);
+  document.getElementById('drawerStatus').addEventListener('click', () => {
+    window.location.href = 'status.html';
+  });
+  document.getElementById('drawerKontak').addEventListener('click', () => {
+    window.location.href = 'kontak.html';
+  });
+  document.getElementById('drawerNotif').addEventListener('click', () => {
+    window.location.href = 'notifikasi.html';
   });
 </script>
 </body>
