@@ -36,7 +36,10 @@
     overscroll-behavior:none;
     touch-action:pan-y;
     -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
     user-select:none;
+    -webkit-touch-callout:none;
   }
   input, textarea{
     -webkit-user-select:text;
@@ -637,6 +640,7 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
+<script src="push-notif.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -957,6 +961,9 @@
       document.getElementById('drawerAvatar').textContent = initials(profile.username);
       document.getElementById('drawerAvatar').style.background = colorFor(session.user.id);
     }
+
+    // Aktifkan push notification (minta izin & simpan subscription)
+    initPushNotifications(session.user.id);
 
     // Hitung notifikasi: permintaan pertemanan masuk yang belum dijawab
     // + notifikasi diterima/ditolak yang belum dilihat, tampilkan di badge
