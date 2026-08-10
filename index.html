@@ -343,7 +343,7 @@
   render();
 
   // Proteksi halaman: kalau belum login, lempar ke login.html
-  (async () => {
+  async function refreshNotifBadge(){
     const { data: { session } } = await supabaseClient.auth.getSession();
     if(!session){
       window.location.href = 'login.html';
@@ -376,12 +376,30 @@
       .eq('seen_by_requester', false);
 
     const totalNotif = (pendingCount || 0) + (unseenCount || 0);
+    const badge = document.getElementById('notifBadge');
     if(totalNotif > 0){
-      const badge = document.getElementById('notifBadge');
       badge.textContent = totalNotif;
       badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
     }
-  })();
+  }
+
+  refreshNotifBadge();
+
+  // Halaman yang dipulihkan dari cache browser (mis. tombol back dari
+  // notifikasi.html) tidak menjalankan ulang script di atas secara otomatis,
+  // jadi kita paksa cek ulang badge tiap kali halaman ini kembali ditampilkan.
+  window.addEventListener('pageshow', (e) => {
+    if(e.persisted){
+      refreshNotifBadge();
+    }
+  });
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible'){
+      refreshNotifBadge();
+    }
+  });
 
   document.getElementById('tabStatus').addEventListener('click', () => {
     window.location.href = 'status.html';
