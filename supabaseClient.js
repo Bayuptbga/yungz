@@ -5,9 +5,10 @@ const SUPABASE_ANON_KEY = 'sb_publishable_LcTHxYsZJsvZWkdsdQWfoQ_JsV7ahbT';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Karena Supabase Auth butuh format email, username diubah jadi
-// "username@bbm.local" di belakang layar. User tidak pernah melihat ini.
+// "username@bbmchat.app" di belakang layar. User tidak pernah melihat ini.
+// (Domain .local ditolak Supabase karena dianggap TLD tidak valid.)
 function usernameToEmail(username){
-  return username.trim().toLowerCase() + '@bbm.local';
+  return username.trim().toLowerCase() + '@bbmchat.app';
 }
 
 function generatePin(){
