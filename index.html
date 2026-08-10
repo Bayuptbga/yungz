@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bang Bayu Message - Chats</title>
+<style>
+  :root{
+    --bbm-blue-dark:#0077b6;
+    --bbm-blue:#0092d1;
+    --bbm-blue-light:#1aa8e6;
+    --bg:#ffffff;
+    --ink:#1c2b33;
+    --muted:#7a8a92;
+    --border:#e9edf0;
+    --tab-active:#0092d1;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+  }
+  .phone{
+    width:100%;
+    max-width:420px;
+    min-height:100vh;
+    background:#fff;
+    box-shadow:0 0 40px rgba(0,0,0,0.08);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    overflow:hidden;
+  }
+
+  /* top app bar */
+  .appbar{
+    background:var(--bbm-blue);
+    color:#fff;
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .appbar .left{
+    display:flex;
+    align-items:center;
+    gap:18px;
+  }
+  .appbar .hamburger{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    cursor:pointer;
+  }
+  .appbar .hamburger span{
+    width:22px;
+    height:2.5px;
+    background:#fff;
+    border-radius:2px;
+  }
+  .appbar h1{
+    margin:0;
+    font-size:22px;
+    font-weight:500;
+  }
+  .appbar .right{
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .appbar .icon-btn{
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* tabs */
+  .tabbar{
+    display:flex;
+    background:#f7f9fa;
+    border-bottom:1px solid var(--border);
+  }
+  .tabbar .tabitem{
+    flex:1;
+    padding:14px 0 11px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    cursor:pointer;
+  }
+  .tabbar .tabitem.active{
+    border-bottom:3px solid var(--tab-active);
+  }
+  .tabbar .tabitem svg{
+    width:22px;
+    height:22px;
+  }
+  .tabbar .tabitem .badge{
+    position:absolute;
+    top:8px;
+    right:calc(50% - 16px);
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    background:#e0433d;
+    border:1.5px solid #f7f9fa;
+  }
+
+  /* chat list */
+  .chatlist{
+    flex:1;
+    overflow-y:auto;
+  }
+  .chat-item{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:12px 16px;
+    border-bottom:1px solid var(--border);
+    cursor:pointer;
+  }
+  .chat-item:active{
+    background:#f5f8fa;
+  }
+  .avatar{
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    font-size:17px;
+    color:#fff;
+    background-size:cover;
+    background-position:center;
+  }
+  .chat-main{
+    flex:1;
+    min-width:0;
+  }
+  .chat-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:8px;
+  }
+  .chat-name{
+    font-size:16.5px;
+    font-weight:600;
+    color:var(--ink);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    display:flex;
+    align-items:center;
+    gap:5px;
+  }
+  .chat-name .prefix-mark{
+    font-weight:700;
+    color:var(--ink);
+  }
+  .chat-bottom{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-top:3px;
+  }
+  .status-icon{
+    width:16px;
+    height:16px;
+    border-radius:50%;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:10px;
+    font-weight:700;
+    color:#fff;
+  }
+  .status-icon.delivered{background:#1a7fc2;}
+  .status-icon.read{background:#3aa15a;}
+  .status-icon.sent{background:#b8c2c7;}
+  .status-icon.broadcast{background:none;}
+  .status-icon.broadcast svg{width:16px;height:16px;}
+  .chat-msg{
+    font-size:13.5px;
+    color:var(--muted);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  /* fab */
+  .fab{
+    position:absolute;
+    right:18px;
+    bottom:24px;
+    width:56px;
+    height:56px;
+    border-radius:50%;
+    background:var(--bbm-blue);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 4px 14px rgba(0,0,0,0.25);
+    cursor:pointer;
+  }
+  .fab svg{width:24px;height:24px;}
+
+  .appbar .username{
+    font-size:12px;
+    opacity:0.9;
+    font-weight:400;
+    margin-top:1px;
+  }
+  .logout-btn{
+    cursor:pointer;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
+</head>
+<body>
+<div class="phone">
+
+  <div class="appbar">
+    <div class="left">
+      <div class="hamburger">
+        <span></span><span></span><span></span>
+      </div>
+      <div>
+        <h1>BBM Chats</h1>
+        <div class="username" id="currentUsername"></div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="icon-btn logout-btn" id="logoutBtn" title="Keluar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/></svg>
+      </div>
+      <div class="icon-btn" title="Menu lainnya">
+        <svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tabitem active">
+      <svg viewBox="0 0 24 24" fill="#0092d1"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+    </div>
+    <div class="tabitem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4.5 9a8 8 0 0114-4.5M19.5 15a8 8 0 01-14 4.5"/></svg>
+    </div>
+    <div class="tabitem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>
+    </div>
+    <div class="tabitem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><path d="M15 14.2c2.7.5 4.5 2.6 4.5 5.8"/></svg>
+    </div>
+  </div>
+
+  <div class="chatlist" id="chatlist"></div>
+
+  <div class="fab" title="Chat baru">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg>
+  </div>
+
+</div>
+
+<script>
+  // Tampilan murni — data di bawah ini contoh generik, bukan data nyata.
+  const chats = [
+    { name: 'Kontak 1', status: 'delivered', statusLabel: 'D', msg: 'Contoh pesan singkat', color: '#c77b8c', initials: 'K1' },
+    { name: 'Kontak 2', status: 'broadcast', msg: 'Contoh pesan promo dari kontak', color: '#3a3f47', initials: 'K2' },
+    { name: 'Kontak 3', status: 'broadcast', msg: 'Contoh pesan informasi', color: '#2f6b3a', initials: 'K3' },
+    { name: 'Kontak 4', status: 'sent', msg: 'Contoh balasan singkat', color: '#5b6b74', initials: 'K4' },
+    { name: 'Kontak 5', status: 'broadcast', msg: 'Contoh pesan penawaran', color: '#2c2c2c', initials: 'K5' },
+    { name: 'Kontak 6', status: 'read', statusLabel: 'R', msg: 'Contoh pesan yang sudah dibaca', color: '#7c3f9e', initials: 'K6' },
+    { name: 'Kontak 7', status: 'broadcast', msg: 'Contoh pesan pembuka percakapan', color: '#8a7a4a', initials: 'K7' }
+  ];
+
+  function statusIconHTML(chat){
+    if(chat.status === 'broadcast'){
+      return `<span class="status-icon broadcast"><svg viewBox="0 0 24 24" fill="#c8901f"><path d="M3 10v4h4l5 5V5l-5 5H3z"/><path d="M16 9a5 5 0 010 6" stroke="#c8901f" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></span>`;
+    }
+    if(chat.status === 'delivered'){
+      return `<span class="status-icon delivered">${chat.statusLabel}</span>`;
+    }
+    if(chat.status === 'read'){
+      return `<span class="status-icon read">${chat.statusLabel}</span>`;
+    }
+    if(chat.status === 'sent'){
+      return `<span class="status-icon sent" style="width:8px;height:8px;"></span>`;
+    }
+    return '';
+  }
+
+  function render(){
+    const list = document.getElementById('chatlist');
+    list.innerHTML = chats.map(chat => `
+      <div class="chat-item">
+        <div class="avatar" style="background:${chat.color}">${chat.initials}</div>
+        <div class="chat-main">
+          <div class="chat-top">
+            <div class="chat-name">${chat.name}</div>
+          </div>
+          <div class="chat-bottom">
+            ${statusIconHTML(chat)}
+            <div class="chat-msg">${chat.msg}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  render();
+
+  // Proteksi halaman: kalau belum login, lempar ke login.html
+  (async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if(!session){
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('username')
+      .eq('id', session.user.id)
+      .maybeSingle();
+
+    if(profile){
+      document.getElementById('currentUsername').textContent = '@' + profile.username;
+    }
+  })();
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'login.html';
+  });
+</script>
+</body>
+</html>
