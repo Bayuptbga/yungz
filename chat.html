@@ -25,7 +25,15 @@
     font-family:'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;
     background:#dfe6ea;
     color:var(--ink);
-    min-height:100vh;
+    /* Kunci body supaya seluruh halaman tidak ikut ter-scroll saat keyboard
+       muncul di HP — hanya .msg-area di dalam yang boleh scroll, jadi header
+       dan kolom ketik selalu diam di tempat. */
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    overscroll-behavior:none;
     display:flex;
     align-items:flex-start;
     justify-content:center;
@@ -34,16 +42,13 @@
   .phone{
     width:100%;
     max-width:420px;
-    height:100vh;
+    height:100%;
     background:var(--bg);
     box-shadow:0 0 40px rgba(0,0,0,0.08);
     display:flex;
     flex-direction:column;
     position:relative;
     overflow:hidden;
-  }
-  @supports (height: 100dvh){
-    .phone{ height:100dvh; }
   }
 
   /* ---------- App bar ---------- */
