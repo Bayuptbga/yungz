@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bang Bayu Message - Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bbm-blue-dark:#005f8f;
+    --bbm-blue:#0092d1;
+    --bbm-blue-light:#3ab6ef;
+    --bg:#e8eef2;
+    --ink:#1c2b33;
+    --ink-soft:#4a5a63;
+    --muted:#8a97a0;
+    --border:#e6ebee;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+  body{
+    margin:0;
+    font-family:'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:#dfe6ea;
+    color:var(--ink);
+    /* Kunci body supaya seluruh halaman tidak ikut ter-scroll saat keyboard
+       muncul di HP — hanya .msg-area di dalam yang boleh scroll, jadi header
+       dan kolom ketik selalu diam di tempat. */
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    overscroll-behavior:none;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    -webkit-font-smoothing:antialiased;
+  }
+  .phone{
+    width:100%;
+    max-width:420px;
+    height:100%;
+    background:var(--bg);
+    box-shadow:0 0 40px rgba(0,0,0,0.08);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    overflow:hidden;
+  }
+
+  /* ---------- App bar ---------- */
+  .appbar{
+    background:linear-gradient(120deg,var(--bbm-blue-dark),var(--bbm-blue) 55%,var(--bbm-blue-light));
+    color:#fff;
+    padding:calc(12px + env(safe-area-inset-top)) 14px 12px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-shrink:0;
+    box-shadow:0 3px 10px rgba(0,52,79,0.18);
+    position:relative;
+    z-index:2;
+  }
+  .appbar .back{
+    cursor:pointer;
+    width:34px;height:34px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    transition:background .15s ease;
+  }
+  .appbar .back:hover,
+  .appbar .back:active{
+    background:rgba(255,255,255,0.16);
+  }
+  .appbar .avatar{
+    width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:700;font-size:14px;flex-shrink:0;
+    box-shadow:0 0 0 2px rgba(255,255,255,0.35);
+    letter-spacing:.3px;
+  }
+  .appbar .who{flex:1;min-width:0;}
+  .appbar .uname{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.1px;}
+  .appbar .sub{font-size:11.5px;opacity:0.82;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  /* ---------- Message area ---------- */
+  .msg-area{
+    flex:1;
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding:14px 12px 6px;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    background-color:var(--bg);
+    background-image:radial-gradient(circle at 1px 1px, rgba(20,40,50,0.05) 1px, transparent 0);
+    background-size:20px 20px;
+    scroll-behavior:smooth;
+  }
+  .msg-area::-webkit-scrollbar{ width:6px; }
+  .msg-area::-webkit-scrollbar-track{ background:transparent; }
+  .msg-area::-webkit-scrollbar-thumb{ background:rgba(20,40,50,0.14); border-radius:3px; }
+
+  .day-sep{
+    align-self:center;
+    position:sticky;
+    top:6px;
+    background:rgba(255,255,255,0.88);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    color:var(--ink-soft);
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    padding:5px 13px;
+    border-radius:20px;
+    margin:12px 0 10px;
+    flex-shrink:0;
+    box-shadow:0 1px 5px rgba(20,40,50,0.10);
+    z-index:3;
+  }
+
+  .bubble-row{
+    display:flex;
+    align-items:flex-end;
+    width:100%;
+    flex-shrink:0;
+    margin:3px 0;
+    animation:bubbleIn .2s ease both;
+  }
+  @keyframes bubbleIn{
+    from{ opacity:0; transform:translateY(6px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .bubble-row{ animation:none; }
+  }
+  .bubble-row.mine{justify-content:flex-end;}
+  .bubble-row.theirs{justify-content:flex-start;}
+  .bubble{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    align-self:auto;
+    max-width:78%;
+    width:fit-content;
+    height:auto;
+    min-height:0;
+    max-height:none;
+    padding:8px 11px 6px;
+    border-radius:16px;
+    font-size:14.5px;
+    line-height:20px;
+    word-wrap:break-word;
+    overflow-wrap:break-word;
+    overflow:visible;
+    box-shadow:0 1px 2px rgba(20,40,50,0.08);
+  }
+  .bubble-row.mine .bubble{
+    background:linear-gradient(135deg,#eaf7ff,#d5ecfb);
+    border:1px solid #c7e5f6;
+    border-top-right-radius:4px;
+    color:var(--ink);
+  }
+  .bubble-row.theirs .bubble{
+    background:#fff;
+    border:1px solid var(--border);
+    border-top-left-radius:4px;
+  }
+  .bubble .txt{
+    align-self:stretch;
+    min-width:36px;
+    text-align:left;
+    white-space:pre-wrap;
+    word-wrap:break-word;
+    overflow-wrap:break-word;
+  }
+  .bubble .meta{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:4px;
+    margin-top:3px;
+    font-size:10.5px;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+  .bubble .meta .tick{
+    display:inline-flex;
+    align-items:center;
+  }
+
+  /* ---------- Empty / loading states ---------- */
+  .empty-state{
+    margin:auto;
+    text-align:center;
+    color:var(--muted);
+    font-size:13.5px;
+    line-height:1.6;
+    padding:32px 30px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+  }
+  .empty-state .es-icon{
+    width:54px;height:54px;
+    border-radius:50%;
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 8px rgba(20,40,50,0.08);
+  }
+  .empty-state .es-title{
+    font-size:14px;
+    font-weight:600;
+    color:var(--ink-soft);
+  }
+  .loading-spinner{
+    width:30px;height:30px;
+    border:3px solid #d7e2e8;
+    border-top-color:var(--bbm-blue);
+    border-radius:50%;
+    animation:spin .75s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* ---------- Input bar ---------- */
+  .input-bar{
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+    padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+    background:#fff;
+    border-top:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .input-bar textarea{
+    flex:1;
+    resize:none;
+    border:1.5px solid #e3e9ec;
+    border-radius:22px;
+    padding:11px 17px;
+    font-size:14.5px;
+    font-family:inherit;
+    outline:none;
+    max-height:100px;
+    line-height:1.35;
+    background:#f4f7f9;
+    transition:border-color .15s ease, background .15s ease, box-shadow .15s ease;
+  }
+  .input-bar textarea::placeholder{ color:#9aa7ae; }
+  .input-bar textarea:disabled{background:#f0f2f3;color:var(--muted);}
+  .input-bar textarea:focus{
+    border-color:var(--bbm-blue);
+    background:#fff;
+    box-shadow:0 0 0 3px rgba(0,146,209,0.12);
+  }
+  .send-btn{
+    width:43px;height:43px;
+    border-radius:50%;
+    background:linear-gradient(135deg,var(--bbm-blue-light),var(--bbm-blue));
+    border:none;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    flex-shrink:0;
+    transition:transform .12s ease, box-shadow .15s ease, background .15s ease;
+    box-shadow:0 2px 8px rgba(0,146,209,0.35);
+  }
+  .send-btn:not(:disabled):hover{ transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,146,209,0.4); }
+  .send-btn:not(:disabled):active{ transform:scale(0.94); }
+  .send-btn:disabled{background:#cfd8dc;box-shadow:none;cursor:default;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
+</head>
+<body>
+<div class="phone">
+
+  <div class="appbar">
+    <div class="back" onclick="window.location.href='index.html'" role="button" aria-label="Kembali">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </div>
+    <div class="avatar" id="peerAvatar">?</div>
+    <div class="who">
+      <div class="uname" id="peerUname">@—</div>
+      <div class="sub">Bang Bayu Message</div>
+    </div>
+  </div>
+
+  <div class="msg-area" id="msgArea">
+    <div class="empty-state">
+      <div class="loading-spinner"></div>
+      <span>Memuat percakapan…</span>
+    </div>
+  </div>
+
+  <div class="input-bar">
+    <textarea id="msgInput" rows="1" placeholder="Ketik pesan..." disabled></textarea>
+    <button class="send-btn" id="sendBtn" disabled aria-label="Kirim pesan">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+    </button>
+  </div>
+
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const peerId = params.get('uid');
+
+  let currentUserId = null;
+  let peerUsername = params.get('uname') || '';
+
+  const msgArea = document.getElementById('msgArea');
+  const msgInput = document.getElementById('msgInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const peerAvatar = document.getElementById('peerAvatar');
+  const peerUnameEl = document.getElementById('peerUname');
+
+  const colorPalette = ['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
+  function colorFor(id){
+    let hash = 0;
+    for(let i=0;i<id.length;i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    return colorPalette[Math.abs(hash) % colorPalette.length];
+  }
+  function initials(username){
+    return (username || '?').slice(0,2).toUpperCase();
+  }
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+  // Merapikan teks pesan: hilangkan spasi nyasar di ujung tiap baris, dan
+  // gabungkan baris kosong/berisi-spasi-saja yang berurutan jadi maksimal
+  // satu baris kosong. Ini menangkap pola seperti "enter-spasi-enter-spasi"
+  // yang sering muncul dari keyboard Android, tidak cuma newline dobel murni.
+  function normalizeText(str){
+    if(!str) return '';
+    // Buang karakter kontrol/spasi aneh (selain \n) yang kadang nyelip dari
+    // keyboard mobile, supaya tidak ikut bikin bubble melar.
+    str = str.replace(/[\r\u000B\u000C\u2028\u2029]/g, '\n');
+    const lines = str.split('\n').map(l => l.replace(/[ \t]+$/,''));
+    const out = [];
+    let blankRun = 0;
+    for(const line of lines){
+      if(line.trim() === ''){
+        blankRun++;
+        if(blankRun <= 1) out.push('');
+      } else {
+        blankRun = 0;
+        out.push(line);
+      }
+    }
+    return out.join('\n').trim();
+  }
+  function timeLabel(iso){
+    const d = new Date(iso);
+    return d.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+  }
+  function dayLabel(iso){
+    const d = new Date(iso);
+    const today = new Date();
+    const yest = new Date(); yest.setDate(today.getDate()-1);
+    const sameDay = (a,b) => a.toDateString() === b.toDateString();
+    if(sameDay(d, today)) return 'Hari ini';
+    if(sameDay(d, yest)) return 'Kemarin';
+    return d.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+  }
+
+  // Ikon centang gaya BBM/WhatsApp:
+  // - 1 centang abu = terkirim ke server
+  // - 2 centang abu = sudah sampai ke perangkat lawan bicara
+  // - 2 centang biru = sudah dibaca
+  function tickSvg(deliveredAt, readAt){
+    if(readAt){
+      return `<svg viewBox="0 0 20 15" width="16" height="12" fill="none" stroke="#0092d1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
+    }
+    if(deliveredAt){
+      return `<svg viewBox="0 0 20 15" width="16" height="12" fill="none" stroke="#93a1a8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
+    }
+    return `<svg viewBox="0 0 16 15" width="13" height="12" fill="none" stroke="#93a1a8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L14 3"/></svg>`;
+  }
+
+  async function init(){
+    if(!peerId){
+      window.location.href = 'index.html';
+      return;
+    }
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if(!session){
+      window.location.href = 'login.html';
+      return;
+    }
+    currentUserId = session.user.id;
+
+    // Pastikan mereka memang kontak yang sudah diterima
+    const { data: rel } = await supabaseClient
+      .from('contacts')
+      .select('id, status')
+      .or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`)
+      .eq('status', 'accepted')
+      .maybeSingle();
+
+    if(!rel){
+      msgArea.innerHTML = `
+        <div class="empty-state">
+          <div class="es-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8a97a0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.6 3-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/><path d="M18 8v5M15.5 10.5h5"/></svg>
+          </div>
+          <div class="es-title">Belum berteman</div>
+          <span>Kalian belum berteman. Tambahkan lewat tab Kontak dulu ya.</span>
+        </div>`;
+      return;
+    }
+
+    if(!peerUsername){
+      const { data: prof } = await supabaseClient
+        .from('profiles')
+        .select('username')
+        .eq('id', peerId)
+        .maybeSingle();
+      peerUsername = prof ? prof.username : 'Pengguna';
+    }
+    peerAvatar.textContent = initials(peerUsername);
+    peerAvatar.style.background = colorFor(peerId);
+    peerUnameEl.textContent = '@' + peerUsername;
+
+    await loadMessages();
+    await markIncomingAsRead();
+    subscribeRealtime();
+    msgInput.disabled = false;
+    msgInput.focus();
+  }
+
+  async function loadMessages(){
+    const { data: rows, error } = await supabaseClient
+      .from('messages')
+      .select('id, sender_id, receiver_id, content, created_at, delivered_at, read_at')
+      .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`)
+      .order('created_at', { ascending: true });
+
+    if(error || !rows || rows.length === 0){
+      msgArea.innerHTML = `
+        <div class="empty-state">
+          <div class="es-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8a97a0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg>
+          </div>
+          <div class="es-title">Belum ada pesan</div>
+          <span>Mulai obrolan sekarang!</span>
+        </div>`;
+      return;
+    }
+
+    msgArea.innerHTML = '';
+    let lastDay = null;
+    rows.forEach(m => {
+      const d = dayLabel(m.created_at);
+      if(d !== lastDay){
+        const sep = document.createElement('div');
+        sep.className = 'day-sep';
+        sep.textContent = d;
+        msgArea.appendChild(sep);
+        lastDay = d;
+      }
+      appendBubble(m);
+    });
+    scrollToBottom();
+  }
+
+  function appendBubble(m){
+    const mine = m.sender_id === currentUserId;
+    const row = document.createElement('div');
+    row.className = 'bubble-row ' + (mine ? 'mine' : 'theirs');
+    row.dataset.id = m.id;
+
+    const tickHtml = mine
+      ? `<span class="tick">${tickSvg(m.delivered_at, m.read_at)}</span>`
+      : '';
+
+    row.innerHTML = `
+      <div class="bubble">
+        <div class="txt"></div>
+        <div class="meta">
+          <span>${timeLabel(m.created_at)}</span>
+          ${tickHtml}
+        </div>
+      </div>
+    `;
+    // Rapikan baris kosong/spasi nyasar supaya bubble tidak melar tinggi.
+    row.querySelector('.txt').textContent = normalizeText(m.content);
+    msgArea.appendChild(row);
+  }
+
+  function scrollToBottom(){
+    msgArea.scrollTop = msgArea.scrollHeight;
+  }
+
+  async function markIncomingAsRead(){
+    const now = new Date().toISOString();
+    await supabaseClient
+      .from('messages')
+      .update({ delivered_at: now, read_at: now })
+      .eq('sender_id', peerId)
+      .eq('receiver_id', currentUserId)
+      .is('read_at', null);
+  }
+
+  function subscribeRealtime(){
+    supabaseClient
+      .channel('chat-' + [currentUserId, peerId].sort().join('-'))
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${currentUserId}` },
+        async (payload) => {
+          const m = payload.new;
+          if(m.sender_id !== peerId) return;
+          if(msgArea.querySelector('.empty-state')) msgArea.innerHTML = '';
+          appendBubble(m);
+          scrollToBottom();
+          const now = new Date().toISOString();
+          await supabaseClient
+            .from('messages')
+            .update({ delivered_at: now, read_at: now })
+            .eq('id', m.id);
+        }
+      )
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'messages', filter: `sender_id=eq.${currentUserId}` },
+        (payload) => {
+          const m = payload.new;
+          const row = msgArea.querySelector(`.bubble-row[data-id="${m.id}"]`);
+          if(row){
+            const tick = row.querySelector('.tick');
+            if(tick) tick.innerHTML = tickSvg(m.delivered_at, m.read_at);
+          }
+        }
+      )
+      .subscribe();
+  }
+
+  async function sendMessage(){
+    // Rapikan dulu sebelum dikirim, supaya pesan baru tidak ikut membawa
+    // baris kosong/spasi nyasar dari keyboard mobile.
+    const text = normalizeText(msgInput.value);
+    if(!text) return;
+    msgInput.value = '';
+    autoResize();
+    sendBtn.disabled = true;
+
+    const { data, error } = await supabaseClient
+      .from('messages')
+      .insert({ sender_id: currentUserId, receiver_id: peerId, content: text })
+      .select()
+      .single();
+
+    sendBtn.disabled = false;
+    msgInput.focus();
+
+    if(error){
+      alert('Gagal mengirim pesan: ' + error.message);
+      msgInput.value = text;
+      return;
+    }
+
+    if(msgArea.querySelector('.empty-state')) msgArea.innerHTML = '';
+    appendBubble(data);
+    scrollToBottom();
+  }
+
+  function autoResize(){
+    msgInput.style.height = 'auto';
+    msgInput.style.height = Math.min(msgInput.scrollHeight, 100) + 'px';
+  }
+
+  msgInput.addEventListener('input', () => {
+    autoResize();
+    sendBtn.disabled = msgInput.value.trim().length === 0;
+  });
+  msgInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+  sendBtn.addEventListener('click', sendMessage);
+
+  init();
+</script>
+</body>
+</html>
