@@ -456,6 +456,162 @@
     font-weight:700;
     cursor:pointer;
   }
+
+  /* ---------- Panel switching (tab tidak pindah halaman) ---------- */
+  .tab-panel{
+    display:none;
+    flex:1;
+    min-height:0;
+    flex-direction:column;
+    overflow-y:auto;
+  }
+  .tab-panel.active{display:flex;}
+  #panelChats.active{display:flex;}
+  #panelChats{display:flex;flex-direction:column;flex:1;min-height:0;position:relative;}
+
+  /* ---------- Status panel ---------- */
+  .status-empty{
+    margin:auto;
+    padding:60px 24px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13.5px;
+    line-height:1.6;
+  }
+  .status-empty .icon{margin-bottom:14px;}
+
+  /* ---------- Kontak panel ---------- */
+  .add-section{
+    padding:18px 16px;
+    border-bottom:8px solid #f5f7f8;
+    flex-shrink:0;
+  }
+  .add-section .label{
+    font-size:12px;
+    font-weight:700;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    margin-bottom:8px;
+  }
+  .add-row{display:flex;gap:8px;}
+  .add-row input{
+    flex:1;
+    border:1.5px solid #dde5e9;
+    border-radius:10px;
+    padding:11px 12px;
+    font-size:15px;
+    font-family:'Courier New',monospace;
+    letter-spacing:2px;
+    outline:none;
+  }
+  .add-row input:focus{border-color:var(--bbm-blue);}
+  .add-row button{
+    padding:0 18px;
+    background:var(--bbm-blue);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .add-row button:disabled{background:#c7d1d6;}
+  .search-msg{margin-top:10px;font-size:13px;}
+  .search-msg.err{color:var(--error);}
+  .search-msg.ok{color:var(--ok);}
+  .found-card{
+    display:none;
+    margin-top:12px;
+    background:#f7fafb;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 14px;
+    align-items:center;
+    gap:12px;
+  }
+  .found-card.show{display:flex;}
+  .found-card .avatar{
+    width:44px;height:44px;border-radius:50%;
+    background:var(--bbm-blue-dark);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:15px;flex-shrink:0;
+  }
+  .found-card .info{flex:1;min-width:0;}
+  .found-card .info .uname{font-weight:600;font-size:15px;}
+  .found-card .info .pin-label{font-size:11.5px;color:var(--muted);}
+  .found-card button{
+    background:var(--bbm-blue);
+    color:#fff;border:none;border-radius:8px;
+    padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
+    white-space:nowrap;
+  }
+  .found-card button:disabled{background:#c7d1d6;}
+  .section-title{
+    padding:14px 16px 6px;
+    font-size:12px;
+    font-weight:700;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    flex-shrink:0;
+  }
+  .contact-item{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:12px 16px;
+    border-bottom:1px solid var(--border);
+    cursor:pointer;
+  }
+  .contact-item:active{background:#f5f8fa;}
+  .contact-item .avatar{
+    width:48px;height:48px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:700;font-size:16px;flex-shrink:0;
+  }
+  .contact-item .uname{font-size:15.5px;font-weight:600;}
+  .panel-empty{
+    padding:40px 24px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13.5px;
+  }
+
+  /* ---------- Notifikasi panel ---------- */
+  .req-item, .notif-item{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:12px 16px;
+    border-bottom:1px solid var(--border);
+  }
+  .req-item .avatar, .notif-item .avatar{
+    width:48px;height:48px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:700;font-size:16px;flex-shrink:0;
+  }
+  .req-item .info, .notif-item .info{flex:1;min-width:0;}
+  .req-item .uname, .notif-item .uname{font-size:15px;font-weight:600;}
+  .req-item .sub, .notif-item .sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .req-actions{display:flex;gap:8px;flex-shrink:0;}
+  .btn-accept, .btn-decline{
+    border:none;
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .btn-accept{background:var(--ok);color:#fff;}
+  .btn-decline{background:#f1f5f7;color:var(--muted);}
+  .btn-accept:disabled, .btn-decline:disabled{opacity:0.5;}
+  .notif-item.unseen{background:#f2faff;}
+  .status-dot{
+    width:8px;height:8px;border-radius:50%;
+    flex-shrink:0;margin-left:4px;
+  }
+  .status-dot.new{background:var(--bbm-blue);}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
@@ -528,7 +684,7 @@
   </div>
 
   <div class="tabbar">
-    <div class="tabitem active">
+    <div class="tabitem active" id="tabChats">
       <svg viewBox="0 0 24 24" fill="#0092d1"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
     </div>
     <div class="tabitem" id="tabStatus">
@@ -543,10 +699,53 @@
     </div>
   </div>
 
-  <div class="chatlist" id="chatlist"></div>
+  <!-- ===== Panel: Chats (tab default) ===== -->
+  <div class="tab-panel active" id="panelChats">
+    <div class="chatlist" id="chatlist"></div>
+    <div class="fab" title="Chat baru" id="fabNewChat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg>
+    </div>
+  </div>
 
-  <div class="fab" title="Chat baru">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg>
+  <!-- ===== Panel: Status ===== -->
+  <div class="tab-panel" id="panelStatus">
+    <div class="status-empty">
+      <div class="icon">
+        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#c7d1d6" stroke-width="1.6" style="margin:0 auto;display:block;"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg>
+      </div>
+      Belum ada status untuk ditampilkan.<br>Fitur ini akan segera hadir.
+    </div>
+  </div>
+
+  <!-- ===== Panel: Kontak ===== -->
+  <div class="tab-panel" id="panelKontak">
+    <div class="add-section">
+      <div class="label">Tambah kontak via PIN</div>
+      <div class="add-row">
+        <input type="text" id="pinInput" placeholder="Masukkan 8 digit PIN" maxlength="8" inputmode="numeric">
+        <button id="searchBtn">Cari</button>
+      </div>
+      <div class="search-msg" id="searchMsg"></div>
+
+      <div class="found-card" id="foundCard">
+        <div class="avatar" id="foundAvatar">?</div>
+        <div class="info">
+          <div class="uname" id="foundUname">@—</div>
+          <div class="pin-label">Ditemukan lewat PIN</div>
+        </div>
+        <button id="sendRequestBtn">Kirim Permintaan</button>
+      </div>
+    </div>
+    <div class="section-title">Kontak Saya</div>
+    <div id="contactList"></div>
+  </div>
+
+  <!-- ===== Panel: Notifikasi ===== -->
+  <div class="tab-panel" id="panelNotif">
+    <div class="section-title">Permintaan Pertemanan</div>
+    <div id="reqList"></div>
+    <div class="section-title">Pembaruan</div>
+    <div id="updateList"></div>
   </div>
 
 </div>
@@ -749,6 +948,289 @@
     markInboxDelivered(session.user.id);
   }
 
+  // ============================================================
+  // Panel Kontak (dulunya kontak.html)
+  // ============================================================
+  let foundProfile = null;
+  const pinInput = document.getElementById('pinInput');
+  const searchBtn = document.getElementById('searchBtn');
+  const searchMsg = document.getElementById('searchMsg');
+  const foundCard = document.getElementById('foundCard');
+  const foundAvatar = document.getElementById('foundAvatar');
+  const foundUname = document.getElementById('foundUname');
+  const sendRequestBtn = document.getElementById('sendRequestBtn');
+  const contactList = document.getElementById('contactList');
+
+  searchBtn.addEventListener('click', async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if(!session) return;
+    const currentUserId = session.user.id;
+
+    const pin = pinInput.value.trim();
+    searchMsg.textContent = '';
+    searchMsg.className = 'search-msg';
+    foundCard.classList.remove('show');
+    foundProfile = null;
+
+    if(!/^\d{8}$/.test(pin)){
+      searchMsg.textContent = 'PIN harus 8 digit angka.';
+      searchMsg.className = 'search-msg err';
+      return;
+    }
+
+    searchBtn.disabled = true;
+    searchBtn.textContent = '...';
+
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('id, username, pin')
+      .eq('pin', pin)
+      .maybeSingle();
+
+    searchBtn.disabled = false;
+    searchBtn.textContent = 'Cari';
+
+    if(error || !data){
+      searchMsg.textContent = 'PIN tidak ditemukan.';
+      searchMsg.className = 'search-msg err';
+      return;
+    }
+    if(data.id === currentUserId){
+      searchMsg.textContent = 'Itu PIN kamu sendiri.';
+      searchMsg.className = 'search-msg err';
+      return;
+    }
+
+    foundProfile = data;
+    foundAvatar.textContent = initials(data.username);
+    foundAvatar.style.background = colorFor(data.id);
+    foundUname.textContent = '@' + data.username;
+    foundCard.classList.add('show');
+    searchMsg.textContent = 'Ditemukan!';
+    searchMsg.className = 'search-msg ok';
+  });
+
+  sendRequestBtn.addEventListener('click', async () => {
+    if(!foundProfile) return;
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if(!session) return;
+    const currentUserId = session.user.id;
+
+    sendRequestBtn.disabled = true;
+    sendRequestBtn.textContent = 'Mengirim...';
+
+    const { error } = await supabaseClient.from('contacts').insert({
+      requester_id: currentUserId,
+      addressee_id: foundProfile.id,
+      status: 'pending'
+    });
+
+    if(error){
+      if(error.message.toLowerCase().includes('duplicate')){
+        searchMsg.textContent = 'Kamu sudah pernah mengirim permintaan ke akun ini.';
+      } else {
+        searchMsg.textContent = 'Gagal mengirim: ' + error.message;
+      }
+      searchMsg.className = 'search-msg err';
+      sendRequestBtn.disabled = false;
+      sendRequestBtn.textContent = 'Kirim Permintaan';
+      return;
+    }
+
+    sendRequestBtn.textContent = 'Terkirim ✓';
+    searchMsg.textContent = 'Permintaan pertemanan sudah dikirim.';
+    searchMsg.className = 'search-msg ok';
+  });
+
+  async function loadContacts(){
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if(!session) return;
+    const currentUserId = session.user.id;
+
+    contactList.innerHTML = '<div class="panel-empty">Memuat...</div>';
+
+    const { data: rows, error } = await supabaseClient
+      .from('contacts')
+      .select('id, requester_id, addressee_id, status')
+      .eq('status', 'accepted')
+      .or(`requester_id.eq.${currentUserId},addressee_id.eq.${currentUserId}`);
+
+    if(error || !rows || rows.length === 0){
+      contactList.innerHTML = '<div class="panel-empty">Belum ada kontak. Tambahkan lewat PIN di atas.</div>';
+      return;
+    }
+
+    const otherIds = rows.map(r => r.requester_id === currentUserId ? r.addressee_id : r.requester_id);
+
+    const { data: profilesData } = await supabaseClient
+      .from('profiles')
+      .select('id, username')
+      .in('id', otherIds);
+
+    const profileMap = {};
+    (profilesData || []).forEach(p => profileMap[p.id] = p.username);
+
+    contactList.innerHTML = otherIds.map(id => {
+      const uname = profileMap[id] || 'Pengguna';
+      return `
+        <div class="contact-item" data-uid="${id}" data-uname="${uname}">
+          <div class="avatar" style="background:${colorFor(id)}">${initials(uname)}</div>
+          <div class="uname">@${uname}</div>
+        </div>
+      `;
+    }).join('');
+
+    document.querySelectorAll('#contactList .contact-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const uid = item.dataset.uid;
+        const uname = item.dataset.uname;
+        window.location.href = `chat.html?uid=${uid}&uname=${encodeURIComponent(uname)}`;
+      });
+    });
+  }
+
+  // ============================================================
+  // Panel Notifikasi (dulunya notifikasi.html)
+  // ============================================================
+  const reqList = document.getElementById('reqList');
+  const updateList = document.getElementById('updateList');
+
+  async function loadRequests(){
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if(!session) return;
+    const currentUserId = session.user.id;
+
+    reqList.innerHTML = '<div class="panel-empty">Memuat...</div>';
+
+    const { data: rows, error } = await supabaseClient
+      .from('contacts')
+      .select('id, requester_id')
+      .eq('addressee_id', currentUserId)
+      .eq('status', 'pending');
+
+    if(error || !rows || rows.length === 0){
+      reqList.innerHTML = '<div class="panel-empty">Tidak ada permintaan pertemanan baru.</div>';
+      return;
+    }
+
+    const requesterIds = rows.map(r => r.requester_id);
+    const { data: profilesData } = await supabaseClient
+      .from('profiles')
+      .select('id, username')
+      .in('id', requesterIds);
+
+    const profileMap = {};
+    (profilesData || []).forEach(p => profileMap[p.id] = p.username);
+
+    reqList.innerHTML = rows.map(r => {
+      const uname = profileMap[r.requester_id] || 'Pengguna';
+      return `
+        <div class="req-item" data-contact-id="${r.id}">
+          <div class="avatar" style="background:${colorFor(r.requester_id)}">${initials(uname)}</div>
+          <div class="info">
+            <div class="uname">@${uname}</div>
+            <div class="sub">Ingin menambahkanmu sebagai kontak</div>
+          </div>
+          <div class="req-actions">
+            <button class="btn-accept" data-id="${r.id}">Terima</button>
+            <button class="btn-decline" data-id="${r.id}">Tolak</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    document.querySelectorAll('#reqList .btn-accept').forEach(btn => {
+      btn.addEventListener('click', () => respondToRequest(btn.dataset.id, 'accepted', btn));
+    });
+    document.querySelectorAll('#reqList .btn-decline').forEach(btn => {
+      btn.addEventListener('click', () => respondToRequest(btn.dataset.id, 'declined', btn));
+    });
+  }
+
+  async function respondToRequest(contactId, status, btn){
+    const item = btn.closest('.req-item');
+    item.querySelectorAll('button').forEach(b => b.disabled = true);
+
+    const { error } = await supabaseClient
+      .from('contacts')
+      .update({ status, seen_by_requester: false })
+      .eq('id', contactId);
+
+    if(error){
+      alert('Gagal memproses: ' + error.message);
+      item.querySelectorAll('button').forEach(b => b.disabled = false);
+      return;
+    }
+
+    item.style.opacity = '0.4';
+    setTimeout(() => {
+      item.remove();
+      if(!reqList.querySelector('.req-item')){
+        reqList.innerHTML = '<div class="panel-empty">Tidak ada permintaan pertemanan baru.</div>';
+      }
+    }, 300);
+
+    // Kalau diterima, kontak baru ini otomatis nongol lain kali tab
+    // Kontak dibuka. Refresh badge & daftar chat juga.
+    refreshNotifBadge();
+  }
+
+  async function loadUpdates(){
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if(!session) return;
+    const currentUserId = session.user.id;
+
+    updateList.innerHTML = '<div class="panel-empty">Memuat...</div>';
+
+    const { data: rows, error } = await supabaseClient
+      .from('contacts')
+      .select('id, addressee_id, status, seen_by_requester')
+      .eq('requester_id', currentUserId)
+      .in('status', ['accepted', 'declined'])
+      .order('id', { ascending: false });
+
+    if(error || !rows || rows.length === 0){
+      updateList.innerHTML = '<div class="panel-empty">Belum ada pembaruan.</div>';
+      return;
+    }
+
+    const otherIds = rows.map(r => r.addressee_id);
+    const { data: profilesData } = await supabaseClient
+      .from('profiles')
+      .select('id, username')
+      .in('id', otherIds);
+
+    const profileMap = {};
+    (profilesData || []).forEach(p => profileMap[p.id] = p.username);
+
+    updateList.innerHTML = rows.map(r => {
+      const uname = profileMap[r.addressee_id] || 'Pengguna';
+      const isAccepted = r.status === 'accepted';
+      const text = isAccepted
+        ? `menerima permintaan pertemananmu`
+        : `menolak permintaan pertemananmu`;
+      return `
+        <div class="notif-item ${r.seen_by_requester ? '' : 'unseen'}">
+          <div class="avatar" style="background:${colorFor(r.addressee_id)}">${initials(uname)}</div>
+          <div class="info">
+            <div class="uname">@${uname}</div>
+            <div class="sub">${isAccepted ? '✅' : '❌'} ${text}</div>
+          </div>
+          ${r.seen_by_requester ? '' : '<span class="status-dot new"></span>'}
+        </div>
+      `;
+    }).join('');
+
+    const unseenIds = rows.filter(r => !r.seen_by_requester).map(r => r.id);
+    if(unseenIds.length > 0){
+      await supabaseClient
+        .from('contacts')
+        .update({ seen_by_requester: true })
+        .in('id', unseenIds);
+      refreshNotifBadge();
+    }
+  }
+
   refreshNotifBadge();
 
   // Halaman yang dipulihkan dari cache browser (mis. tombol back dari
@@ -765,15 +1247,64 @@
     }
   });
 
-  document.getElementById('tabStatus').addEventListener('click', () => {
-    window.location.href = 'status.html';
-  });
-  document.getElementById('tabKontak').addEventListener('click', () => {
-    window.location.href = 'kontak.html';
-  });
-  document.getElementById('tabNotif').addEventListener('click', () => {
-    window.location.href = 'notifikasi.html';
-  });
+  // ============================================================
+  // Tab switching di dalam satu halaman (SPA) — Chats / Status /
+  // Kontak / Notifikasi tidak lagi pindah ke file .html terpisah,
+  // cuma ganti-ganti panel yang ditampilkan.
+  // ============================================================
+  const tabDefs = {
+    chats:  { tabEl: 'tabChats',  panelEl: 'panelChats',  title: 'BBM Chats',   showSub: true,  showFab: true  },
+    status: { tabEl: 'tabStatus', panelEl: 'panelStatus', title: 'Status',      showSub: false, showFab: false },
+    kontak: { tabEl: 'tabKontak', panelEl: 'panelKontak', title: 'Kontak',      showSub: false, showFab: false },
+    notif:  { tabEl: 'tabNotif',  panelEl: 'panelNotif',  title: 'Notifikasi',  showSub: false, showFab: false }
+  };
+  let activeTab = 'chats';
+
+  function switchTab(name){
+    if(!tabDefs[name]) return;
+    activeTab = name;
+
+    Object.entries(tabDefs).forEach(([key, def]) => {
+      const tabEl = document.getElementById(def.tabEl);
+      const panelEl = document.getElementById(def.panelEl);
+      const isActive = key === name;
+      tabEl.classList.toggle('active', isActive);
+      panelEl.classList.toggle('active', isActive);
+      const svg = tabEl.querySelector('svg');
+      if(svg){
+        if(isActive){
+          svg.setAttribute('fill', key === 'chats' ? '#0092d1' : 'none');
+          svg.setAttribute('stroke', '#0092d1');
+        } else {
+          svg.setAttribute('fill', 'none');
+          svg.setAttribute('stroke', '#7a8a92');
+        }
+      }
+    });
+
+    const def = tabDefs[name];
+    document.querySelector('.appbar h1').textContent = def.title;
+    document.getElementById('currentUsername').style.display = def.showSub ? '' : 'none';
+    document.getElementById('fabNewChat').style.display = def.showFab ? 'flex' : 'none';
+
+    if(name === 'status'){
+      // Placeholder — belum ada data untuk dimuat.
+    } else if(name === 'kontak'){
+      loadContacts();
+    } else if(name === 'notif'){
+      loadRequests();
+      loadUpdates();
+    } else if(name === 'chats'){
+      supabaseClient.auth.getSession().then(({ data: { session } }) => {
+        if(session) loadChats(session.user.id);
+      });
+    }
+  }
+
+  document.getElementById('tabChats').addEventListener('click', () => switchTab('chats'));
+  document.getElementById('tabStatus').addEventListener('click', () => switchTab('status'));
+  document.getElementById('tabKontak').addEventListener('click', () => switchTab('kontak'));
+  document.getElementById('tabNotif').addEventListener('click', () => switchTab('notif'));
 
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await supabaseClient.auth.signOut();
@@ -827,7 +1358,7 @@
 
   document.getElementById('ddChatBaru').addEventListener('click', () => {
     closeDropdown();
-    window.location.href = 'kontak.html';
+    switchTab('kontak');
   });
 
   // Modal PIN Saya
