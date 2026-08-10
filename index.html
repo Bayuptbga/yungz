@@ -295,52 +295,129 @@
 </div>
 
 <script>
-  // Tampilan murni — data di bawah ini contoh generik, bukan data nyata.
-  const chats = [
-    { name: 'Kontak 1', status: 'delivered', statusLabel: 'D', msg: 'Contoh pesan singkat', color: '#c77b8c', initials: 'K1' },
-    { name: 'Kontak 2', status: 'broadcast', msg: 'Contoh pesan promo dari kontak', color: '#3a3f47', initials: 'K2' },
-    { name: 'Kontak 3', status: 'broadcast', msg: 'Contoh pesan informasi', color: '#2f6b3a', initials: 'K3' },
-    { name: 'Kontak 4', status: 'sent', msg: 'Contoh balasan singkat', color: '#5b6b74', initials: 'K4' },
-    { name: 'Kontak 5', status: 'broadcast', msg: 'Contoh pesan penawaran', color: '#2c2c2c', initials: 'K5' },
-    { name: 'Kontak 6', status: 'read', statusLabel: 'R', msg: 'Contoh pesan yang sudah dibaca', color: '#7c3f9e', initials: 'K6' },
-    { name: 'Kontak 7', status: 'broadcast', msg: 'Contoh pesan pembuka percakapan', color: '#8a7a4a', initials: 'K7' }
-  ];
-
-  function statusIconHTML(chat){
-    if(chat.status === 'broadcast'){
-      return `<span class="status-icon broadcast"><svg viewBox="0 0 24 24" fill="#c8901f"><path d="M3 10v4h4l5 5V5l-5 5H3z"/><path d="M16 9a5 5 0 010 6" stroke="#c8901f" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></span>`;
+  const colorPalette = ['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
+  function colorFor(id){
+    let hash = 0;
+    for(let i=0;i<id.length;i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    return colorPalette[Math.abs(hash) % colorPalette.length];
+  }
+  function initials(username){
+    return (username || '?').slice(0,2).toUpperCase();
+  }
+  function timeLabel(iso){
+    const d = new Date(iso);
+    const today = new Date();
+    if(d.toDateString() === today.toDateString()){
+      return d.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
     }
-    if(chat.status === 'delivered'){
-      return `<span class="status-icon delivered">${chat.statusLabel}</span>`;
-    }
-    if(chat.status === 'read'){
-      return `<span class="status-icon read">${chat.statusLabel}</span>`;
-    }
-    if(chat.status === 'sent'){
-      return `<span class="status-icon sent" style="width:8px;height:8px;"></span>`;
-    }
-    return '';
+    return d.toLocaleDateString('id-ID', { day:'numeric', month:'short' });
   }
 
-  function render(){
+  function statusIconHTML(chat){
+    if(!chat.mine) return '';
+    return chat.read
+      ? `<span class="status-icon read">R</span>`
+      : `<span class="status-icon sent" style="width:8px;height:8px;"></span>`;
+  }
+
+  function render(chats){
     const list = document.getElementById('chatlist');
+    if(!chats || chats.length === 0){
+      list.innerHTML = `
+        <div style="padding:40px 24px;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.6;">
+          Belum ada percakapan.<br>Buka tab Kontak lalu ketuk salah satu kontak untuk mulai chat.
+        </div>`;
+      return;
+    }
     list.innerHTML = chats.map(chat => `
-      <div class="chat-item">
-        <div class="avatar" style="background:${chat.color}">${chat.initials}</div>
+      <div class="chat-item" data-uid="${chat.uid}" data-uname="${chat.uname}">
+        <div class="avatar" style="background:${colorFor(chat.uid)}">${initials(chat.uname)}</div>
         <div class="chat-main">
           <div class="chat-top">
-            <div class="chat-name">${chat.name}</div>
+            <div class="chat-name" style="${chat.unread ? 'font-weight:700;' : ''}">@${chat.uname}</div>
+            <div style="font-size:11.5px;color:var(--muted);flex-shrink:0;">${timeLabel(chat.time)}</div>
           </div>
           <div class="chat-bottom">
             ${statusIconHTML(chat)}
-            <div class="chat-msg">${chat.msg}</div>
+            <div class="chat-msg" style="${chat.unread ? 'color:var(--ink);font-weight:600;' : ''}">${chat.preview}</div>
           </div>
         </div>
       </div>
     `).join('');
+
+    document.querySelectorAll('.chat-item').forEach(item => {
+      item.addEventListener('click', () => {
+        window.location.href = `chat.html?uid=${item.dataset.uid}&uname=${encodeURIComponent(item.dataset.uname)}`;
+      });
+    });
   }
 
-  render();
+  async function loadChats(userId){
+    const list = document.getElementById('chatlist');
+    list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);font-size:13.5px;">Memuat...</div>';
+
+    // Kontak yang sudah berteman (accepted)
+    const { data: contactRows } = await supabaseClient
+      .from('contacts')
+      .select('requester_id, addressee_id')
+      .eq('status', 'accepted')
+      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+
+    const acceptedIds = new Set(
+      (contactRows || []).map(r => r.requester_id === userId ? r.addressee_id : r.requester_id)
+    );
+
+    if(acceptedIds.size === 0){
+      render([]);
+      return;
+    }
+
+    // Ambil pesan terbaru yang melibatkan kita, lalu ambil satu pesan
+    // terakhir per lawan bicara (pesan sudah terurut dari yang terbaru).
+    const { data: msgRows } = await supabaseClient
+      .from('messages')
+      .select('sender_id, receiver_id, content, created_at, read_at')
+      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+      .order('created_at', { ascending: false })
+      .limit(300);
+
+    const lastByPartner = new Map();
+    (msgRows || []).forEach(m => {
+      const partner = m.sender_id === userId ? m.receiver_id : m.sender_id;
+      if(!acceptedIds.has(partner)) return;
+      if(!lastByPartner.has(partner)) lastByPartner.set(partner, m);
+    });
+
+    if(lastByPartner.size === 0){
+      render([]);
+      return;
+    }
+
+    const partnerIds = [...lastByPartner.keys()];
+    const { data: profilesData } = await supabaseClient
+      .from('profiles')
+      .select('id, username')
+      .in('id', partnerIds);
+
+    const profileMap = {};
+    (profilesData || []).forEach(p => profileMap[p.id] = p.username);
+
+    const chats = partnerIds.map(pid => {
+      const m = lastByPartner.get(pid);
+      const mine = m.sender_id === userId;
+      return {
+        uid: pid,
+        uname: profileMap[pid] || 'Pengguna',
+        preview: (mine ? 'Kamu: ' : '') + m.content,
+        time: m.created_at,
+        mine,
+        read: !!m.read_at,
+        unread: !mine && !m.read_at
+      };
+    });
+
+    render(chats);
+  }
 
   // Proteksi halaman: kalau belum login, lempar ke login.html
   async function refreshNotifBadge(){
@@ -383,6 +460,8 @@
     } else {
       badge.style.display = 'none';
     }
+
+    loadChats(session.user.id);
   }
 
   refreshNotifBadge();
