@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bang Bayu Message - Kontak</title>
+<style>
+  :root{
+    --bbm-blue-dark:#0077b6;
+    --bbm-blue:#0092d1;
+    --bbm-blue-light:#1aa8e6;
+    --bg:#ffffff;
+    --ink:#1c2b33;
+    --muted:#7a8a92;
+    --border:#e9edf0;
+    --error:#d64545;
+    --ok:#1f9d55;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+  }
+  .phone{
+    width:100%;
+    max-width:420px;
+    min-height:100vh;
+    background:#fff;
+    box-shadow:0 0 40px rgba(0,0,0,0.08);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    overflow:hidden;
+  }
+  .appbar{
+    background:var(--bbm-blue);
+    color:#fff;
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .appbar .back{
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .appbar h1{
+    margin:0;
+    font-size:19px;
+    font-weight:600;
+  }
+
+  .add-section{
+    padding:18px 16px;
+    border-bottom:8px solid #f5f7f8;
+  }
+  .add-section .label{
+    font-size:12px;
+    font-weight:700;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    margin-bottom:8px;
+  }
+  .add-row{
+    display:flex;
+    gap:8px;
+  }
+  .add-row input{
+    flex:1;
+    border:1.5px solid #dde5e9;
+    border-radius:10px;
+    padding:11px 12px;
+    font-size:15px;
+    font-family:'Courier New',monospace;
+    letter-spacing:2px;
+    outline:none;
+  }
+  .add-row input:focus{
+    border-color:var(--bbm-blue);
+  }
+  .add-row button{
+    padding:0 18px;
+    background:var(--bbm-blue);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .add-row button:disabled{
+    background:#c7d1d6;
+  }
+  .search-msg{
+    margin-top:10px;
+    font-size:13px;
+  }
+  .search-msg.err{color:var(--error);}
+  .search-msg.ok{color:var(--ok);}
+
+  .found-card{
+    display:none;
+    margin-top:12px;
+    background:#f7fafb;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 14px;
+    align-items:center;
+    gap:12px;
+  }
+  .found-card.show{display:flex;}
+  .found-card .avatar{
+    width:44px;height:44px;border-radius:50%;
+    background:var(--bbm-blue-dark);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:15px;flex-shrink:0;
+  }
+  .found-card .info{flex:1;min-width:0;}
+  .found-card .info .uname{font-weight:600;font-size:15px;}
+  .found-card .info .pin-label{font-size:11.5px;color:var(--muted);}
+  .found-card button{
+    background:var(--bbm-blue);
+    color:#fff;border:none;border-radius:8px;
+    padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
+    white-space:nowrap;
+  }
+  .found-card button:disabled{background:#c7d1d6;}
+
+  .section-title{
+    padding:14px 16px 6px;
+    font-size:12px;
+    font-weight:700;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+  }
+
+  .contact-list{flex:1;}
+  .contact-item{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:12px 16px;
+    border-bottom:1px solid var(--border);
+  }
+  .contact-item .avatar{
+    width:48px;height:48px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:700;font-size:16px;flex-shrink:0;
+  }
+  .contact-item .uname{font-size:15.5px;font-weight:600;}
+
+  .empty-state{
+    padding:40px 24px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13.5px;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
+</head>
+<body>
+<div class="phone">
+
+  <div class="appbar">
+    <div class="back" onclick="window.location.href='index.html'">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+    </div>
+    <h1>Kontak</h1>
+  </div>
+
+  <div class="add-section">
+    <div class="label">Tambah kontak via PIN</div>
+    <div class="add-row">
+      <input type="text" id="pinInput" placeholder="Masukkan 8 digit PIN" maxlength="8" inputmode="numeric">
+      <button id="searchBtn">Cari</button>
+    </div>
+    <div class="search-msg" id="searchMsg"></div>
+
+    <div class="found-card" id="foundCard">
+      <div class="avatar" id="foundAvatar">?</div>
+      <div class="info">
+        <div class="uname" id="foundUname">@—</div>
+        <div class="pin-label">Ditemukan lewat PIN</div>
+      </div>
+      <button id="sendRequestBtn">Kirim Permintaan</button>
+    </div>
+  </div>
+
+  <div class="section-title">Kontak Saya</div>
+  <div class="contact-list" id="contactList"></div>
+
+</div>
+
+<script>
+  let currentUserId = null;
+  let foundProfile = null;
+
+  const pinInput = document.getElementById('pinInput');
+  const searchBtn = document.getElementById('searchBtn');
+  const searchMsg = document.getElementById('searchMsg');
+  const foundCard = document.getElementById('foundCard');
+  const foundAvatar = document.getElementById('foundAvatar');
+  const foundUname = document.getElementById('foundUname');
+  const sendRequestBtn = document.getElementById('sendRequestBtn');
+  const contactList = document.getElementById('contactList');
+
+  const colorPalette = ['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
+  function colorFor(id){
+    let hash = 0;
+    for(let i=0;i<id.length;i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    return colorPalette[Math.abs(hash) % colorPalette.length];
+  }
+  function initials(username){
+    return username.slice(0,2).toUpperCase();
+  }
+
+  async function init(){
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if(!session){
+      window.location.href = 'login.html';
+      return;
+    }
+    currentUserId = session.user.id;
+    loadContacts();
+  }
+
+  searchBtn.addEventListener('click', async () => {
+    const pin = pinInput.value.trim();
+    searchMsg.textContent = '';
+    searchMsg.className = 'search-msg';
+    foundCard.classList.remove('show');
+    foundProfile = null;
+
+    if(!/^\d{8}$/.test(pin)){
+      searchMsg.textContent = 'PIN harus 8 digit angka.';
+      searchMsg.className = 'search-msg err';
+      return;
+    }
+
+    searchBtn.disabled = true;
+    searchBtn.textContent = '...';
+
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('id, username, pin')
+      .eq('pin', pin)
+      .maybeSingle();
+
+    searchBtn.disabled = false;
+    searchBtn.textContent = 'Cari';
+
+    if(error || !data){
+      searchMsg.textContent = 'PIN tidak ditemukan.';
+      searchMsg.className = 'search-msg err';
+      return;
+    }
+    if(data.id === currentUserId){
+      searchMsg.textContent = 'Itu PIN kamu sendiri.';
+      searchMsg.className = 'search-msg err';
+      return;
+    }
+
+    foundProfile = data;
+    foundAvatar.textContent = initials(data.username);
+    foundAvatar.style.background = colorFor(data.id);
+    foundUname.textContent = '@' + data.username;
+    foundCard.classList.add('show');
+    searchMsg.textContent = 'Ditemukan!';
+    searchMsg.className = 'search-msg ok';
+  });
+
+  sendRequestBtn.addEventListener('click', async () => {
+    if(!foundProfile) return;
+    sendRequestBtn.disabled = true;
+    sendRequestBtn.textContent = 'Mengirim...';
+
+    const { error } = await supabaseClient.from('contacts').insert({
+      requester_id: currentUserId,
+      addressee_id: foundProfile.id,
+      status: 'pending'
+    });
+
+    if(error){
+      if(error.message.toLowerCase().includes('duplicate')){
+        searchMsg.textContent = 'Kamu sudah pernah mengirim permintaan ke akun ini.';
+      } else {
+        searchMsg.textContent = 'Gagal mengirim: ' + error.message;
+      }
+      searchMsg.className = 'search-msg err';
+      sendRequestBtn.disabled = false;
+      sendRequestBtn.textContent = 'Kirim Permintaan';
+      return;
+    }
+
+    sendRequestBtn.textContent = 'Terkirim ✓';
+    searchMsg.textContent = 'Permintaan pertemanan sudah dikirim.';
+    searchMsg.className = 'search-msg ok';
+  });
+
+  async function loadContacts(){
+    contactList.innerHTML = '<div class="empty-state">Memuat...</div>';
+
+    const { data: rows, error } = await supabaseClient
+      .from('contacts')
+      .select('id, requester_id, addressee_id, status')
+      .eq('status', 'accepted')
+      .or(`requester_id.eq.${currentUserId},addressee_id.eq.${currentUserId}`);
+
+    if(error || !rows || rows.length === 0){
+      contactList.innerHTML = '<div class="empty-state">Belum ada kontak. Tambahkan lewat PIN di atas.</div>';
+      return;
+    }
+
+    const otherIds = rows.map(r => r.requester_id === currentUserId ? r.addressee_id : r.requester_id);
+
+    const { data: profilesData } = await supabaseClient
+      .from('profiles')
+      .select('id, username')
+      .in('id', otherIds);
+
+    const profileMap = {};
+    (profilesData || []).forEach(p => profileMap[p.id] = p.username);
+
+    contactList.innerHTML = otherIds.map(id => {
+      const uname = profileMap[id] || 'Pengguna';
+      return `
+        <div class="contact-item">
+          <div class="avatar" style="background:${colorFor(id)}">${initials(uname)}</div>
+          <div class="uname">@${uname}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  init();
+</script>
+</body>
+</html>
