@@ -456,7 +456,9 @@
         </div>
       </div>
     `;
-    row.querySelector('.txt').textContent = m.content;
+    // Rapikan baris kosong berlebih (mis. dari keyboard mobile yang menyisipkan
+    // enter ganda) supaya bubble tidak melar tinggi karena baris kosong tersembunyi.
+    row.querySelector('.txt').textContent = (m.content || '').replace(/\n{2,}/g, '\n');
     msgArea.appendChild(row);
   }
 
@@ -507,7 +509,9 @@
   }
 
   async function sendMessage(){
-    const text = msgInput.value.trim();
+    // Gabungkan enter ganda jadi satu baris sebelum dikirim, supaya pesan yang
+    // tersimpan tidak membawa banyak baris kosong (bisa terjadi di keyboard mobile).
+    const text = msgInput.value.replace(/\n{2,}/g, '\n').trim();
     if(!text) return;
     msgInput.value = '';
     autoResize();
