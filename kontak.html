@@ -151,7 +151,9 @@
     gap:14px;
     padding:12px 16px;
     border-bottom:1px solid var(--border);
+    cursor:pointer;
   }
+  .contact-item:active{background:#f5f8fa;}
   .contact-item .avatar{
     width:48px;height:48px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
@@ -336,12 +338,20 @@
     contactList.innerHTML = otherIds.map(id => {
       const uname = profileMap[id] || 'Pengguna';
       return `
-        <div class="contact-item">
+        <div class="contact-item" data-uid="${id}" data-uname="${uname}">
           <div class="avatar" style="background:${colorFor(id)}">${initials(uname)}</div>
           <div class="uname">@${uname}</div>
         </div>
       `;
     }).join('');
+
+    document.querySelectorAll('.contact-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const uid = item.dataset.uid;
+        const uname = item.dataset.uname;
+        window.location.href = `chat.html?uid=${uid}&uname=${encodeURIComponent(uname)}`;
+      });
+    });
   }
 
   init();
