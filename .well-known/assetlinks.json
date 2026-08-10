@@ -1,1 +1,9 @@
 
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.bbmessage.yungz",
+        "sha256_cert_fingerprints": ["BB:44:1A:7A:4A:7F:48:9D:FB:1F:99:CE:48:8D:DD:45:C6:2A:A5:9A:92:3D:52:57:E2:FD:BC:C8:4C:EE:E5:D1"]
+      }
+    }]
