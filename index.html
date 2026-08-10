@@ -274,12 +274,12 @@
     <div class="tabitem active">
       <svg viewBox="0 0 24 24" fill="#0092d1"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
     </div>
-    <div class="tabitem" id="tabPermintaan">
+    <div class="tabitem" id="tabStatus">
       <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4.5 9a8 8 0 0114-4.5M19.5 15a8 8 0 01-14 4.5"/></svg>
-      <span class="badge" id="reqBadge" style="display:none;"></span>
     </div>
     <div class="tabitem" id="tabKontak">
       <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>
+      <span class="badge" id="reqBadge" style="display:none;"></span>
     </div>
     <div class="tabitem" id="tabGrup">
       <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><path d="M15 14.2c2.7.5 4.5 2.6 4.5 5.8"/></svg>
@@ -374,8 +374,8 @@
     }
   })();
 
-  document.getElementById('tabPermintaan').addEventListener('click', () => {
-    window.location.href = 'permintaan.html';
+  document.getElementById('tabStatus').addEventListener('click', () => {
+    window.location.href = 'status.html';
   });
   document.getElementById('tabKontak').addEventListener('click', () => {
     window.location.href = 'kontak.html';
