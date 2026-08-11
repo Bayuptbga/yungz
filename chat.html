@@ -38,7 +38,10 @@
     overscroll-behavior:none;
     touch-action:pan-y;
     -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
     user-select:none;
+    -webkit-touch-callout:none;
   }
   input, textarea{
     -webkit-user-select:text;
@@ -562,10 +565,21 @@
           appendBubble(m);
           scrollToBottom();
           const now = new Date().toISOString();
-          await supabaseClient
-            .from('messages')
-            .update({ delivered_at: now, read_at: now })
-            .eq('id', m.id);
+          // Cuma tandai "read" kalau halaman ini beneran lagi keliatan/aktif di layar.
+          // Kalau app di-minimize/background, JS di sini bisa masih jalan (tab masih hidup),
+          // jadi jangan asal mark read walau user gak beneran lihat pesannya.
+          if(document.visibilityState === 'visible'){
+            await supabaseClient
+              .from('messages')
+              .update({ delivered_at: now, read_at: now })
+              .eq('id', m.id);
+          } else {
+            await supabaseClient
+              .from('messages')
+              .update({ delivered_at: now })
+              .eq('id', m.id)
+              .is('delivered_at', null);
+          }
         }
       )
       .on('postgres_changes',
@@ -580,6 +594,14 @@
         }
       )
       .subscribe();
+
+    // Begitu user balik lihat halaman ini lagi (misal habis dari app lain),
+    // baru tandai read pesan-pesan yang numpuk pas dia gak lihat.
+    document.addEventListener('visibilitychange', () => {
+      if(document.visibilityState === 'visible'){
+        markIncomingAsRead();
+      }
+    });
   }
 
   async function sendMessage(){
