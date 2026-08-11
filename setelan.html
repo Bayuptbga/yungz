@@ -31,7 +31,10 @@
     overscroll-behavior:none;
     touch-action:pan-y;
     -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
     user-select:none;
+    -webkit-touch-callout:none;
   }
   input, textarea{
     -webkit-user-select:text;
@@ -112,7 +115,7 @@
   (async () => {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if(!session){
-      window.location.href = 'login.html';
+      window.location.replace('login.html');
     }
   })();
 </script>
