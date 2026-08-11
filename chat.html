@@ -117,6 +117,49 @@
   .appbar .uname{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.1px;}
   .appbar .sub{font-size:11.5px;opacity:0.82;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
+  .appbar .menu-btn{
+    cursor:pointer;
+    width:34px;height:34px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    transition:background .15s ease;
+    position:relative;
+  }
+  .appbar .menu-btn:hover,
+  .appbar .menu-btn:active{
+    background:rgba(255,255,255,0.16);
+  }
+  .chat-menu{
+    position:absolute;
+    top:calc(100% + 6px);
+    right:10px;
+    background:#fff;
+    border-radius:12px;
+    box-shadow:0 6px 24px rgba(0,0,0,0.22);
+    min-width:180px;
+    overflow:hidden;
+    z-index:50;
+    display:none;
+  }
+  .chat-menu.open{display:block;}
+  .chat-menu .item{
+    padding:13px 16px;
+    font-size:14.5px;
+    color:#222;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border-bottom:1px solid #f0f0f0;
+  }
+  .chat-menu .item:last-child{border-bottom:none;}
+  .chat-menu .item:active{background:#f5f7f8;}
+  .chat-menu .item.danger{color:#d33;}
+  .chat-menu .item.ping{color:#e08a00;font-weight:600;}
+
   /* ---------- Message area ---------- */
   .msg-area{
     flex:1;
@@ -326,6 +369,14 @@
     <div class="who">
       <div class="uname" id="peerUname">@—</div>
       <div class="sub">Bang Bayu Message</div>
+    </div>
+    <div class="menu-btn" id="menuBtn" role="button" aria-label="Menu chat">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+      <div class="chat-menu" id="chatMenu">
+        <div class="item" id="menuHapusChat">🗑️ Hapus Chat</div>
+        <div class="item danger" id="menuHapusKontak">🚫 Hapus Kontak</div>
+        <div class="item ping" id="menuPing">🔔 PING!!!</div>
+      </div>
     </div>
   </div>
 
@@ -564,6 +615,9 @@
           if(msgArea.querySelector('.empty-state')) msgArea.innerHTML = '';
           appendBubble(m);
           scrollToBottom();
+          if(m.content === '🔔 PING!!!' && navigator.vibrate){
+            navigator.vibrate([80, 40, 80, 40, 160]);
+          }
           const now = new Date().toISOString();
           // Cuma tandai "read" kalau halaman ini beneran lagi keliatan/aktif di layar.
           // Kalau app di-minimize/background, JS di sini bisa masih jalan (tab masih hidup),
@@ -649,6 +703,76 @@
     }
   });
   sendBtn.addEventListener('click', sendMessage);
+
+  // ------- Menu titik tiga: Hapus Chat / Hapus Kontak / PING!!! -------
+  const menuBtn = document.getElementById('menuBtn');
+  const chatMenu = document.getElementById('chatMenu');
+
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    chatMenu.classList.toggle('open');
+  });
+  document.addEventListener('click', () => {
+    chatMenu.classList.remove('open');
+  });
+
+  document.getElementById('menuHapusChat').addEventListener('click', async (e) => {
+    e.stopPropagation();
+    chatMenu.classList.remove('open');
+    if(!confirm('Hapus semua pesan di chat ini? Tindakan ini tidak bisa dibatalkan.')) return;
+
+    const { error } = await supabaseClient
+      .from('messages')
+      .delete()
+      .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`);
+
+    if(error){
+      alert('Gagal menghapus chat: ' + error.message);
+      return;
+    }
+    msgArea.innerHTML = `
+      <div class="empty-state">
+        <span>Belum ada pesan. Mulai percakapan!</span>
+      </div>`;
+  });
+
+  document.getElementById('menuHapusKontak').addEventListener('click', async (e) => {
+    e.stopPropagation();
+    chatMenu.classList.remove('open');
+    if(!confirm('Hapus kontak ini? Kamu dan dia tidak akan lagi terhubung sebagai kontak.')) return;
+
+    const { error } = await supabaseClient
+      .from('contacts')
+      .delete()
+      .or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`);
+
+    if(error){
+      alert('Gagal menghapus kontak: ' + error.message);
+      return;
+    }
+    window.location.href = 'index.html';
+  });
+
+  document.getElementById('menuPing').addEventListener('click', async (e) => {
+    e.stopPropagation();
+    chatMenu.classList.remove('open');
+
+    if(navigator.vibrate) navigator.vibrate([80, 40, 80, 40, 160]);
+
+    const { data, error } = await supabaseClient
+      .from('messages')
+      .insert({ sender_id: currentUserId, receiver_id: peerId, content: '🔔 PING!!!' })
+      .select()
+      .single();
+
+    if(error){
+      alert('Gagal mengirim PING: ' + error.message);
+      return;
+    }
+    if(msgArea.querySelector('.empty-state')) msgArea.innerHTML = '';
+    appendBubble(data);
+    scrollToBottom();
+  });
 
   init();
 </script>
