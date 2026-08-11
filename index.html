@@ -1332,10 +1332,32 @@
     notif:  { tabEl: 'tabNotif',  panelEl: 'panelNotif',  title: 'Notifikasi',  showSub: false, showFab: false }
   };
   let activeTab = 'chats';
+  let onNonChatTab = false; // lagi ada 1 history entry "nyangkut" buat tab non-Chat
 
-  function switchTab(name){
+  function switchTab(name, fromPopstate){
     if(!tabDefs[name]) return;
     activeTab = name;
+
+    // Atur history: dari tab Chat -> tab lain = numpuk 1 entry baru (biar back
+    // bisa balik ke Chat). Antar tab non-Chat (Status<->Kontak<->Notif) = replace
+    // entry yang sama, jangan numpuk lagi, biar back cuma butuh 1x pencet buat
+    // balik ke Chat dari tab manapun. Dari tab Chat sendiri = gak ada entry
+    // nyangkut, jadi back berikutnya bakal nutup app (bukan cuma balik ke SPA).
+    if(!fromPopstate){
+      if(name !== 'chats'){
+        if(!onNonChatTab){
+          history.pushState({ tab: name }, '', location.href);
+        } else {
+          history.replaceState({ tab: name }, '', location.href);
+        }
+        onNonChatTab = true;
+      } else if(onNonChatTab){
+        // User klik tab "Chats" manual (bukan lewat back) waktu lagi di tab lain
+        // -> buang entry yang nyangkut itu, biar balik ke kondisi "bersih".
+        history.back();
+        return; // switchTab beneran akan dipanggil ulang lewat event popstate
+      }
+    }
 
     Object.entries(tabDefs).forEach(([key, def]) => {
       const tabEl = document.getElementById(def.tabEl);
@@ -1377,6 +1399,16 @@
   document.getElementById('tabStatus').addEventListener('click', () => switchTab('status'));
   document.getElementById('tabKontak').addEventListener('click', () => switchTab('kontak'));
   document.getElementById('tabNotif').addEventListener('click', () => switchTab('notif'));
+
+  // Tombol back Android: kalau lagi di tab Status/Kontak/Notif -> balik ke tab
+  // Chat. Kalau lagi di tab Chat (gak ada entry nyangkut) -> biarkan browser/TWA
+  // proses back seperti biasa, yang artinya app-nya nutup.
+  window.addEventListener('popstate', () => {
+    if(onNonChatTab){
+      onNonChatTab = false;
+      switchTab('chats', true);
+    }
+  });
 
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await supabaseClient.auth.signOut();
