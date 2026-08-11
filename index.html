@@ -950,6 +950,20 @@
       .is('delivered_at', null);
   }
 
+  let presenceTracked = false;
+  function trackOnlinePresence(userId){
+    if(presenceTracked) return; // refreshNotifBadge() bisa terpanggil berkali-kali, cukup subscribe 1x
+    presenceTracked = true;
+    const channel = supabaseClient.channel('online-users', {
+      config: { presence: { key: userId } }
+    });
+    channel.subscribe(async (status) => {
+      if(status === 'SUBSCRIBED'){
+        await channel.track({ online_at: new Date().toISOString() });
+      }
+    });
+  }
+
   // Proteksi halaman: kalau belum login, lempar ke login.html
   async function refreshNotifBadge(){
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -974,6 +988,10 @@
 
     // Aktifkan push notification (minta izin & simpan subscription)
     initPushNotifications(session.user.id);
+
+    // Tandai diri sendiri "online" selama app ini terbuka, biar lawan chat
+    // bisa lihat status "Sedang Online" walau kita cuma di halaman daftar chat.
+    trackOnlinePresence(session.user.id);
 
     // Hitung notifikasi: permintaan pertemanan masuk yang belum dijawab
     // + notifikasi diterima/ditolak yang belum dilihat, tampilkan di badge
