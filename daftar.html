@@ -35,7 +35,10 @@
     overscroll-behavior:none;
     touch-action:pan-y;
     -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
     user-select:none;
+    -webkit-touch-callout:none;
   }
   input, textarea{
     -webkit-user-select:text;
@@ -541,7 +544,7 @@
   });
 
   lanjutBtn.addEventListener('click', () => {
-    window.location.href = 'index.html';
+    window.location.replace('index.html');
   });
 
   document.getElementById('tabMasuk').addEventListener('click', () => {
