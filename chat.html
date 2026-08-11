@@ -19,6 +19,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* Transisi halus antar halaman (index.html <-> chat.html), didukung Chrome/TWA modern */
+  @view-transition {
+    navigation: auto;
+  }
+
   :root{
     --bbm-blue-dark:#005f8f;
     --bbm-blue:#0092d1;
@@ -228,6 +233,19 @@
   }
   .bubble-row.mine{justify-content:flex-end;}
   .bubble-row.theirs{justify-content:flex-start;}
+  .bubble-row.sending .bubble{ opacity:0.55; transition:opacity .15s ease; }
+  .bubble-row.send-failed .bubble{
+    opacity:1;
+    background:#ffe4e4 !important;
+    border:1px solid #ffb3b3;
+  }
+  .bubble-row.send-failed .bubble::after{
+    content:"⚠ Gagal terkirim";
+    display:block;
+    font-size:10.5px;
+    color:#c33;
+    margin-top:3px;
+  }
   .bubble{
     display:flex;
     flex-direction:column;
@@ -636,10 +654,10 @@
     scrollToBottom();
   }
 
-  function appendBubble(m){
+  function appendBubble(m, sending){
     const mine = m.sender_id === currentUserId;
     const row = document.createElement('div');
-    row.className = 'bubble-row ' + (mine ? 'mine' : 'theirs');
+    row.className = 'bubble-row ' + (mine ? 'mine' : 'theirs') + ' bubble-in' + (sending ? ' sending' : '');
     row.dataset.id = m.id;
 
     const tickHtml = mine
@@ -735,7 +753,23 @@
     if(!text) return;
     msgInput.value = '';
     autoResize();
-    sendBtn.disabled = true;
+
+    // Optimistic UI: langsung tampilkan bubble-nya SEBELUM nunggu respons
+    // server, biar kerasa instan. Ditandai "sending" (agak transparan) sampai
+    // beneran sukses, baru di-reconcile jadi bubble asli dengan id & ceklis.
+    if(msgArea.querySelector('.empty-state')) msgArea.innerHTML = '';
+    const tempId = 'temp-' + Date.now();
+    const optimisticMsg = {
+      id: tempId,
+      sender_id: currentUserId,
+      receiver_id: peerId,
+      content: text,
+      created_at: new Date().toISOString(),
+      delivered_at: null,
+      read_at: null
+    };
+    appendBubble(optimisticMsg, true);
+    scrollToBottom();
 
     const { data, error } = await supabaseClient
       .from('messages')
@@ -743,18 +777,23 @@
       .select()
       .single();
 
-    sendBtn.disabled = false;
     msgInput.focus();
 
+    const tempRow = msgArea.querySelector(`[data-id="${tempId}"]`);
+
     if(error){
-      alert('Gagal mengirim pesan: ' + error.message);
+      // Gagal kirim: tandai bubble-nya sebagai gagal, biar user tau & bisa retry manual
+      if(tempRow){
+        tempRow.classList.add('send-failed');
+        tempRow.classList.remove('sending');
+      }
       msgInput.value = text;
       return;
     }
 
-    if(msgArea.querySelector('.empty-state')) msgArea.innerHTML = '';
+    // Sukses: ganti bubble sementara jadi versi asli (punya id & status ceklis beneran)
+    if(tempRow) tempRow.remove();
     appendBubble(data);
-    scrollToBottom();
   }
 
   function autoResize(){
