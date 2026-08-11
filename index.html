@@ -968,7 +968,7 @@
   async function refreshNotifBadge(){
     const { data: { session } } = await supabaseClient.auth.getSession();
     if(!session){
-      window.location.href = 'login.html';
+      window.location.replace('login.html');
       return;
     }
 
@@ -1412,7 +1412,7 @@
 
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await supabaseClient.auth.signOut();
-    window.location.href = 'login.html';
+    window.location.replace('login.html');
   });
 
   // Side drawer (menu garis tiga)
