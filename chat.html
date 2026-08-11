@@ -116,6 +116,7 @@
   .appbar .who{flex:1;min-width:0;}
   .appbar .uname{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.1px;}
   .appbar .sub{font-size:11.5px;opacity:0.82;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .appbar .sub.online{opacity:1;color:#c8f7d0;font-weight:600;}
 
   .appbar .menu-btn{
     cursor:pointer;
@@ -368,7 +369,7 @@
     <div class="avatar" id="peerAvatar">?</div>
     <div class="who">
       <div class="uname" id="peerUname">@—</div>
-      <div class="sub">Bang Bayu Message</div>
+      <div class="sub" id="peerSub">Bang Bayu Message</div>
     </div>
     <div class="menu-btn" id="menuBtn" role="button" aria-label="Menu chat">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
@@ -528,7 +529,40 @@
     await loadMessages();
     await markIncomingAsRead();
     subscribeRealtime();
+    subscribePresence();
     msgInput.disabled = false;
+  }
+
+  const peerSubEl = document.getElementById('peerSub');
+  let presenceChannel = null;
+
+  function subscribePresence(){
+    presenceChannel = supabaseClient.channel('online-users', {
+      config: { presence: { key: currentUserId } }
+    });
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, updatePeerOnlineStatus)
+      .on('presence', { event: 'join' }, updatePeerOnlineStatus)
+      .on('presence', { event: 'leave' }, updatePeerOnlineStatus)
+      .subscribe(async (status) => {
+        if(status === 'SUBSCRIBED'){
+          await presenceChannel.track({ online_at: new Date().toISOString() });
+        }
+      });
+  }
+
+  function updatePeerOnlineStatus(){
+    if(!presenceChannel) return;
+    const state = presenceChannel.presenceState();
+    const isOnline = !!state[peerId];
+    if(isOnline){
+      peerSubEl.textContent = 'Sedang Online';
+      peerSubEl.classList.add('online');
+    } else {
+      peerSubEl.textContent = 'Bang Bayu Message';
+      peerSubEl.classList.remove('online');
+    }
   }
 
   let clearedBefore = null; // timestamp "Hapus Chat" terakhir, khusus buat tampilan Anda
