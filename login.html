@@ -35,7 +35,10 @@
     overscroll-behavior:none;
     touch-action:pan-y;
     -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
     user-select:none;
+    -webkit-touch-callout:none;
   }
   input, textarea{
     -webkit-user-select:text;
@@ -375,7 +378,10 @@
       return;
     }
 
-    window.location.href = 'index.html';
+    // location.replace (bukan .href) supaya login.html gak numpuk di history —
+    // biar pas di halaman utama, tombol back Android langsung nutup app,
+    // bukan malah balik ke halaman login.
+    window.location.replace('index.html');
   });
 
   document.getElementById('btnPin').addEventListener('click', () => {
