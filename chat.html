@@ -531,12 +531,31 @@
     msgInput.disabled = false;
   }
 
+  let clearedBefore = null; // timestamp "Hapus Chat" terakhir, khusus buat tampilan Anda
+
   async function loadMessages(){
-    const { data: rows, error } = await supabaseClient
+    // Cek apakah user pernah "Hapus Chat" dengan peer ini -> jangan tampilkan
+    // pesan sebelum titik itu (pesan aslinya tetap ada di DB, cuma disembunyikan
+    // dari tampilan Anda saja, tidak memengaruhi tampilan lawan chat).
+    const { data: clearRow } = await supabaseClient
+      .from('chat_clears')
+      .select('cleared_before')
+      .eq('user_id', currentUserId)
+      .eq('peer_id', peerId)
+      .maybeSingle();
+    clearedBefore = clearRow ? clearRow.cleared_before : null;
+
+    let query = supabaseClient
       .from('messages')
       .select('id, sender_id, receiver_id, content, created_at, delivered_at, read_at')
       .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`)
       .order('created_at', { ascending: true });
+
+    if(clearedBefore){
+      query = query.gt('created_at', clearedBefore);
+    }
+
+    const { data: rows, error } = await query;
 
     if(error || !rows || rows.length === 0){
       msgArea.innerHTML = `
@@ -719,17 +738,21 @@
   document.getElementById('menuHapusChat').addEventListener('click', async (e) => {
     e.stopPropagation();
     chatMenu.classList.remove('open');
-    if(!confirm('Hapus semua pesan di chat ini? Tindakan ini tidak bisa dibatalkan.')) return;
+    if(!confirm('Hapus riwayat chat ini dari tampilanmu? Pesan tidak akan terlihat lagi di layar kamu (tapi tidak menghapusnya dari perangkat lawan chat).')) return;
 
+    const nowIso = new Date().toISOString();
     const { error } = await supabaseClient
-      .from('messages')
-      .delete()
-      .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`);
+      .from('chat_clears')
+      .upsert(
+        { user_id: currentUserId, peer_id: peerId, cleared_before: nowIso },
+        { onConflict: 'user_id,peer_id' }
+      );
 
     if(error){
       alert('Gagal menghapus chat: ' + error.message);
       return;
     }
+    clearedBefore = nowIso;
     msgArea.innerHTML = `
       <div class="empty-state">
         <span>Belum ada pesan. Mulai percakapan!</span>
