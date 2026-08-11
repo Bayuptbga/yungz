@@ -16,6 +16,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="BB Message">
 <style>
+  /* Transisi halus antar halaman (index.html <-> chat.html), didukung Chrome/TWA modern */
+  @view-transition {
+    navigation: auto;
+  }
+
   :root{
     --bbm-blue-dark:#0077b6;
     --bbm-blue:#0092d1;
@@ -491,8 +496,15 @@
     flex-direction:column;
     overflow-y:auto;
   }
-  .tab-panel.active{display:flex;}
+  .tab-panel.active{display:flex; animation:panelFadeIn .18s ease both;}
   #panelChats.active{display:flex;flex-direction:column;flex:1;min-height:0;position:relative;}
+  @keyframes panelFadeIn{
+    from{ opacity:0; transform:translateY(4px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .tab-panel.active{ animation:none; }
+  }
 
   /* ---------- Status panel ---------- */
   .status-empty{
