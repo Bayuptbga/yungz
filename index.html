@@ -891,10 +891,20 @@
       .order('created_at', { ascending: false })
       .limit(300);
 
+    // Ambil daftar "titik hapus chat" per lawan bicara, biar preview di sini
+    // juga ikut nyembunyiin pesan yang sudah di-"Hapus Chat" dari tampilan kita.
+    const { data: clearRows } = await supabaseClient
+      .from('chat_clears')
+      .select('peer_id, cleared_before')
+      .eq('user_id', userId);
+    const clearedMap = new Map((clearRows || []).map(c => [c.peer_id, c.cleared_before]));
+
     const lastByPartner = new Map();
     (msgRows || []).forEach(m => {
       const partner = m.sender_id === userId ? m.receiver_id : m.sender_id;
       if(!acceptedIds.has(partner)) return;
+      const cutoff = clearedMap.get(partner);
+      if(cutoff && m.created_at <= cutoff) return; // sudah "dihapus" dari tampilan kita
       if(!lastByPartner.has(partner)) lastByPartner.set(partner, m);
     });
 
