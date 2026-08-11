@@ -86,9 +86,11 @@ self.addEventListener('push', (event) => {
       icon: './icons/icon-192.png',
       badge: './icons/icon-96.png',
       data: { url: payload.url || './index.html' },
-      vibrate: [100, 50, 100],
+      vibrate: [200, 100, 200],
       tag: payload.url, // notif dari peer yang sama akan menumpuk jadi 1
-      renotify: true
+      renotify: true,
+      silent: false,
+      requireInteraction: false
     })
   );
 });
