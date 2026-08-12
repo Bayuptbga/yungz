@@ -25,10 +25,10 @@
     --bbm-blue-dark:#1b2a32;
     --bbm-blue:#1b2a32;
     --bbm-blue-light:#1b2a32;
-    --bg:#ffffff;
+    --bg:#eef3f6;
     --ink:#1c2b33;
     --muted:#7a8a92;
-    --border:#e9edf0;
+    --border:#dde5e9;
     --tab-active:#1b2a32;
     --ok:#2ecc71;
   }
@@ -70,7 +70,7 @@
     width:100%;
     max-width:420px;
     height:100%;
-    background:#fff;
+    background:var(--bg);
     box-shadow:0 0 40px rgba(0,0,0,0.08);
     display:flex;
     flex-direction:column;
@@ -197,7 +197,7 @@
     font-size:14.5px;
   }
   .drawer-item:active{
-    background:#f2f5f7;
+    background:#e3e8eb;
   }
   .drawer-item svg{
     width:20px;height:20px;
@@ -271,7 +271,7 @@
     cursor:pointer;
   }
   .chat-item:active{
-    background:#f5f8fa;
+    background:#e3e8eb;
   }
   .avatar{
     width:52px;
@@ -419,7 +419,7 @@
     gap:10px;
   }
   .dropdown-menu .dd-item:active{
-    background:#f2f5f7;
+    background:#e3e8eb;
   }
   .dropdown-menu .dd-item svg{
     width:18px;height:18px;
@@ -533,7 +533,7 @@
   /* ---------- Kontak panel ---------- */
   .add-section{
     padding:18px 16px;
-    border-bottom:8px solid #f5f7f8;
+    border-bottom:8px solid #e1e8eb;
     flex-shrink:0;
   }
   .add-section .label{
@@ -573,7 +573,7 @@
   .found-card{
     display:none;
     margin-top:12px;
-    background:#f7fafb;
+    background:#e8eff3;
     border:1px solid var(--border);
     border-radius:12px;
     padding:12px 14px;
@@ -614,7 +614,7 @@
     border-bottom:1px solid var(--border);
     cursor:pointer;
   }
-  .contact-item:active{background:#f5f8fa;}
+  .contact-item:active{background:#e3e8eb;}
   .contact-item .avatar{
     width:48px;height:48px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
@@ -654,9 +654,9 @@
     cursor:pointer;
   }
   .btn-accept{background:var(--ok);color:#fff;}
-  .btn-decline{background:#f1f5f7;color:var(--muted);}
+  .btn-decline{background:#e3e8eb;color:var(--muted);}
   .btn-accept:disabled, .btn-decline:disabled{opacity:0.5;}
-  .notif-item.unseen{background:#f2faff;}
+  .notif-item.unseen{background:#e6f0f7;}
   .status-dot{
     width:8px;height:8px;border-radius:50%;
     flex-shrink:0;margin-left:4px;
