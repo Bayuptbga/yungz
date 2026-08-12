@@ -29,7 +29,7 @@
     --ink:#1c2b33;
     --muted:#7a8a92;
     --border:#e9edf0;
-    --tab-active:#1aa8e6; /* Biru terang untuk latar gelap */
+    --tab-active:#0092d1; /* Menggunakan biru logo utama */
     --ok:#2ecc71;
   }
   *{box-sizing:border-box;}
@@ -224,7 +224,7 @@
   }
   .tabbar {
     display: flex;
-    background: var(--ink); /* #1c2b33 */
+    background: var(--ink); /* Latar gelap kapsul */
     border-radius: 40px; /* Bentuk kapsul */
     padding: 6px 8px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
@@ -248,7 +248,7 @@
     max-width: 80px; /* Cegah melar berlebih */
   }
   .tabbar .tabitem.active {
-    background: rgba(26, 168, 230, 0.15); /* Tint biru transparan */
+    background: rgba(0, 146, 209, 0.15); /* Tint transparan menggunakan biru #0092d1 */
     color: var(--tab-active);
   }
   .tabbar .tabitem svg {
@@ -812,7 +812,7 @@
     <div class="tabbar">
       <!-- Chat (aktif default) -->
       <div class="tabitem active" id="tabChats">
-        <svg viewBox="0 0 24 24" fill="#1aa8e6"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+        <svg viewBox="0 0 24 24" fill="#0092d1"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
         <span class="tab-label">Chats</span>
       </div>
       <!-- Status -->
@@ -1390,11 +1390,11 @@
       const svg = tabEl.querySelector('svg');
       if(svg){
         if(isActive){
-          // Warna aktif diset menjadi biru muda agar kontras di latar kapsul gelap
-          svg.setAttribute('fill', key === 'chats' ? '#1aa8e6' : 'none');
-          svg.setAttribute('stroke', key === 'chats' ? 'none' : '#1aa8e6');
+          // Warna aktif diset ke #0092d1 (biru logo BBM)
+          svg.setAttribute('fill', key === 'chats' ? '#0092d1' : 'none');
+          svg.setAttribute('stroke', key === 'chats' ? 'none' : '#0092d1');
         } else {
-          // Warna tidak aktif dikembalikan abu-abu gelap
+          // Warna tidak aktif (abu-abu gelap)
           svg.setAttribute('fill', key === 'chats' ? '#7a8a92' : 'none');
           svg.setAttribute('stroke', key === 'chats' ? 'none' : '#7a8a92');
         }
