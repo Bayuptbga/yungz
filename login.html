@@ -6,398 +6,78 @@
 <meta http-equiv="Expires" content="0">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Bang Bayu Message - Masuk</title>
+<title>BBM Private Chat - Masuk</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1b2a32">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="BB Message">
 <style>
   :root{
-    --bbm-blue-dark:#1b2a32;
+    --bbm-blue-dark:#0b141a;
     --bbm-blue:#1b2a32;
-    --bbm-blue-light:#1b2a32;
-    --bg:#eef3f6;
-    --ink:#1c2b33;
-    --muted:#6b7c85;
-    --error:#d64545;
-    --ok:#1f9d55;
+    --bbm-blue-light:#233138;
+    --bg:#121b22;
+    --card-bg:#1b2a32;
+    --ink:#e9edf0;
+    --muted:#8696a0;
+    --border:#2a3942;
+    --ok:#2ecc71;
+    --error:#f15c6d;
   }
   *{box-sizing:border-box;}
-  html{
-    overscroll-behavior:none;
-    -webkit-tap-highlight-color:transparent;
-  }
-  body{
-    overscroll-behavior:none;
-    touch-action:pan-y;
-    -webkit-user-select:none;
-    -moz-user-select:none;
-    -ms-user-select:none;
-    user-select:none;
-    -webkit-touch-callout:none;
-  }
-  input, textarea{
-    -webkit-user-select:text;
-    user-select:text;
-  }
-  body{
-    margin:0;
-    font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-    background:var(--bg);
-    color:var(--ink);
-    min-height:100vh;
-    display:flex;
-    align-items:flex-start;
-    justify-content:center;
-  }
-  .phone{
-    width:100%;
-    max-width:420px;
-    min-height:100vh;
-    background:#fff;
-    box-shadow:0 0 40px rgba(0,0,0,0.08);
-    display:flex;
-    flex-direction:column;
-    position:relative;
-    overflow:hidden;
-  }
-  .topbar{
-    background:linear-gradient(180deg,var(--bbm-blue-light),var(--bbm-blue));
-    color:#fff;
-    padding:18px 20px 22px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    text-align:center;
-  }
-  .logo-mark{
-    width:56px;
-    height:56px;
-    border-radius:14px;
-    background:#fff;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    margin-bottom:10px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.15);
-  }
-  .logo-mark svg{width:32px;height:32px;}
-  .topbar h1{
-    margin:2px 0 2px;
-    font-size:21px;
-    font-weight:600;
-    letter-spacing:0.2px;
-  }
-  .topbar p{
-    margin:0;
-    font-size:12.5px;
-    opacity:0.9;
-  }
-
-  .body{
-    flex:1;
-    padding:26px 24px 40px;
-    display:flex;
-    flex-direction:column;
-  }
-
-  .tabs{
-    display:flex;
-    background:#f1f5f7;
-    border-radius:10px;
-    padding:4px;
-    margin-bottom:24px;
-  }
-  .tab{
-    flex:1;
-    text-align:center;
-    padding:9px 0;
-    font-size:13.5px;
-    font-weight:600;
-    color:var(--muted);
-    border-radius:8px;
-    cursor:pointer;
-    transition:all .2s ease;
-    user-select:none;
-  }
-  .tab.active{
-    background:#fff;
-    color:var(--bbm-blue);
-    box-shadow:0 2px 6px rgba(0,0,0,0.08);
-  }
-
-  .field{
-    margin-bottom:16px;
-  }
-  .field label{
-    display:block;
-    font-size:12px;
-    font-weight:600;
-    color:var(--muted);
-    margin-bottom:6px;
-    text-transform:uppercase;
-    letter-spacing:0.4px;
-  }
-  .input-wrap{
-    display:flex;
-    align-items:center;
-    border:1.5px solid #dde5e9;
-    border-radius:10px;
-    background:#fbfcfd;
-    padding:0 12px;
-    transition:border-color .15s ease, box-shadow .15s ease;
-  }
-  .input-wrap:focus-within{
-    border-color:var(--bbm-blue);
-    box-shadow:0 0 0 3px rgba(0,137,201,0.12);
-  }
-  .input-wrap .prefix{
-    color:var(--bbm-blue);
-    font-weight:700;
-    font-size:15px;
-    padding-right:2px;
-  }
-  .input-wrap input{
-    border:none;
-    outline:none;
-    background:transparent;
-    padding:12px 8px;
-    font-size:15px;
-    width:100%;
-    color:var(--ink);
-  }
-  .input-wrap .toggle-pw{
-    font-size:12px;
-    color:var(--bbm-blue);
-    font-weight:600;
-    cursor:pointer;
-    user-select:none;
-    white-space:nowrap;
-  }
-  .hint{
-    font-size:11.5px;
-    color:var(--muted);
-    margin-top:5px;
-    min-height:14px;
-  }
-  .hint.err{color:var(--error);}
-  .hint.ok{color:var(--ok);}
-
-  .row-between{
-    display:flex;
-    justify-content:flex-end;
-    margin:-8px 0 18px;
-  }
-  .row-between a{
-    font-size:12.5px;
-    color:var(--bbm-blue);
-    font-weight:600;
-    text-decoration:none;
-  }
-
-  .btn{
-    margin-top:4px;
-    width:100%;
-    padding:13px 0;
-    background:linear-gradient(180deg,var(--bbm-blue-light),var(--bbm-blue));
-    color:#fff;
-    border:none;
-    border-radius:10px;
-    font-size:15px;
-    font-weight:700;
-    letter-spacing:0.3px;
-    cursor:pointer;
-    box-shadow:0 4px 12px rgba(0,137,201,0.35);
-    transition:transform .1s ease, box-shadow .1s ease;
-  }
-  .btn:active{transform:translateY(1px);box-shadow:0 2px 6px rgba(0,137,201,0.3);}
-  .btn:disabled{
-    background:#c7d1d6;
-    box-shadow:none;
-    cursor:not-allowed;
-  }
-
-  .divider{
-    display:flex;
-    align-items:center;
-    margin:22px 0;
-    color:var(--muted);
-    font-size:11.5px;
-    text-transform:uppercase;
-    letter-spacing:0.6px;
-  }
-  .divider::before,.divider::after{
-    content:'';
-    flex:1;
-    height:1px;
-    background:#e5ebee;
-  }
+  html{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;font-family:'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;}
+  input{user-select:text;}
+  .phone{width:100%;max-width:420px;min-height:100vh;background:var(--bg);box-shadow:0 0 40px rgba(0,0,0,0.5);display:flex;flex-direction:column;}
+  .topbar{background:var(--bbm-blue);color:#fff;padding:18px 20px 22px;display:flex;flex-direction:column;align-items:center;text-align:center;}
+  .logo-mark{width:56px;height:56px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+  .topbar h1{margin:2px 0;font-size:21px;font-weight:600;}
+  .topbar p{margin:0;font-size:12.5px;opacity:0.9;}
+  .body{flex:1;padding:26px 24px 40px;display:flex;flex-direction:column;}
+  .tabs{display:flex;background:var(--card-bg);border-radius:10px;padding:4px;margin-bottom:24px;}
+  .tab{flex:1;text-align:center;padding:9px 0;font-size:13.5px;font-weight:600;color:var(--muted);border-radius:8px;cursor:pointer;transition:all .2s;}
+  .tab.active{background:var(--border);color:var(--ink);}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;}
+  .input-wrap{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);padding:0 12px;}
+  .input-wrap:focus-within{border-color:var(--muted);}
+  .input-wrap input{border:none;outline:none;background:transparent;padding:12px 8px;font-size:15px;width:100%;color:var(--ink);}
+  .input-wrap .prefix{color:var(--muted);font-weight:700;}
+  .toggle-pw{font-size:12px;color:var(--muted);font-weight:600;cursor:pointer;}
+  .btn{margin-top:4px;width:100%;padding:13px 0;background:var(--bbm-blue-light);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;}
+  .btn-alt{width:100%;padding:12px 0;background:transparent;color:var(--ink);border:1.5px solid var(--border);border-radius:10px;font-size:14.5px;font-weight:700;cursor:pointer;}
+  .divider{display:flex;align-items:center;margin:22px 0;color:var(--muted);font-size:11.5px;text-transform:uppercase;}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
   .divider span{padding:0 10px;}
-
-  .btn-alt{
-    width:100%;
-    padding:12px 0;
-    background:#fff;
-    color:var(--bbm-blue);
-    border:1.5px solid var(--bbm-blue);
-    border-radius:10px;
-    font-size:14.5px;
-    font-weight:700;
-    cursor:pointer;
-  }
-
-  .foot-note{
-    text-align:center;
-    font-size:12.5px;
-    color:var(--muted);
-    margin-top:20px;
-  }
-  .foot-note a{color:var(--bbm-blue);font-weight:600;text-decoration:none;}
-
-  .banner-err{
-    display:none;
-    background:#fdecec;
-    border:1px solid #f4c6c6;
-    color:var(--error);
-    font-size:13px;
-    padding:10px 12px;
-    border-radius:8px;
-    margin-bottom:16px;
-  }
+  .foot-note{text-align:center;font-size:12.5px;color:var(--muted);margin-top:20px;}
+  .foot-note a{color:#53bdeb;text-decoration:none;}
+  .banner-err{display:none;background:#3f1d24;border:1px solid var(--error);color:var(--error);font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:16px;}
   .banner-err.show{display:block;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW register gagal:', err));
-    });
-  }
-</script>
 </head>
 <body>
 <div class="phone">
-  <div class="topbar">
-    <div class="logo-mark">
-      <svg viewBox="0 0 24 24" fill="none">
-        <path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z" fill="#1b2a32"/>
-      </svg>
-    </div>
-    <h1>Bang Bayu Message</h1>
-    <p>Masuk untuk lanjut ngobrol</p>
-  </div>
-
+  <div class="topbar"><div class="logo-mark"><svg viewBox="0 0 24 24" width="32" height="32" fill="#1b2a32"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg></div><h1>Private Chat</h1><p>Masuk untuk lanjut ngobrol</p></div>
   <div class="body">
-    <div class="tabs">
-      <div class="tab" id="tabDaftar">Daftar</div>
-      <div class="tab active" id="tabMasuk">Masuk</div>
-    </div>
-
-    <div class="banner-err" id="loginError">Username atau kata sandi salah.</div>
-
-    <form id="loginForm" autocomplete="off">
-      <div class="field">
-        <label for="username">Username</label>
-        <div class="input-wrap">
-          <span class="prefix">@</span>
-          <input type="text" id="username" placeholder="username kamu" maxlength="20" required>
-        </div>
-        <div class="hint">&nbsp;</div>
-      </div>
-
-      <div class="field">
-        <label for="password">Kata Sandi</label>
-        <div class="input-wrap">
-          <input type="password" id="password" placeholder="Masukkan kata sandi" required>
-          <span class="toggle-pw" id="togglePw">LIHAT</span>
-        </div>
-        <div class="hint">&nbsp;</div>
-      </div>
-
-      <div class="row-between">
-        <a href="#" id="lupaSandi">Lupa kata sandi?</a>
-      </div>
-
+    <div class="tabs"><div class="tab" onclick="location.replace('daftar.html')">Daftar</div><div class="tab active">Masuk</div></div>
+    <div class="banner-err" id="loginError"></div>
+    <form id="loginForm">
+      <div class="field"><label>Username</label><div class="input-wrap"><span class="prefix">@</span><input type="text" id="username" required></div></div>
+      <div class="field"><label>Kata Sandi</label><div class="input-wrap"><input type="password" id="password" required><span class="toggle-pw" onclick="const p=document.getElementById('password');p.type=p.type==='password'?'text':'password';">LIHAT</span></div></div>
       <button type="submit" class="btn" id="submitBtn">Masuk</button>
     </form>
-
     <div class="divider"><span>atau</span></div>
-
-    <button class="btn-alt" id="btnPin">Masuk dengan PIN</button>
-
-    <div class="foot-note">Belum punya akun? <a href="#" id="linkDaftar">Daftar sekarang</a></div>
+    <button class="btn-alt" onclick="alert('Belum tersedia')">Masuk dengan PIN</button>
+    <div class="foot-note">Belum punya akun? <a href="daftar.html">Daftar sekarang</a></div>
   </div>
 </div>
-
 <script>
-  const usernameInput = document.getElementById('username');
-  const passwordInput = document.getElementById('password');
-  const togglePw = document.getElementById('togglePw');
-  const loginForm = document.getElementById('loginForm');
-  const submitBtn = document.getElementById('submitBtn');
-  const loginError = document.getElementById('loginError');
-
-  togglePw.addEventListener('click', () => {
-    const showing = passwordInput.type === 'text';
-    passwordInput.type = showing ? 'password' : 'text';
-    togglePw.textContent = showing ? 'LIHAT' : 'SEMBUNYIKAN';
-  });
-
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    loginError.classList.remove('show');
-
-    const u = usernameInput.value.trim();
-    const p = passwordInput.value;
-
-    if(u.length === 0 || p.length === 0){
-      loginError.textContent = 'Username dan kata sandi wajib diisi.';
-      loginError.classList.add('show');
-      return;
-    }
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Memeriksa...';
-
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-      email: usernameToEmail(u),
-      password: p
-    });
-
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Masuk';
-
-    if(error){
-      loginError.textContent = 'Username atau kata sandi salah.';
-      loginError.classList.add('show');
-      return;
-    }
-
-    // location.replace (bukan .href) supaya login.html gak numpuk di history —
-    // biar pas di halaman utama, tombol back Android langsung nutup app,
-    // bukan malah balik ke halaman login.
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); const u=document.getElementById('username').value.trim(), p=document.getElementById('password').value, b=document.getElementById('submitBtn'), err=document.getElementById('loginError');
+    err.classList.remove('show'); b.disabled=true; b.textContent='Memeriksa...';
+    const {error} = await supabaseClient.auth.signInWithPassword({email: usernameToEmail(u), password: p});
+    if(error){err.textContent='Username atau kata sandi salah.'; err.classList.add('show'); b.disabled=false; b.textContent='Masuk'; return;}
     window.location.replace('index.html');
-  });
-
-  document.getElementById('btnPin').addEventListener('click', () => {
-    alert('Login pakai PIN belum dibuat di prototype ini.');
-  });
-
-  document.getElementById('tabDaftar').addEventListener('click', () => {
-    window.location.replace('daftar.html');
-  });
-  document.getElementById('linkDaftar').addEventListener('click', (e) => {
-    e.preventDefault();
-    window.location.replace('daftar.html');
-  });
-  document.getElementById('lupaSandi').addEventListener('click', (e) => {
-    e.preventDefault();
-    alert('Fitur lupa kata sandi belum dibuat di prototype ini.');
   });
 </script>
 </body>
