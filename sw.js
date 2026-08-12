@@ -1,5 +1,5 @@
-// Service Worker - Bang Bayu Message
-const CACHE_NAME = 'bb-message-v2';
+// Service Worker - BBM Private Chat
+const CACHE_NAME = 'private-chat-v1';
 
 // File "app shell" yang dicache saat instalasi, biar bisa dibuka offline
 const APP_SHELL = [
@@ -73,7 +73,7 @@ self.addEventListener('fetch', (event) => {
 
 // Terima push notification dari server (dikirim lewat Supabase Edge Function)
 self.addEventListener('push', (event) => {
-  let payload = { title: 'Bang Bayu Message', body: 'Ada pesan baru', url: './index.html' };
+  let payload = { title: 'BBM Private Chat', body: 'Ada pesan baru', url: './index.html' };
   try {
     if (event.data) payload = { ...payload, ...event.data.json() };
   } catch (e) {
