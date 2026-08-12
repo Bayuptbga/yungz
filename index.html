@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="BB Message">
 <style>
-  /* Transisi halus antar halaman (index.html <-> chat.html), didukung Chrome/TWA modern */
+  /* Transisi halus antar halaman (index.html <-> chat.html) */
   @view-transition {
     navigation: auto;
   }
@@ -29,7 +29,7 @@
     --ink:#1c2b33;
     --muted:#7a8a92;
     --border:#e9edf0;
-    --tab-active:#0092d1;
+    --tab-active:#1aa8e6; /* Biru terang untuk latar gelap */
     --ok:#2ecc71;
   }
   *{box-sizing:border-box;}
@@ -77,7 +77,7 @@
     position:relative;
     overflow:hidden;
   }
-  .appbar,.tabbar{flex-shrink:0;}
+  .appbar{flex-shrink:0;}
 
   /* top app bar */
   .appbar{
@@ -213,63 +213,73 @@
     color:#e0433d;
   }
 
-  /* tabbar modern di bawah */
-  .tabbar{
-    display:flex;
-    background:rgba(255, 255, 255, 0.92);
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-    border-top:1px solid rgba(0,0,0,0.06);
-    box-shadow:0 -4px 15px rgba(0,0,0,0.02);
-    padding-bottom:env(safe-area-inset-bottom);
+  /* ---------- Floating Capsule Tabbar ---------- */
+  .tabbar-wrapper {
+    position: absolute;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    left: 16px;
+    right: 16px;
     z-index: 30;
+    pointer-events: none; /* Klik tembus ke area kosong */
   }
-  .tabbar .tabitem{
-    flex:1;
-    padding:10px 0 8px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    position:relative;
-    cursor:pointer;
-    color:var(--muted);
-    gap:4px;
-    transition:color 0.2s ease;
-    -webkit-tap-highlight-color:transparent;
+  .tabbar {
+    display: flex;
+    background: var(--ink); /* #1c2b33 */
+    border-radius: 40px; /* Bentuk kapsul */
+    padding: 6px 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    pointer-events: auto; /* Mengaktifkan klik pada kapsul */
+    justify-content: space-around;
   }
-  .tabbar .tabitem.active{
-    color:var(--tab-active);
+  .tabbar .tabitem {
+    flex: 1;
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    color: #7a8a92; /* Warna teks tidak aktif */
+    border-radius: 30px; /* Bentuk pil untuk latar aktif */
+    gap: 4px;
+    transition: all 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+    max-width: 80px; /* Cegah melar berlebih */
   }
-  .tabbar .tabitem svg{
-    width:24px;
-    height:24px;
-    transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  .tabbar .tabitem.active {
+    background: rgba(26, 168, 230, 0.15); /* Tint biru transparan */
+    color: var(--tab-active);
   }
-  .tabbar .tabitem.active svg{
-    transform:translateY(-3px) scale(1.08);
+  .tabbar .tabitem svg {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .tabbar .tabitem.active svg {
+    transform: translateY(-2px) scale(1.05); /* Sedikit membesar dan naik */
   }
   .tab-label {
-    font-size:11px;
-    font-weight:600;
-    letter-spacing:0.2px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
   }
-  .tabbar .tabitem .badge{
-    position:absolute;
-    top:4px;
-    right:calc(50% - 22px);
-    min-width:16px;
-    height:16px;
-    border-radius:8px;
-    background:#e0433d;
-    border:1.5px solid #fff;
-    color:#fff;
-    font-size:10px;
-    font-weight:700;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:0 3px;
+  .tabbar .tabitem .badge {
+    position: absolute;
+    top: 2px;
+    right: 12px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    background: #e0433d;
+    border: 2px solid var(--ink); /* Outline sewarna kapsul */
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
   }
 
   /* chat list */
@@ -362,7 +372,7 @@
   .fab{
     position:absolute;
     right:18px;
-    bottom:18px;
+    bottom: calc(90px + env(safe-area-inset-bottom)); /* Disesuaikan agar di atas kapsul */
     width:56px;
     height:56px;
     border-radius:50%;
@@ -511,6 +521,7 @@
     min-height:0;
     flex-direction:column;
     overflow-y:auto;
+    padding-bottom: 90px; /* Ruang untuk kapsul melayang di bawah */
   }
   .tab-panel.active{display:flex; animation:panelFadeIn .18s ease both;}
   #panelChats.active{display:flex;flex-direction:column;flex:1;min-height:0;position:relative;}
@@ -796,24 +807,30 @@
     <div id="updateList"></div>
   </div>
 
-  <!-- ===== TABBAR PINDAH KE BAWAH SINI ===== -->
-  <div class="tabbar">
-    <div class="tabitem active" id="tabChats">
-      <svg viewBox="0 0 24 24" fill="#0092d1"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
-      <span class="tab-label">Chats</span>
-    </div>
-    <div class="tabitem" id="tabStatus">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4.5 9a8 8 0 0114-4.5M19.5 15a8 8 0 01-14 4.5"/></svg>
-      <span class="tab-label">Status</span>
-    </div>
-    <div class="tabitem" id="tabKontak">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>
-      <span class="tab-label">Kontak</span>
-    </div>
-    <div class="tabitem" id="tabNotif">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-      <span class="tab-label">Notif</span>
-      <span class="badge" id="notifBadge" style="display:none;"></span>
+  <!-- ===== TABBAR KAPSUL MELAYANG ===== -->
+  <div class="tabbar-wrapper">
+    <div class="tabbar">
+      <!-- Chat (aktif default) -->
+      <div class="tabitem active" id="tabChats">
+        <svg viewBox="0 0 24 24" fill="#1aa8e6"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+        <span class="tab-label">Chats</span>
+      </div>
+      <!-- Status -->
+      <div class="tabitem" id="tabStatus">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4.5 9a8 8 0 0114-4.5M19.5 15a8 8 0 01-14 4.5"/></svg>
+        <span class="tab-label">Status</span>
+      </div>
+      <!-- Kontak -->
+      <div class="tabitem" id="tabKontak">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>
+        <span class="tab-label">Contacts</span>
+      </div>
+      <!-- Notif -->
+      <div class="tabitem" id="tabNotif">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="tab-label">Settings</span>
+        <span class="badge" id="notifBadge" style="display:none;"></span>
+      </div>
     </div>
   </div>
   <!-- ======================================= -->
@@ -1340,7 +1357,7 @@
     chats:  { tabEl: 'tabChats',  panelEl: 'panelChats',  title: 'BBM Chats',   showFab: true  },
     status: { tabEl: 'tabStatus', panelEl: 'panelStatus', title: 'Status',      showFab: false },
     kontak: { tabEl: 'tabKontak', panelEl: 'panelKontak', title: 'Kontak',      showFab: false },
-    notif:  { tabEl: 'tabNotif',  panelEl: 'panelNotif',  title: 'Notifikasi',  showFab: false }
+    notif:  { tabEl: 'tabNotif',  panelEl: 'panelNotif',  title: 'Settings',    showFab: false }
   };
   let activeTab = 'chats';
   let onNonChatTab = false;
@@ -1373,11 +1390,13 @@
       const svg = tabEl.querySelector('svg');
       if(svg){
         if(isActive){
-          svg.setAttribute('fill', key === 'chats' ? '#0092d1' : 'none');
-          svg.setAttribute('stroke', '#0092d1');
+          // Warna aktif diset menjadi biru muda agar kontras di latar kapsul gelap
+          svg.setAttribute('fill', key === 'chats' ? '#1aa8e6' : 'none');
+          svg.setAttribute('stroke', key === 'chats' ? 'none' : '#1aa8e6');
         } else {
-          svg.setAttribute('fill', 'none');
-          svg.setAttribute('stroke', '#7a8a92');
+          // Warna tidak aktif dikembalikan abu-abu gelap
+          svg.setAttribute('fill', key === 'chats' ? '#7a8a92' : 'none');
+          svg.setAttribute('stroke', key === 'chats' ? 'none' : '#7a8a92');
         }
       }
     });
