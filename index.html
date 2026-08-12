@@ -6,7 +6,7 @@
 <meta http-equiv="Expires" content="0">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Private Chat - Chats</title>
+<title>Bang Bayu Message - Chats</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1b2a32">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -14,155 +14,654 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Private Chat">
+<meta name="apple-mobile-web-app-title" content="BB Message">
 <style>
-  @view-transition { navigation: auto; }
+  /* Transisi halus antar halaman (index.html <-> chat.html), didukung Chrome/TWA modern */
+  @view-transition {
+    navigation: auto;
+  }
+
   :root{
-    --bbm-blue-dark:#141f27;
+    --bbm-blue-dark:#1b2a32;
     --bbm-blue:#1b2a32;
-    --bbm-blue-light:#32424a;
+    --bbm-blue-light:#1b2a32;
     --bg:#ffffff;
     --ink:#1c2b33;
     --muted:#7a8a92;
     --border:#e9edf0;
+    --tab-active:#1b2a32;
     --ok:#2ecc71;
   }
   *{box-sizing:border-box;}
-  html{ overscroll-behavior:none; -webkit-tap-highlight-color:transparent; }
+  html{
+    overscroll-behavior:none;
+    -webkit-tap-highlight-color:transparent;
+  }
   body{
-    overscroll-behavior:none; touch-action:pan-y;
-    -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
-    margin:0; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-    background:var(--bg); color:var(--ink); position:fixed; inset:0;
-    width:100%; height:100%; overflow:hidden; display:flex; align-items:flex-start; justify-content:center;
+    overscroll-behavior:none;
+    touch-action:pan-y;
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+  }
+  input, textarea{
+    -webkit-user-select:text;
+    user-select:text;
+  }
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    overscroll-behavior:none;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
   }
   .phone{
-    width:100%; max-width:420px; height:100%; background:#fff;
-    box-shadow:0 0 40px rgba(0,0,0,0.08); display:flex; flex-direction:column; position:relative; overflow:hidden;
+    width:100%;
+    max-width:420px;
+    height:100%;
+    background:#fff;
+    box-shadow:0 0 40px rgba(0,0,0,0.08);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    overflow:hidden;
   }
-  .appbar{flex-shrink:0;}
+  .appbar,.tabbar{flex-shrink:0;}
+
+  /* top app bar */
   .appbar{
-    background:var(--bbm-blue); color:#fff; padding:14px 16px;
-    display:flex; align-items:center; justify-content:space-between; z-index: 10;
+    background:var(--bbm-blue);
+    color:#fff;
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
   }
-  .appbar .left{ display:flex; align-items:center; gap:18px; }
-  .appbar .hamburger{ display:flex; flex-direction:column; gap:4px; cursor:pointer; }
-  .appbar .hamburger span{ width:22px; height:2.5px; background:#fff; border-radius:2px; }
-  .appbar h1{ margin:0; font-size:22px; font-weight:500; letter-spacing:0.3px; }
-  .appbar .right{ display:flex; align-items:center; gap:20px; }
-  .appbar .icon-btn{ cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .appbar .left{
+    display:flex;
+    align-items:center;
+    gap:18px;
+  }
+  .appbar .hamburger{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    cursor:pointer;
+  }
+  .appbar .hamburger span{
+    width:22px;
+    height:2.5px;
+    background:#fff;
+    border-radius:2px;
+  }
+  .appbar h1{
+    margin:0;
+    font-size:22px;
+    font-weight:500;
+  }
+  .appbar .right{
+    display:flex;
+    align-items:center;
+    gap:20px;
+  }
+  .appbar .icon-btn{
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
 
-  .drawer-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.4); opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:40; }
-  .drawer-overlay.open{ opacity:1; pointer-events:auto; }
+  /* side drawer */
+  .drawer-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.4);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s ease;
+    z-index:40;
+  }
+  .drawer-overlay.open{
+    opacity:1;
+    pointer-events:auto;
+  }
   .drawer{
-    position:fixed; top:0; bottom:0; left:0; width:78%; max-width:300px;
-    background:#fff; display:flex; flex-direction:column; transform:translateX(-100%);
-    transition:transform .25s ease; z-index:41; box-shadow:2px 0 20px rgba(0,0,0,0.15);
+    position:fixed;
+    top:0;
+    bottom:0;
+    left:0;
+    width:78%;
+    max-width:300px;
+    background:#fff;
+    display:flex;
+    flex-direction:column;
+    transform:translateX(-100%);
+    transition:transform .25s ease;
+    z-index:41;
+    box-shadow:2px 0 20px rgba(0,0,0,0.15);
   }
-  .drawer.open{ transform:translateX(0); }
-  .drawer-header{ background:var(--bbm-blue); color:#fff; padding:28px 18px 20px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
-  .drawer-header .d-avatar{ width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; flex-shrink:0; }
-  .drawer-header .d-uname{ font-size:15px; font-weight:600; word-break:break-word; }
-  .drawer-header .d-pin{ font-size:11.5px; opacity:0.85; margin-top:3px; letter-spacing:0.5px; font-family:'Courier New',monospace; }
-  .drawer-body{ flex:1; overflow-y:auto; padding:6px 0; }
-  .drawer-item{ display:flex; align-items:center; gap:16px; padding:13px 18px; cursor:pointer; color:var(--ink); font-size:14.5px; }
-  .drawer-item:active{ background:#f2f5f7; }
-  .drawer-item svg{ width:20px; height:20px; flex-shrink:0; }
-  .drawer-footer{ flex-shrink:0; border-top:1px solid var(--border); padding:6px 0; }
-  .drawer-footer .drawer-item{ color:#e0433d; }
+  .drawer.open{
+    transform:translateX(0);
+  }
+  .drawer-header{
+    background:var(--bbm-blue);
+    color:#fff;
+    padding:28px 18px 20px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-shrink:0;
+  }
+  .drawer-header .d-avatar{
+    width:46px;height:46px;border-radius:50%;
+    background:rgba(255,255,255,0.2);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:16px;
+    flex-shrink:0;
+  }
+  .drawer-header .d-uname{
+    font-size:15px;
+    font-weight:600;
+    word-break:break-word;
+  }
+  .drawer-header .d-pin{
+    font-size:11.5px;
+    opacity:0.85;
+    margin-top:3px;
+    letter-spacing:0.5px;
+    font-family:'Courier New',monospace;
+  }
+  .drawer-body{
+    flex:1;
+    overflow-y:auto;
+    padding:6px 0;
+  }
+  .drawer-item{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:13px 18px;
+    cursor:pointer;
+    color:var(--ink);
+    font-size:14.5px;
+  }
+  .drawer-item:active{
+    background:#f2f5f7;
+  }
+  .drawer-item svg{
+    width:20px;height:20px;
+    flex-shrink:0;
+  }
+  .drawer-footer{
+    flex-shrink:0;
+    border-top:1px solid var(--border);
+    padding:6px 0;
+  }
+  .drawer-footer .drawer-item{
+    color:#e0433d;
+  }
 
-  /* Kapsul Melayang */
-  .tabbar-wrapper { position: absolute; bottom: calc(16px + env(safe-area-inset-bottom)); left: 16px; right: 16px; z-index: 30; pointer-events: none; }
-  .tabbar { display: flex; background: var(--ink); border-radius: 40px; padding: 6px 8px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25); pointer-events: auto; justify-content: space-around; }
-  .tabbar .tabitem { flex: 1; padding: 8px 0; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; color: #7a8a92; border-radius: 30px; gap: 4px; transition: all 0.25s ease; max-width: 80px; }
-  .tabbar .tabitem.active { background: rgba(50, 66, 74, 0.35); color: #ffffff; }
-  .tabbar .tabitem svg { width: 24px; height: 24px; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-  .tabbar .tabitem.active svg { transform: translateY(-2px) scale(1.05); }
-  .tab-label { font-size: 11px; font-weight: 600; letter-spacing: 0.2px; }
-  .tabbar .tabitem .badge { position: absolute; top: 2px; right: 12px; min-width: 18px; height: 18px; border-radius: 9px; background: #e0433d; border: 2px solid var(--ink); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+  /* tabs: kapsul mengambang di bawah, gaya WhatsApp */
+  .tabbar{
+    position:absolute;
+    left:50%;
+    bottom:calc(14px + env(safe-area-inset-bottom));
+    transform:translateX(-50%);
+    display:flex;
+    align-items:center;
+    gap:2px;
+    background:#ffffff;
+    border-radius:999px;
+    padding:6px;
+    box-shadow:0 6px 22px rgba(0,0,0,0.16), 0 1px 3px rgba(0,0,0,0.08);
+    z-index:25;
+  }
+  .tabbar .tabitem{
+    flex:none;
+    width:52px;
+    height:44px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    cursor:pointer;
+    transition:background-color .2s ease;
+  }
+  .tabbar .tabitem.active{
+    background:#e3e7e9;
+  }
+  .tabbar .tabitem svg{
+    width:22px;
+    height:22px;
+  }
+  .tabbar .tabitem .badge{
+    position:absolute;
+    top:4px;
+    right:8px;
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    background:#e0433d;
+    border:1.5px solid #fff;
+  }
 
-  .chatlist{ flex:1; overflow-y:auto; }
-  .chat-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
-  .chat-item:active{ background:#f5f8fa; }
-  .avatar{ width:52px; height:52px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px; color:#fff; background-size:cover; background-position:center; }
-  .chat-main{ flex:1; min-width:0; }
-  .chat-top{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
-  .chat-name{ font-size:16.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:5px; }
-  .chat-bottom{ display:flex; align-items:center; gap:6px; margin-top:3px; }
-  .status-icon{ width:16px; height:16px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; }
-  .chat-msg{ font-size:13.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* chat list */
+  .chatlist{
+    flex:1;
+    overflow-y:auto;
+  }
+  .chat-item{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:12px 16px;
+    border-bottom:1px solid var(--border);
+    cursor:pointer;
+  }
+  .chat-item:active{
+    background:#f5f8fa;
+  }
+  .avatar{
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    font-size:17px;
+    color:#fff;
+    background-size:cover;
+    background-position:center;
+  }
+  .chat-main{
+    flex:1;
+    min-width:0;
+  }
+  .chat-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:8px;
+  }
+  .chat-name{
+    font-size:16.5px;
+    font-weight:600;
+    color:var(--ink);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    display:flex;
+    align-items:center;
+    gap:5px;
+  }
+  .chat-name .prefix-mark{
+    font-weight:700;
+    color:var(--ink);
+  }
+  .chat-bottom{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-top:3px;
+  }
+  .status-icon{
+    width:16px;
+    height:16px;
+    border-radius:50%;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:10px;
+    font-weight:700;
+    color:#fff;
+  }
+  .status-icon.delivered{background:#1b2a32;}
+  .status-icon.read{background:#3aa15a;}
+  .status-icon.sent{background:#b8c2c7;}
+  .status-icon.broadcast{background:none;}
+  .status-icon.broadcast svg{width:16px;height:16px;}
+  .chat-msg{
+    font-size:13.5px;
+    color:var(--muted);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
 
+  /* fab */
   .fab{
-    position:absolute; right:18px; bottom: calc(90px + env(safe-area-inset-bottom));
-    width:56px; height:56px; border-radius:50%; background:var(--bbm-blue);
-    display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.25);
-    cursor:pointer; z-index: 20; transition: transform 0.2s ease;
+    position:absolute;
+    right:18px;
+    bottom:calc(78px + env(safe-area-inset-bottom));
+    width:56px;
+    height:56px;
+    border-radius:50%;
+    background:var(--bbm-blue);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 4px 14px rgba(0,0,0,0.25);
+    cursor:pointer;
   }
-  .fab:active{ transform: scale(0.95); }
   .fab svg{width:24px;height:24px;}
 
+  .appbar .username{
+    font-size:12px;
+    opacity:0.9;
+    font-weight:400;
+    margin-top:1px;
+  }
+  .logout-btn{
+    cursor:pointer;
+  }
+  .tabbar .tabitem .badge{
+    position:absolute;
+    top:2px;
+    right:6px;
+    min-width:16px;
+    height:16px;
+    border-radius:8px;
+    background:#e0433d;
+    border:1.5px solid #fff;
+    color:#fff;
+    font-size:10px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 3px;
+  }
+
+  /* dropdown menu titik tiga */
+  .icon-btn{position:relative;}
   .dropdown-menu{
-    position:absolute; top:38px; right:0; background:#fff; color:var(--ink);
-    border-radius:8px; box-shadow:0 4px 18px rgba(0,0,0,0.22); min-width:170px; padding:6px 0;
-    opacity:0; transform:translateY(-6px); pointer-events:none; transition:opacity .15s ease, transform .15s ease; z-index:50;
+    position:absolute;
+    top:38px;
+    right:0;
+    background:#fff;
+    color:var(--ink);
+    border-radius:8px;
+    box-shadow:0 4px 18px rgba(0,0,0,0.22);
+    min-width:170px;
+    padding:6px 0;
+    opacity:0;
+    transform:translateY(-6px);
+    pointer-events:none;
+    transition:opacity .15s ease, transform .15s ease;
+    z-index:50;
   }
-  .dropdown-menu.open{ opacity:1; transform:translateY(0); pointer-events:auto; }
-  .dropdown-menu .dd-item{ padding:11px 16px; font-size:14px; cursor:pointer; display:flex; align-items:center; gap:10px; }
-  .dropdown-menu .dd-item:active{ background:#f2f5f7; }
-  .dropdown-menu .dd-item svg{ width:18px; height:18px; flex-shrink:0; stroke:var(--ink); }
+  .dropdown-menu.open{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
+  }
+  .dropdown-menu .dd-item{
+    padding:11px 16px;
+    font-size:14px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .dropdown-menu .dd-item:active{
+    background:#f2f5f7;
+  }
+  .dropdown-menu .dd-item svg{
+    width:18px;height:18px;
+    flex-shrink:0;
+    stroke:var(--ink);
+  }
 
+  /* modal PIN */
   .pin-modal-overlay{
-    position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center;
-    opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:60; padding:24px;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.45);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease;
+    z-index:60;
+    padding:24px;
   }
-  .pin-modal-overlay.open{ opacity:1; pointer-events:auto; }
-  .pin-modal{ background:#fff; border-radius:14px; padding:26px 22px; width:100%; max-width:300px; text-align:center; }
-  .pin-modal .pm-title{ font-size:15.5px; font-weight:700; margin-bottom:4px; }
-  .pin-modal .pm-sub{ font-size:12px; color:var(--muted); margin-bottom:18px; line-height:1.5; }
-  .pin-modal .pm-box{ background:#f1f5f7; border:1.5px dashed var(--bbm-blue); border-radius:12px; padding:16px; margin-bottom:16px; }
-  .pin-modal .pm-pin{ font-size:26px; font-weight:800; letter-spacing:4px; color:var(--bbm-blue-dark); font-family:'Courier New',monospace; }
-  .pin-modal .pm-copy{ font-size:12.5px; color:var(--bbm-blue); font-weight:600; background:none; border:none; cursor:pointer; margin-bottom:14px; padding:6px 10px; }
-  .pin-modal .pm-close{ width:100%; padding:11px 0; background:var(--bbm-blue); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
+  .pin-modal-overlay.open{
+    opacity:1;
+    pointer-events:auto;
+  }
+  .pin-modal{
+    background:#fff;
+    border-radius:14px;
+    padding:26px 22px;
+    width:100%;
+    max-width:300px;
+    text-align:center;
+  }
+  .pin-modal .pm-title{
+    font-size:15.5px;
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .pin-modal .pm-sub{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:18px;
+    line-height:1.5;
+  }
+  .pin-modal .pm-box{
+    background:#f1f5f7;
+    border:1.5px dashed var(--bbm-blue);
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:16px;
+  }
+  .pin-modal .pm-pin{
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:4px;
+    color:var(--bbm-blue-dark);
+    font-family:'Courier New',monospace;
+  }
+  .pin-modal .pm-copy{
+    font-size:12.5px;
+    color:var(--bbm-blue);
+    font-weight:600;
+    background:none;
+    border:none;
+    cursor:pointer;
+    margin-bottom:14px;
+    padding:6px 10px;
+  }
+  .pin-modal .pm-close{
+    width:100%;
+    padding:11px 0;
+    background:var(--bbm-blue);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+  }
 
-  .tab-panel{ display:none; flex:1; min-height:0; flex-direction:column; overflow-y:auto; padding-bottom: 90px; }
-  .tab-panel.active{ display:flex; animation:panelFadeIn .18s ease both; }
-  #panelChats.active{ display:flex; flex-direction:column; flex:1; min-height:0; position:relative; }
-  @keyframes panelFadeIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
+  /* ---------- Panel switching (tab tidak pindah halaman) ---------- */
+  .tab-panel{
+    display:none;
+    flex:1;
+    min-height:0;
+    flex-direction:column;
+    overflow-y:auto;
+    padding-bottom:calc(70px + env(safe-area-inset-bottom));
+  }
+  .tab-panel.active{display:flex; animation:panelFadeIn .18s ease both;}
+  #panelChats.active{display:flex;flex-direction:column;flex:1;min-height:0;position:relative;}
+  @keyframes panelFadeIn{
+    from{ opacity:0; transform:translateY(4px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .tab-panel.active{ animation:none; }
+  }
 
-  .status-empty{ margin:auto; padding:60px 24px; text-align:center; color:var(--muted); font-size:13.5px; line-height:1.6; }
-  .add-section{ padding:18px 16px; border-bottom:8px solid #f5f7f8; flex-shrink:0; }
-  .add-section .label{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px; }
-  .add-row{ display:flex; gap:8px; }
-  .add-row input{ flex:1; border:1.5px solid #dde5e9; border-radius:10px; padding:11px 12px; font-size:15px; font-family:'Courier New',monospace; letter-spacing:2px; outline:none; }
-  .add-row input:focus{ border-color:var(--bbm-blue); }
-  .add-row button{ padding:0 18px; background:var(--bbm-blue); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
-  .search-msg{ margin-top:10px; font-size:13px; }
-  .search-msg.err{ color:#d64545; } .search-msg.ok{ color:var(--ok); }
-  .found-card{ display:none; margin-top:12px; background:#f7fafb; border:1px solid var(--border); border-radius:12px; padding:12px 14px; align-items:center; gap:12px; }
-  .found-card.show{ display:flex; }
-  .found-card .avatar{ width:44px; height:44px; border-radius:50%; background:var(--bbm-blue-dark); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; flex-shrink:0; }
-  .found-card .info{ flex:1; min-width:0; }
-  .found-card .info .uname{ font-weight:600; font-size:15px; }
-  .found-card .info .pin-label{ font-size:11.5px; color:var(--muted); }
-  .found-card button{ background:var(--bbm-blue); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
-  .section-title{ padding:14px 16px 6px; font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; flex-shrink:0; }
-  .contact-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
-  .contact-item:active{ background:#f5f8fa; }
-  .contact-item .avatar{ width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:16px; flex-shrink:0; }
-  .contact-item .uname{ font-size:15.5px; font-weight:600; }
-  .panel-empty{ padding:40px 24px; text-align:center; color:var(--muted); font-size:13.5px; }
+  /* ---------- Status panel ---------- */
+  .status-empty{
+    margin:auto;
+    padding:60px 24px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13.5px;
+    line-height:1.6;
+  }
+  .status-empty .icon{margin-bottom:14px;}
 
-  .req-item, .notif-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--border); }
-  .req-item .avatar, .notif-item .avatar{ width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:16px; flex-shrink:0; }
-  .req-item .info, .notif-item .info{ flex:1; min-width:0; }
-  .req-item .uname, .notif-item .uname{ font-size:15px; font-weight:600; }
-  .req-item .sub, .notif-item .sub{ font-size:11.5px; color:var(--muted); margin-top:2px; }
-  .req-actions{ display:flex; gap:8px; flex-shrink:0; }
-  .btn-accept, .btn-decline{ border:none; border-radius:8px; padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer; }
-  .btn-accept{ background:var(--ok); color:#fff; } .btn-decline{ background:#f1f5f7; color:var(--muted); }
-  .notif-item.unseen{ background:#f2faff; }
-  .status-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-left:4px; }
-  .status-dot.new{ background:var(--bbm-blue); }
+  /* ---------- Kontak panel ---------- */
+  .add-section{
+    padding:18px 16px;
+    border-bottom:8px solid #f5f7f8;
+    flex-shrink:0;
+  }
+  .add-section .label{
+    font-size:12px;
+    font-weight:700;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    margin-bottom:8px;
+  }
+  .add-row{display:flex;gap:8px;}
+  .add-row input{
+    flex:1;
+    border:1.5px solid #dde5e9;
+    border-radius:10px;
+    padding:11px 12px;
+    font-size:15px;
+    font-family:'Courier New',monospace;
+    letter-spacing:2px;
+    outline:none;
+  }
+  .add-row input:focus{border-color:var(--bbm-blue);}
+  .add-row button{
+    padding:0 18px;
+    background:var(--bbm-blue);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .add-row button:disabled{background:#c7d1d6;}
+  .search-msg{margin-top:10px;font-size:13px;}
+  .search-msg.err{color:var(--error);}
+  .search-msg.ok{color:var(--ok);}
+  .found-card{
+    display:none;
+    margin-top:12px;
+    background:#f7fafb;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 14px;
+    align-items:center;
+    gap:12px;
+  }
+  .found-card.show{display:flex;}
+  .found-card .avatar{
+    width:44px;height:44px;border-radius:50%;
+    background:var(--bbm-blue-dark);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:15px;flex-shrink:0;
+  }
+  .found-card .info{flex:1;min-width:0;}
+  .found-card .info .uname{font-weight:600;font-size:15px;}
+  .found-card .info .pin-label{font-size:11.5px;color:var(--muted);}
+  .found-card button{
+    background:var(--bbm-blue);
+    color:#fff;border:none;border-radius:8px;
+    padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
+    white-space:nowrap;
+  }
+  .found-card button:disabled{background:#c7d1d6;}
+  .section-title{
+    padding:14px 16px 6px;
+    font-size:12px;
+    font-weight:700;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+    flex-shrink:0;
+  }
+  .contact-item{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:12px 16px;
+    border-bottom:1px solid var(--border);
+    cursor:pointer;
+  }
+  .contact-item:active{background:#f5f8fa;}
+  .contact-item .avatar{
+    width:48px;height:48px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:700;font-size:16px;flex-shrink:0;
+  }
+  .contact-item .uname{font-size:15.5px;font-weight:600;}
+  .panel-empty{
+    padding:40px 24px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13.5px;
+  }
+
+  /* ---------- Notifikasi panel ---------- */
+  .req-item, .notif-item{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:12px 16px;
+    border-bottom:1px solid var(--border);
+  }
+  .req-item .avatar, .notif-item .avatar{
+    width:48px;height:48px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:700;font-size:16px;flex-shrink:0;
+  }
+  .req-item .info, .notif-item .info{flex:1;min-width:0;}
+  .req-item .uname, .notif-item .uname{font-size:15px;font-weight:600;}
+  .req-item .sub, .notif-item .sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .req-actions{display:flex;gap:8px;flex-shrink:0;}
+  .btn-accept, .btn-decline{
+    border:none;
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .btn-accept{background:var(--ok);color:#fff;}
+  .btn-decline{background:#f1f5f7;color:var(--muted);}
+  .btn-accept:disabled, .btn-decline:disabled{opacity:0.5;}
+  .notif-item.unseen{background:#f2faff;}
+  .status-dot{
+    width:8px;height:8px;border-radius:50%;
+    flex-shrink:0;margin-left:4px;
+  }
+  .status-dot.new{background:var(--bbm-blue);}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
@@ -180,12 +679,16 @@
 
   <div class="appbar">
     <div class="left">
-      <div class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></div>
-      <div><h1>Private Chat</h1></div>
+      <div class="hamburger" id="hamburgerBtn">
+        <span></span><span></span><span></span>
+      </div>
+      <div>
+        <h1>BBM Chats</h1>
+      </div>
     </div>
     <div class="right">
       <div class="icon-btn" id="menuBtn" title="Menu lainnya">
-        <svg viewBox="0 0 24 24" fill="#fff" width="22" height="22"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+        <svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
         <div class="dropdown-menu" id="dropdownMenu">
           <div class="dd-item" id="ddChatBaru">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg>
@@ -193,7 +696,7 @@
           </div>
           <div class="dd-item" id="ddPinSaya">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
-            <span>ID Keamanan</span>
+            <span>PIN Saya</span>
           </div>
         </div>
       </div>
@@ -204,10 +707,12 @@
 
   <div class="pin-modal-overlay" id="pinModalOverlay">
     <div class="pin-modal">
-      <div class="pm-title">ID Keamanan Kamu</div>
-      <div class="pm-sub">Bagikan ID rahasia ini ke teman terpercaya supaya bisa terhubung secara aman.</div>
-      <div class="pm-box"><div class="pm-pin" id="pmPinValue">00000000</div></div>
-      <button class="pm-copy" id="pmCopyBtn">Salin ID</button>
+      <div class="pm-title">PIN Kamu</div>
+      <div class="pm-sub">Bagikan PIN ini ke teman supaya mereka bisa menambahkanmu sebagai kontak.</div>
+      <div class="pm-box">
+        <div class="pm-pin" id="pmPinValue">00000000</div>
+      </div>
+      <button class="pm-copy" id="pmCopyBtn">Salin PIN</button>
       <button class="pm-close" id="pmCloseBtn">Tutup</button>
     </div>
   </div>
@@ -218,7 +723,7 @@
       <div class="d-avatar" id="drawerAvatar">?</div>
       <div>
         <div class="d-uname" id="drawerUname">@—</div>
-        <div class="d-pin" id="drawerPin">ID: —</div>
+        <div class="d-pin" id="drawerPin">PIN: —</div>
       </div>
     </div>
     <div class="drawer-body">
@@ -239,6 +744,7 @@
     </div>
   </div>
 
+  <!-- ===== Panel: Chats (tab default) ===== -->
   <div class="tab-panel active" id="panelChats">
     <div class="chatlist" id="chatlist"></div>
     <div class="fab" title="Chat baru" id="fabNewChat">
@@ -246,28 +752,31 @@
     </div>
   </div>
 
+  <!-- ===== Panel: Status ===== -->
   <div class="tab-panel" id="panelStatus">
     <div class="status-empty">
       <div class="icon">
         <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#c7d1d6" stroke-width="1.6" style="margin:0 auto;display:block;"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg>
       </div>
-      Enkripsi end-to-end aktif.<br>Semua pesan Anda aman dan privat.
+      Belum ada status untuk ditampilkan.<br>Fitur ini akan segera hadir.
     </div>
   </div>
 
+  <!-- ===== Panel: Kontak ===== -->
   <div class="tab-panel" id="panelKontak">
     <div class="add-section">
-      <div class="label">Tambah kontak via ID Keamanan</div>
+      <div class="label">Tambah kontak via PIN</div>
       <div class="add-row">
-        <input type="text" id="pinInput" placeholder="Masukkan 8 digit ID" maxlength="8" inputmode="numeric">
+        <input type="text" id="pinInput" placeholder="Masukkan 8 digit PIN" maxlength="8" inputmode="numeric">
         <button id="searchBtn">Cari</button>
       </div>
       <div class="search-msg" id="searchMsg"></div>
+
       <div class="found-card" id="foundCard">
         <div class="avatar" id="foundAvatar">?</div>
         <div class="info">
           <div class="uname" id="foundUname">@—</div>
-          <div class="pin-label">Ditemukan lewat ID</div>
+          <div class="pin-label">Ditemukan lewat PIN</div>
         </div>
         <button id="sendRequestBtn">Kirim Permintaan</button>
       </div>
@@ -276,6 +785,7 @@
     <div id="contactList"></div>
   </div>
 
+  <!-- ===== Panel: Notifikasi ===== -->
   <div class="tab-panel" id="panelNotif">
     <div class="section-title">Permintaan Pertemanan</div>
     <div id="reqList"></div>
@@ -283,26 +793,19 @@
     <div id="updateList"></div>
   </div>
 
-  <!-- Kapsul Melayang -->
-  <div class="tabbar-wrapper">
-    <div class="tabbar">
-      <div class="tabitem active" id="tabChats">
-        <svg viewBox="0 0 24 24" fill="#ffffff"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
-        <span class="tab-label">Chats</span>
-      </div>
-      <div class="tabitem" id="tabStatus">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4.5 9a8 8 0 0114-4.5M19.5 15a8 8 0 01-14 4.5"/></svg>
-        <span class="tab-label">Secure</span>
-      </div>
-      <div class="tabitem" id="tabKontak">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>
-        <span class="tab-label">Contacts</span>
-      </div>
-      <div class="tabitem" id="tabNotif">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-        <span class="tab-label">Notif</span>
-        <span class="badge" id="notifBadge" style="display:none;"></span>
-      </div>
+  <div class="tabbar">
+    <div class="tabitem active" id="tabChats">
+      <svg viewBox="0 0 24 24" fill="#1b2a32"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+    </div>
+    <div class="tabitem" id="tabStatus">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4.5 9a8 8 0 0114-4.5M19.5 15a8 8 0 01-14 4.5"/></svg>
+    </div>
+    <div class="tabitem" id="tabKontak">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>
+    </div>
+    <div class="tabitem" id="tabNotif">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <span class="badge" id="notifBadge" style="display:none;"></span>
     </div>
   </div>
 
@@ -316,18 +819,30 @@
     for(let i=0;i<id.length;i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
     return colorPalette[Math.abs(hash) % colorPalette.length];
   }
-  function initials(username){ return (username || '?').slice(0,2).toUpperCase(); }
-  function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str == null ? '' : String(str); return d.innerHTML; }
+  function initials(username){
+    return (username || '?').slice(0,2).toUpperCase();
+  }
+  // Cegah stored XSS: semua data yang berasal dari user lain (username,
+  // isi pesan) WAJIB lewat sini sebelum disisipkan ke innerHTML.
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : String(str);
+    return d.innerHTML;
+  }
   function timeLabel(iso){
     const d = new Date(iso);
     const today = new Date();
-    if(d.toDateString() === today.toDateString()) return d.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+    if(d.toDateString() === today.toDateString()){
+      return d.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+    }
     return d.toLocaleDateString('id-ID', { day:'numeric', month:'short' });
   }
 
+  // Ikon centang gaya BBM/WhatsApp:
+  // 1 centang abu = terkirim, 2 centang abu = diterima, 2 centang biru = dibaca
   function tickSvg(deliveredAt, readAt){
     if(readAt){
-      return `<svg viewBox="0 0 20 15" width="15" height="11" fill="none" stroke="#2b8fe0" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
+      return `<svg viewBox="0 0 20 15" width="15" height="11" fill="none" stroke="#1b2a32" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
     }
     if(deliveredAt){
       return `<svg viewBox="0 0 20 15" width="15" height="11" fill="none" stroke="#93a1a8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
@@ -343,7 +858,10 @@
   function render(chats){
     const list = document.getElementById('chatlist');
     if(!chats || chats.length === 0){
-      list.innerHTML = `<div style="padding:40px 24px;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.6;">Belum ada percakapan privat.<br>Buka tab Kontak untuk mulai mengobrol secara aman.</div>`;
+      list.innerHTML = `
+        <div style="padding:40px 24px;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.6;">
+          Belum ada percakapan.<br>Buka tab Kontak lalu ketuk salah satu kontak untuk mulai chat.
+        </div>`;
       return;
     }
     list.innerHTML = chats.map(chat => `
@@ -372,67 +890,166 @@
   async function loadChats(userId){
     const list = document.getElementById('chatlist');
     list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);font-size:13.5px;">Memuat...</div>';
-    const { data: contactRows } = await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status', 'accepted').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
-    const acceptedIds = new Set((contactRows || []).map(r => r.requester_id === userId ? r.addressee_id : r.requester_id));
-    if(acceptedIds.size === 0){ render([]); return; }
-    const { data: msgRows } = await supabaseClient.from('messages').select('sender_id, receiver_id, content, created_at, delivered_at, read_at').or(`sender_id.eq.${userId},receiver_id.eq.${userId}`).order('created_at', { ascending: false }).limit(300);
-    const { data: clearRows } = await supabaseClient.from('chat_clears').select('peer_id, cleared_before').eq('user_id', userId);
+
+    // Kontak yang sudah berteman (accepted)
+    const { data: contactRows } = await supabaseClient
+      .from('contacts')
+      .select('requester_id, addressee_id')
+      .eq('status', 'accepted')
+      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+
+    const acceptedIds = new Set(
+      (contactRows || []).map(r => r.requester_id === userId ? r.addressee_id : r.requester_id)
+    );
+
+    if(acceptedIds.size === 0){
+      render([]);
+      return;
+    }
+
+    // Ambil pesan terbaru yang melibatkan kita, lalu ambil satu pesan
+    // terakhir per lawan bicara (pesan sudah terurut dari yang terbaru).
+    const { data: msgRows } = await supabaseClient
+      .from('messages')
+      .select('sender_id, receiver_id, content, created_at, delivered_at, read_at')
+      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+      .order('created_at', { ascending: false })
+      .limit(300);
+
+    // Ambil daftar "titik hapus chat" per lawan bicara, biar preview di sini
+    // juga ikut nyembunyiin pesan yang sudah di-"Hapus Chat" dari tampilan kita.
+    const { data: clearRows } = await supabaseClient
+      .from('chat_clears')
+      .select('peer_id, cleared_before')
+      .eq('user_id', userId);
     const clearedMap = new Map((clearRows || []).map(c => [c.peer_id, c.cleared_before]));
+
     const lastByPartner = new Map();
     (msgRows || []).forEach(m => {
       const partner = m.sender_id === userId ? m.receiver_id : m.sender_id;
       if(!acceptedIds.has(partner)) return;
       const cutoff = clearedMap.get(partner);
-      if(cutoff && m.created_at <= cutoff) return;
+      if(cutoff && m.created_at <= cutoff) return; // sudah "dihapus" dari tampilan kita
       if(!lastByPartner.has(partner)) lastByPartner.set(partner, m);
     });
-    if(lastByPartner.size === 0){ render([]); return; }
+
+    if(lastByPartner.size === 0){
+      render([]);
+      return;
+    }
+
     const partnerIds = [...lastByPartner.keys()];
-    const { data: profilesData } = await supabaseClient.from('profiles').select('id, username').in('id', partnerIds);
+    const { data: profilesData } = await supabaseClient
+      .from('profiles')
+      .select('id, username')
+      .in('id', partnerIds);
+
     const profileMap = {};
     (profilesData || []).forEach(p => profileMap[p.id] = p.username);
+
     const chats = partnerIds.map(pid => {
       const m = lastByPartner.get(pid);
       const mine = m.sender_id === userId;
-      return { uid: pid, uname: profileMap[pid] || 'Pengguna', preview: (mine ? 'Kamu: ' : '') + m.content, time: m.created_at, mine, deliveredAt: m.delivered_at, readAt: m.read_at, unread: !mine && !m.read_at };
+      return {
+        uid: pid,
+        uname: profileMap[pid] || 'Pengguna',
+        preview: (mine ? 'Kamu: ' : '') + m.content,
+        time: m.created_at,
+        mine,
+        deliveredAt: m.delivered_at,
+        readAt: m.read_at,
+        unread: !mine && !m.read_at
+      };
     });
+
     render(chats);
   }
 
+  // Tandai semua pesan masuk sebagai "diterima" begitu aplikasi dibuka
+  // (menandakan pesan sudah sampai di perangkat penerima).
   async function markInboxDelivered(userId){
-    await supabaseClient.from('messages').update({ delivered_at: new Date().toISOString() }).eq('receiver_id', userId).is('delivered_at', null);
+    await supabaseClient
+      .from('messages')
+      .update({ delivered_at: new Date().toISOString() })
+      .eq('receiver_id', userId)
+      .is('delivered_at', null);
   }
 
   let presenceTracked = false;
   function trackOnlinePresence(userId){
-    if(presenceTracked) return;
+    if(presenceTracked) return; // refreshNotifBadge() bisa terpanggil berkali-kali, cukup subscribe 1x
     presenceTracked = true;
-    const channel = supabaseClient.channel('online-users', { config: { presence: { key: userId } } });
-    channel.subscribe(async (status) => { if(status === 'SUBSCRIBED') await channel.track({ online_at: new Date().toISOString() }); });
+    const channel = supabaseClient.channel('online-users', {
+      config: { presence: { key: userId } }
+    });
+    channel.subscribe(async (status) => {
+      if(status === 'SUBSCRIBED'){
+        await channel.track({ online_at: new Date().toISOString() });
+      }
+    });
   }
 
+  // Proteksi halaman: kalau belum login, lempar ke login.html
   async function refreshNotifBadge(){
     const { data: { session } } = await supabaseClient.auth.getSession();
-    if(!session){ window.location.replace('login.html'); return; }
-    const { data: profile } = await supabaseClient.from('profiles').select('username, pin').eq('id', session.user.id).maybeSingle();
+    if(!session){
+      window.location.replace('login.html');
+      return;
+    }
+
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('username, pin')
+      .eq('id', session.user.id)
+      .maybeSingle();
+
     if(profile){
       currentUserPin = profile.pin;
       document.getElementById('drawerUname').textContent = '@' + profile.username;
-      document.getElementById('drawerPin').textContent = 'ID: ' + profile.pin;
+      document.getElementById('drawerPin').textContent = 'PIN: ' + profile.pin;
       document.getElementById('drawerAvatar').textContent = initials(profile.username);
       document.getElementById('drawerAvatar').style.background = colorFor(session.user.id);
     }
+
+    // Aktifkan push notification (minta izin & simpan subscription)
     initPushNotifications(session.user.id);
+
+    // Tandai diri sendiri "online" selama app ini terbuka, biar lawan chat
+    // bisa lihat status "Sedang Online" walau kita cuma di halaman daftar chat.
     trackOnlinePresence(session.user.id);
-    const { count: pendingCount } = await supabaseClient.from('contacts').select('id', { count: 'exact', head: true }).eq('addressee_id', session.user.id).eq('status', 'pending');
-    const { count: unseenCount } = await supabaseClient.from('contacts').select('id', { count: 'exact', head: true }).eq('requester_id', session.user.id).in('status', ['accepted', 'declined']).eq('seen_by_requester', false);
+
+    // Hitung notifikasi: permintaan pertemanan masuk yang belum dijawab
+    // + notifikasi diterima/ditolak yang belum dilihat, tampilkan di badge
+    const { count: pendingCount } = await supabaseClient
+      .from('contacts')
+      .select('id', { count: 'exact', head: true })
+      .eq('addressee_id', session.user.id)
+      .eq('status', 'pending');
+
+    const { count: unseenCount } = await supabaseClient
+      .from('contacts')
+      .select('id', { count: 'exact', head: true })
+      .eq('requester_id', session.user.id)
+      .in('status', ['accepted', 'declined'])
+      .eq('seen_by_requester', false);
+
     const totalNotif = (pendingCount || 0) + (unseenCount || 0);
     const badge = document.getElementById('notifBadge');
-    if(totalNotif > 0){ badge.textContent = totalNotif; badge.style.display = 'flex'; } else { badge.style.display = 'none'; }
+    if(totalNotif > 0){
+      badge.textContent = totalNotif;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+
     loadChats(session.user.id);
     markInboxDelivered(session.user.id);
   }
 
+  // ============================================================
+  // Panel Kontak (dulunya kontak.html)
+  // ============================================================
+  let foundProfile = null;
   const pinInput = document.getElementById('pinInput');
   const searchBtn = document.getElementById('searchBtn');
   const searchMsg = document.getElementById('searchMsg');
@@ -441,130 +1058,332 @@
   const foundUname = document.getElementById('foundUname');
   const sendRequestBtn = document.getElementById('sendRequestBtn');
   const contactList = document.getElementById('contactList');
-  let foundProfile = null;
 
   searchBtn.addEventListener('click', async () => {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if(!session) return;
     const currentUserId = session.user.id;
+
     const pin = pinInput.value.trim();
-    searchMsg.textContent = ''; searchMsg.className = 'search-msg'; foundCard.classList.remove('show'); foundProfile = null;
-    if(!/^\d{8}$/.test(pin)){ searchMsg.textContent = 'ID harus 8 digit angka.'; searchMsg.className = 'search-msg err'; return; }
-    searchBtn.disabled = true; searchBtn.textContent = '...';
-    const { data, error } = await supabaseClient.from('profiles').select('id, username, pin').eq('pin', pin).maybeSingle();
-    searchBtn.disabled = false; searchBtn.textContent = 'Cari';
-    if(error || !data){ searchMsg.textContent = 'ID tidak ditemukan.'; searchMsg.className = 'search-msg err'; return; }
-    if(data.id === currentUserId){ searchMsg.textContent = 'Itu ID kamu sendiri.'; searchMsg.className = 'search-msg err'; return; }
+    searchMsg.textContent = '';
+    searchMsg.className = 'search-msg';
+    foundCard.classList.remove('show');
+    foundProfile = null;
+
+    if(!/^\d{8}$/.test(pin)){
+      searchMsg.textContent = 'PIN harus 8 digit angka.';
+      searchMsg.className = 'search-msg err';
+      return;
+    }
+
+    searchBtn.disabled = true;
+    searchBtn.textContent = '...';
+
+    const { data, error } = await supabaseClient
+      .from('profiles')
+      .select('id, username, pin')
+      .eq('pin', pin)
+      .maybeSingle();
+
+    searchBtn.disabled = false;
+    searchBtn.textContent = 'Cari';
+
+    if(error || !data){
+      searchMsg.textContent = 'PIN tidak ditemukan.';
+      searchMsg.className = 'search-msg err';
+      return;
+    }
+    if(data.id === currentUserId){
+      searchMsg.textContent = 'Itu PIN kamu sendiri.';
+      searchMsg.className = 'search-msg err';
+      return;
+    }
+
     foundProfile = data;
     foundAvatar.textContent = initials(data.username);
     foundAvatar.style.background = colorFor(data.id);
     foundUname.textContent = '@' + data.username;
     foundCard.classList.add('show');
-    searchMsg.textContent = 'Ditemukan!'; searchMsg.className = 'search-msg ok';
+    searchMsg.textContent = 'Ditemukan!';
+    searchMsg.className = 'search-msg ok';
   });
 
   sendRequestBtn.addEventListener('click', async () => {
     if(!foundProfile) return;
     const { data: { session } } = await supabaseClient.auth.getSession();
     if(!session) return;
-    sendRequestBtn.disabled = true; sendRequestBtn.textContent = 'Mengirim...';
-    const { error } = await supabaseClient.from('contacts').insert({ requester_id: session.user.id, addressee_id: foundProfile.id, status: 'pending' });
+    const currentUserId = session.user.id;
+
+    sendRequestBtn.disabled = true;
+    sendRequestBtn.textContent = 'Mengirim...';
+
+    const { error } = await supabaseClient.from('contacts').insert({
+      requester_id: currentUserId,
+      addressee_id: foundProfile.id,
+      status: 'pending'
+    });
+
     if(error){
-      searchMsg.textContent = error.message.toLowerCase().includes('duplicate') ? 'Sudah pernah mengirim permintaan ke akun ini.' : 'Gagal: ' + error.message;
+      if(error.message.toLowerCase().includes('duplicate')){
+        searchMsg.textContent = 'Kamu sudah pernah mengirim permintaan ke akun ini.';
+      } else {
+        searchMsg.textContent = 'Gagal mengirim: ' + error.message;
+      }
       searchMsg.className = 'search-msg err';
-      sendRequestBtn.disabled = false; sendRequestBtn.textContent = 'Kirim Permintaan';
+      sendRequestBtn.disabled = false;
+      sendRequestBtn.textContent = 'Kirim Permintaan';
       return;
     }
+
     sendRequestBtn.textContent = 'Terkirim ✓';
-    searchMsg.textContent = 'Permintaan pertemanan terkirim.'; searchMsg.className = 'search-msg ok';
+    searchMsg.textContent = 'Permintaan pertemanan sudah dikirim.';
+    searchMsg.className = 'search-msg ok';
   });
 
   async function loadContacts(){
     const { data: { session } } = await supabaseClient.auth.getSession();
     if(!session) return;
+    const currentUserId = session.user.id;
+
     contactList.innerHTML = '<div class="panel-empty">Memuat...</div>';
-    const { data: rows } = await supabaseClient.from('contacts').select('id, requester_id, addressee_id, status').eq('status', 'accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
-    if(!rows || rows.length === 0){ contactList.innerHTML = '<div class="panel-empty">Belum ada kontak. Tambahkan via ID Keamanan.</div>'; return; }
-    const otherIds = rows.map(r => r.requester_id === session.user.id ? r.addressee_id : r.requester_id);
-    const { data: profilesData } = await supabaseClient.from('profiles').select('id, username').in('id', otherIds);
-    const profileMap = {}; (profilesData || []).forEach(p => profileMap[p.id] = p.username);
+
+    const { data: rows, error } = await supabaseClient
+      .from('contacts')
+      .select('id, requester_id, addressee_id, status')
+      .eq('status', 'accepted')
+      .or(`requester_id.eq.${currentUserId},addressee_id.eq.${currentUserId}`);
+
+    if(error || !rows || rows.length === 0){
+      contactList.innerHTML = '<div class="panel-empty">Belum ada kontak. Tambahkan lewat PIN di atas.</div>';
+      return;
+    }
+
+    const otherIds = rows.map(r => r.requester_id === currentUserId ? r.addressee_id : r.requester_id);
+
+    const { data: profilesData } = await supabaseClient
+      .from('profiles')
+      .select('id, username')
+      .in('id', otherIds);
+
+    const profileMap = {};
+    (profilesData || []).forEach(p => profileMap[p.id] = p.username);
+
     contactList.innerHTML = otherIds.map(id => {
       const uname = profileMap[id] || 'Pengguna';
-      return `<div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml(uname)}"><div class="avatar" style="background:${colorFor(id)}">${escapeHtml(initials(uname))}</div><div class="uname">@${escapeHtml(uname)}</div></div>`;
+      return `
+        <div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml(uname)}">
+          <div class="avatar" style="background:${colorFor(id)}">${escapeHtml(initials(uname))}</div>
+          <div class="uname">@${escapeHtml(uname)}</div>
+        </div>
+      `;
     }).join('');
+
     document.querySelectorAll('#contactList .contact-item').forEach(item => {
-      item.addEventListener('click', () => { window.location.href = `chat.html?uid=${item.dataset.uid}&uname=${encodeURIComponent(item.dataset.uname)}`; });
+      item.addEventListener('click', () => {
+        const uid = item.dataset.uid;
+        const uname = item.dataset.uname;
+        window.location.href = `chat.html?uid=${uid}&uname=${encodeURIComponent(uname)}`;
+      });
     });
   }
 
+  // ============================================================
+  // Panel Notifikasi (dulunya notifikasi.html)
+  // ============================================================
   const reqList = document.getElementById('reqList');
   const updateList = document.getElementById('updateList');
 
   async function loadRequests(){
     const { data: { session } } = await supabaseClient.auth.getSession();
     if(!session) return;
+    const currentUserId = session.user.id;
+
     reqList.innerHTML = '<div class="panel-empty">Memuat...</div>';
-    const { data: rows } = await supabaseClient.from('contacts').select('id, requester_id').eq('addressee_id', session.user.id).eq('status', 'pending');
-    if(!rows || rows.length === 0){ reqList.innerHTML = '<div class="panel-empty">Tidak ada permintaan pertemanan.</div>'; return; }
+
+    const { data: rows, error } = await supabaseClient
+      .from('contacts')
+      .select('id, requester_id')
+      .eq('addressee_id', currentUserId)
+      .eq('status', 'pending');
+
+    if(error || !rows || rows.length === 0){
+      reqList.innerHTML = '<div class="panel-empty">Tidak ada permintaan pertemanan baru.</div>';
+      return;
+    }
+
     const requesterIds = rows.map(r => r.requester_id);
-    const { data: profilesData } = await supabaseClient.from('profiles').select('id, username').in('id', requesterIds);
-    const profileMap = {}; (profilesData || []).forEach(p => profileMap[p.id] = p.username);
+    const { data: profilesData } = await supabaseClient
+      .from('profiles')
+      .select('id, username')
+      .in('id', requesterIds);
+
+    const profileMap = {};
+    (profilesData || []).forEach(p => profileMap[p.id] = p.username);
+
     reqList.innerHTML = rows.map(r => {
       const uname = profileMap[r.requester_id] || 'Pengguna';
-      return `<div class="req-item" data-contact-id="${escapeHtml(r.id)}"><div class="avatar" style="background:${colorFor(r.requester_id)}">${escapeHtml(initials(uname))}</div><div class="info"><div class="uname">@${escapeHtml(uname)}</div><div class="sub">Ingin terhubung secara privat</div></div><div class="req-actions"><button class="btn-accept" data-id="${r.id}">Terima</button><button class="btn-decline" data-id="${r.id}">Tolak</button></div></div>`;
+      return `
+        <div class="req-item" data-contact-id="${escapeHtml(r.id)}">
+          <div class="avatar" style="background:${colorFor(r.requester_id)}">${escapeHtml(initials(uname))}</div>
+          <div class="info">
+            <div class="uname">@${escapeHtml(uname)}</div>
+            <div class="sub">Ingin menambahkanmu sebagai kontak</div>
+          </div>
+          <div class="req-actions">
+            <button class="btn-accept" data-id="${r.id}">Terima</button>
+            <button class="btn-decline" data-id="${r.id}">Tolak</button>
+          </div>
+        </div>
+      `;
     }).join('');
-    document.querySelectorAll('#reqList .btn-accept').forEach(btn => btn.addEventListener('click', () => respondToRequest(btn.dataset.id, 'accepted', btn)));
-    document.querySelectorAll('#reqList .btn-decline').forEach(btn => btn.addEventListener('click', () => respondToRequest(btn.dataset.id, 'declined', btn)));
+
+    document.querySelectorAll('#reqList .btn-accept').forEach(btn => {
+      btn.addEventListener('click', () => respondToRequest(btn.dataset.id, 'accepted', btn));
+    });
+    document.querySelectorAll('#reqList .btn-decline').forEach(btn => {
+      btn.addEventListener('click', () => respondToRequest(btn.dataset.id, 'declined', btn));
+    });
   }
 
   async function respondToRequest(contactId, status, btn){
     const item = btn.closest('.req-item');
     item.querySelectorAll('button').forEach(b => b.disabled = true);
-    await supabaseClient.from('contacts').update({ status, seen_by_requester: false }).eq('id', contactId);
+
+    const { error } = await supabaseClient
+      .from('contacts')
+      .update({ status, seen_by_requester: false })
+      .eq('id', contactId);
+
+    if(error){
+      alert('Gagal memproses: ' + error.message);
+      item.querySelectorAll('button').forEach(b => b.disabled = false);
+      return;
+    }
+
     item.style.opacity = '0.4';
-    setTimeout(() => { item.remove(); if(!reqList.querySelector('.req-item')) reqList.innerHTML = '<div class="panel-empty">Tidak ada permintaan pertemanan.</div>'; }, 300);
+    setTimeout(() => {
+      item.remove();
+      if(!reqList.querySelector('.req-item')){
+        reqList.innerHTML = '<div class="panel-empty">Tidak ada permintaan pertemanan baru.</div>';
+      }
+    }, 300);
+
+    // Kalau diterima, kontak baru ini otomatis nongol lain kali tab
+    // Kontak dibuka. Refresh badge & daftar chat juga.
     refreshNotifBadge();
   }
 
   async function loadUpdates(){
     const { data: { session } } = await supabaseClient.auth.getSession();
     if(!session) return;
+    const currentUserId = session.user.id;
+
     updateList.innerHTML = '<div class="panel-empty">Memuat...</div>';
-    const { data: rows } = await supabaseClient.from('contacts').select('id, addressee_id, status, seen_by_requester').eq('requester_id', session.user.id).in('status', ['accepted', 'declined']).order('id', { ascending: false });
-    if(!rows || rows.length === 0){ updateList.innerHTML = '<div class="panel-empty">Belum ada pembaruan.</div>'; return; }
+
+    const { data: rows, error } = await supabaseClient
+      .from('contacts')
+      .select('id, addressee_id, status, seen_by_requester')
+      .eq('requester_id', currentUserId)
+      .in('status', ['accepted', 'declined'])
+      .order('id', { ascending: false });
+
+    if(error || !rows || rows.length === 0){
+      updateList.innerHTML = '<div class="panel-empty">Belum ada pembaruan.</div>';
+      return;
+    }
+
     const otherIds = rows.map(r => r.addressee_id);
-    const { data: profilesData } = await supabaseClient.from('profiles').select('id, username').in('id', otherIds);
-    const profileMap = {}; (profilesData || []).forEach(p => profileMap[p.id] = p.username);
+    const { data: profilesData } = await supabaseClient
+      .from('profiles')
+      .select('id, username')
+      .in('id', otherIds);
+
+    const profileMap = {};
+    (profilesData || []).forEach(p => profileMap[p.id] = p.username);
+
     updateList.innerHTML = rows.map(r => {
       const uname = profileMap[r.addressee_id] || 'Pengguna';
       const isAccepted = r.status === 'accepted';
-      return `<div class="notif-item ${r.seen_by_requester ? '' : 'unseen'}"><div class="avatar" style="background:${colorFor(r.addressee_id)}">${escapeHtml(initials(uname))}</div><div class="info"><div class="uname">@${escapeHtml(uname)}</div><div class="sub">${isAccepted ? '✅ Menerima tautan privat' : '❌ Menolak tautan'}</div></div>${r.seen_by_requester ? '' : '<span class="status-dot new"></span>'}</div>`;
+      const text = isAccepted
+        ? `menerima permintaan pertemananmu`
+        : `menolak permintaan pertemananmu`;
+      return `
+        <div class="notif-item ${r.seen_by_requester ? '' : 'unseen'}">
+          <div class="avatar" style="background:${colorFor(r.addressee_id)}">${escapeHtml(initials(uname))}</div>
+          <div class="info">
+            <div class="uname">@${escapeHtml(uname)}</div>
+            <div class="sub">${isAccepted ? '✅' : '❌'} ${escapeHtml(text)}</div>
+          </div>
+          ${r.seen_by_requester ? '' : '<span class="status-dot new"></span>'}
+        </div>
+      `;
     }).join('');
+
     const unseenIds = rows.filter(r => !r.seen_by_requester).map(r => r.id);
-    if(unseenIds.length > 0){ await supabaseClient.from('contacts').update({ seen_by_requester: true }).in('id', unseenIds); refreshNotifBadge(); }
+    if(unseenIds.length > 0){
+      await supabaseClient
+        .from('contacts')
+        .update({ seen_by_requester: true })
+        .in('id', unseenIds);
+      refreshNotifBadge();
+    }
   }
 
   refreshNotifBadge();
 
+  // Halaman yang dipulihkan dari cache browser (mis. tombol back dari
+  // notifikasi.html) tidak menjalankan ulang script di atas secara otomatis,
+  // jadi kita paksa cek ulang badge tiap kali halaman ini kembali ditampilkan.
+  window.addEventListener('pageshow', (e) => {
+    if(e.persisted){
+      refreshNotifBadge();
+    }
+  });
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible'){
+      refreshNotifBadge();
+    }
+  });
+
+  // ============================================================
+  // Tab switching di dalam satu halaman (SPA) — Chats / Status /
+  // Kontak / Notifikasi tidak lagi pindah ke file .html terpisah,
+  // cuma ganti-ganti panel yang ditampilkan.
+  // ============================================================
   const tabDefs = {
-    chats:  { tabEl: 'tabChats',  panelEl: 'panelChats',  title: 'Private Chat', showFab: true  },
-    status: { tabEl: 'tabStatus', panelEl: 'panelStatus', title: 'Security',     showFab: false },
-    kontak: { tabEl: 'tabKontak', panelEl: 'panelKontak', title: 'Contacts',     showFab: false },
-    notif:  { tabEl: 'tabNotif',  panelEl: 'panelNotif',  title: 'Notifications',showFab: false }
+    chats:  { tabEl: 'tabChats',  panelEl: 'panelChats',  title: 'BBM Chats',   showSub: true,  showFab: true  },
+    status: { tabEl: 'tabStatus', panelEl: 'panelStatus', title: 'Status',      showSub: false, showFab: false },
+    kontak: { tabEl: 'tabKontak', panelEl: 'panelKontak', title: 'Kontak',      showSub: false, showFab: false },
+    notif:  { tabEl: 'tabNotif',  panelEl: 'panelNotif',  title: 'Notifikasi',  showSub: false, showFab: false }
   };
   let activeTab = 'chats';
-  let onNonChatTab = false;
+  let onNonChatTab = false; // lagi ada 1 history entry "nyangkut" buat tab non-Chat
 
   function switchTab(name, fromPopstate){
     if(!tabDefs[name]) return;
     activeTab = name;
+
+    // Atur history: dari tab Chat -> tab lain = numpuk 1 entry baru (biar back
+    // bisa balik ke Chat). Antar tab non-Chat (Status<->Kontak<->Notif) = replace
+    // entry yang sama, jangan numpuk lagi, biar back cuma butuh 1x pencet buat
+    // balik ke Chat dari tab manapun. Dari tab Chat sendiri = gak ada entry
+    // nyangkut, jadi back berikutnya bakal nutup app (bukan cuma balik ke SPA).
     if(!fromPopstate){
       if(name !== 'chats'){
-        if(!onNonChatTab) history.pushState({ tab: name }, '', location.href);
-        else history.replaceState({ tab: name }, '', location.href);
+        if(!onNonChatTab){
+          history.pushState({ tab: name }, '', location.href);
+        } else {
+          history.replaceState({ tab: name }, '', location.href);
+        }
         onNonChatTab = true;
-      } else if(onNonChatTab){ history.back(); return; }
+      } else if(onNonChatTab){
+        // User klik tab "Chats" manual (bukan lewat back) waktu lagi di tab lain
+        // -> buang entry yang nyangkut itu, biar balik ke kondisi "bersih".
+        history.back();
+        return; // switchTab beneran akan dipanggil ulang lewat event popstate
+      }
     }
+
     Object.entries(tabDefs).forEach(([key, def]) => {
       const tabEl = document.getElementById(def.tabEl);
       const panelEl = document.getElementById(def.panelEl);
@@ -573,16 +1392,32 @@
       panelEl.classList.toggle('active', isActive);
       const svg = tabEl.querySelector('svg');
       if(svg){
-        svg.setAttribute('fill', isActive ? '#ffffff' : 'none');
-        svg.setAttribute('stroke', isActive ? 'none' : '#7a8a92');
+        if(isActive){
+          svg.setAttribute('fill', key === 'chats' ? '#1b2a32' : 'none');
+          svg.setAttribute('stroke', '#1b2a32');
+        } else {
+          svg.setAttribute('fill', 'none');
+          svg.setAttribute('stroke', '#7a8a92');
+        }
       }
     });
+
     const def = tabDefs[name];
     document.querySelector('.appbar h1').textContent = def.title;
     document.getElementById('fabNewChat').style.display = def.showFab ? 'flex' : 'none';
-    if(name === 'kontak') loadContacts();
-    else if(name === 'notif'){ loadRequests(); loadUpdates(); }
-    else if(name === 'chats'){ supabaseClient.auth.getSession().then(({ data: { session } }) => { if(session) loadChats(session.user.id); }); }
+
+    if(name === 'status'){
+      // Placeholder — belum ada data untuk dimuat.
+    } else if(name === 'kontak'){
+      loadContacts();
+    } else if(name === 'notif'){
+      loadRequests();
+      loadUpdates();
+    } else if(name === 'chats'){
+      supabaseClient.auth.getSession().then(({ data: { session } }) => {
+        if(session) loadChats(session.user.id);
+      });
+    }
   }
 
   document.getElementById('tabChats').addEventListener('click', () => switchTab('chats'));
@@ -590,39 +1425,129 @@
   document.getElementById('tabKontak').addEventListener('click', () => switchTab('kontak'));
   document.getElementById('tabNotif').addEventListener('click', () => switchTab('notif'));
 
-  window.addEventListener('popstate', () => { if(onNonChatTab){ onNonChatTab = false; switchTab('chats', true); } });
-  document.getElementById('logoutBtn').addEventListener('click', async () => { await supabaseClient.auth.signOut(); window.location.replace('login.html'); });
+  // Tombol back Android: kalau lagi di tab Status/Kontak/Notif -> balik ke tab
+  // Chat. Kalau lagi di tab Chat (gak ada entry nyangkut) -> biarkan browser/TWA
+  // proses back seperti biasa, yang artinya app-nya nutup.
+  window.addEventListener('popstate', () => {
+    if(onNonChatTab){
+      onNonChatTab = false;
+      switchTab('chats', true);
+    }
+  });
 
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    window.location.replace('login.html');
+  });
+
+  // Side drawer (menu garis tiga)
   const hamburgerBtn = document.getElementById('hamburgerBtn');
   const drawer = document.getElementById('drawer');
   const drawerOverlay = document.getElementById('drawerOverlay');
-  function openDrawer(){ drawer.classList.add('open'); drawerOverlay.classList.add('open'); }
-  function closeDrawer(){ drawer.classList.remove('open'); drawerOverlay.classList.remove('open'); }
+
+  function openDrawer(){
+    drawer.classList.add('open');
+    drawerOverlay.classList.add('open');
+  }
+  function closeDrawer(){
+    drawer.classList.remove('open');
+    drawerOverlay.classList.remove('open');
+  }
+
   hamburgerBtn.addEventListener('click', openDrawer);
   drawerOverlay.addEventListener('click', closeDrawer);
-  document.getElementById('drawerSetelan').addEventListener('click', () => { window.location.href = 'setelan.html'; });
 
+  document.getElementById('drawerSetelan').addEventListener('click', () => {
+    window.location.href = 'setelan.html';
+  });
+
+  // Instal Aplikasi (PWA)
+  const installBtn = document.getElementById('drawerInstallApp');
+  let deferredInstallPrompt = null;
+
+  // Deteksi apakah sudah berjalan sebagai app terinstall (standalone mode)
+  function isRunningStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true; // iOS Safari
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if(!isRunningStandalone()){
+      installBtn.style.display = 'flex';
+    }
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if(!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    installBtn.style.display = 'none';
+    closeDrawer();
+  });
+
+  window.addEventListener('appinstalled', () => {
+    installBtn.style.display = 'none';
+    deferredInstallPrompt = null;
+  });
+
+  // Dropdown menu titik tiga
   const menuBtn = document.getElementById('menuBtn');
   const dropdownMenu = document.getElementById('dropdownMenu');
   const dropdownOverlayCatch = document.getElementById('dropdownOverlayCatch');
-  function openDropdown(){ dropdownMenu.classList.add('open'); dropdownOverlayCatch.style.display = 'block'; }
-  function closeDropdown(){ dropdownMenu.classList.remove('open'); dropdownOverlayCatch.style.display = 'none'; }
-  menuBtn.addEventListener('click', (e) => { e.stopPropagation(); dropdownMenu.classList.contains('open') ? closeDropdown() : openDropdown(); });
-  dropdownOverlayCatch.addEventListener('click', closeDropdown);
-  document.getElementById('ddChatBaru').addEventListener('click', () => { closeDropdown(); switchTab('kontak'); });
 
+  function openDropdown(){
+    dropdownMenu.classList.add('open');
+    dropdownOverlayCatch.style.display = 'block';
+  }
+  function closeDropdown(){
+    dropdownMenu.classList.remove('open');
+    dropdownOverlayCatch.style.display = 'none';
+  }
+
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if(dropdownMenu.classList.contains('open')){
+      closeDropdown();
+    } else {
+      openDropdown();
+    }
+  });
+  dropdownOverlayCatch.addEventListener('click', closeDropdown);
+
+  document.getElementById('ddChatBaru').addEventListener('click', () => {
+    closeDropdown();
+    switchTab('kontak');
+  });
+
+  // Modal PIN Saya
   const pinModalOverlay = document.getElementById('pinModalOverlay');
   const pmPinValue = document.getElementById('pmPinValue');
   const pmCopyBtn = document.getElementById('pmCopyBtn');
   const pmCloseBtn = document.getElementById('pmCloseBtn');
+
   document.getElementById('ddPinSaya').addEventListener('click', () => {
-    closeDropdown(); pmPinValue.textContent = currentUserPin || '—'; pmCopyBtn.textContent = 'Salin ID'; pinModalOverlay.classList.add('open');
+    closeDropdown();
+    pmPinValue.textContent = currentUserPin || '—';
+    pmCopyBtn.textContent = 'Salin PIN';
+    pinModalOverlay.classList.add('open');
   });
-  pmCloseBtn.addEventListener('click', () => pinModalOverlay.classList.remove('open'));
-  pinModalOverlay.addEventListener('click', (e) => { if(e.target === pinModalOverlay) pinModalOverlay.classList.remove('open'); });
+  pmCloseBtn.addEventListener('click', () => {
+    pinModalOverlay.classList.remove('open');
+  });
+  pinModalOverlay.addEventListener('click', (e) => {
+    if(e.target === pinModalOverlay) pinModalOverlay.classList.remove('open');
+  });
   pmCopyBtn.addEventListener('click', () => {
     if(!currentUserPin) return;
-    navigator.clipboard?.writeText(currentUserPin).then(() => { pmCopyBtn.textContent = 'ID Disalin ✓'; setTimeout(() => pmCopyBtn.textContent = 'Salin ID', 1500); });
+    navigator.clipboard?.writeText(currentUserPin).then(() => {
+      pmCopyBtn.textContent = 'PIN Disalin ✓';
+      setTimeout(() => pmCopyBtn.textContent = 'Salin PIN', 1500);
+    }).catch(() => {
+      pmCopyBtn.textContent = 'Gagal menyalin';
+    });
   });
 </script>
 </body>

@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Bang Bayu Message - Chat</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0092d1">
+<meta name="theme-color" content="#1b2a32">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -25,9 +25,9 @@
   }
 
   :root{
-    --bbm-blue-dark:#005f8f;
-    --bbm-blue:#0092d1;
-    --bbm-blue-light:#3ab6ef;
+    --bbm-blue-dark:#1b2a32;
+    --bbm-blue:#1b2a32;
+    --bbm-blue-light:#1b2a32;
     --bg:#e8eef2;
     --ink:#1c2b33;
     --ink-soft:#4a5a63;
@@ -506,7 +506,7 @@
   // - 2 centang biru = sudah dibaca
   function tickSvg(deliveredAt, readAt){
     if(readAt){
-      return `<svg viewBox="0 0 20 15" width="16" height="12" fill="none" stroke="#0092d1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
+      return `<svg viewBox="0 0 20 15" width="16" height="12" fill="none" stroke="#1b2a32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
     }
     if(deliveredAt){
       return `<svg viewBox="0 0 20 15" width="16" height="12" fill="none" stroke="#93a1a8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
