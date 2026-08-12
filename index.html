@@ -285,9 +285,9 @@
   document.getElementById('tabChats').addEventListener('click',()=>switchTab('chats'));document.getElementById('tabStatus').addEventListener('click',()=>switchTab('status'));document.getElementById('tabKontak').addEventListener('click',()=>switchTab('kontak'));document.getElementById('tabNotif').addEventListener('click',()=>switchTab('notif'));
   window.addEventListener('popstate',()=>{if(onNonChatTab){onNonChatTab=false;switchTab('chats',true);}});
   document.getElementById('logoutBtn').addEventListener('click',async()=>{await supabaseClient.auth.signOut();window.location.replace('login.html');});
-  const drawer=document.getElementById('drawer'),do=document.getElementById('drawerOverlay');
-  document.getElementById('hamburgerBtn').addEventListener('click',()=>{drawer.classList.add('open');do.classList.add('open');});
-  do.addEventListener('click',()=>{drawer.classList.remove('open');do.classList.remove('open');});
+  const drawer=document.getElementById('drawer'),drwOverlay=document.getElementById('drawerOverlay');
+  document.getElementById('hamburgerBtn').addEventListener('click',()=>{drawer.classList.add('open');drwOverlay.classList.add('open');});
+  drwOverlay.addEventListener('click',()=>{drawer.classList.remove('open');drwOverlay.classList.remove('open');});
   document.getElementById('drawerSetelan').addEventListener('click',()=>window.location.href='setelan.html');
   const dMenu=document.getElementById('dropdownMenu'),dc=document.getElementById('dropdownOverlayCatch');
   document.getElementById('menuBtn').addEventListener('click',()=>{dMenu.classList.toggle('open');dc.style.display=dMenu.classList.contains('open')?'block':'none';});

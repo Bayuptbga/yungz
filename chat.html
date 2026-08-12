@@ -139,10 +139,7 @@
   const colorPalette = ['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return (u||'?').slice(0,2).toUpperCase();}
-  function normalizeText(str){if(!str)return'';str=str.replace(/[  ]/g,'
-');const lines=str.split('
-').map(l=>l.replace(/[ 	]+$/,''));const out=[];let blankRun=0;for(const line of lines){if(line.trim()===''){blankRun++;if(blankRun<=1)out.push('');}else{blankRun=0;out.push(line);}}return out.join('
-').trim();}
+  function normalizeText(str){if(!str)return'';str=str.replace(/[  ]/g,'\n');const lines=str.split('\n').map(l=>l.replace(/[ \t]+$/,''));const out=[];let blankRun=0;for(const line of lines){if(line.trim()===''){blankRun++;if(blankRun<=1)out.push('');}else{blankRun=0;out.push(line);}}return out.join('\n').trim();}
   function timeLabel(iso){return new Date(iso).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});}
   function dayLabel(iso){const d=new Date(iso),t=new Date(),y=new Date();y.setDate(t.getDate()-1);const s=(a,b)=>a.toDateString()===b.toDateString();if(s(d,t))return'Hari ini';if(s(d,y))return'Kemarin';return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});}
   function tickSvg(del,read){
