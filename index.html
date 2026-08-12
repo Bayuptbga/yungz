@@ -87,6 +87,7 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
+    z-index: 10;
   }
   .appbar .left{
     display:flex;
@@ -212,37 +213,63 @@
     color:#e0433d;
   }
 
-  /* tabs */
+  /* tabbar modern di bawah */
   .tabbar{
     display:flex;
-    background:#f7f9fa;
-    border-bottom:1px solid var(--border);
+    background:rgba(255, 255, 255, 0.92);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border-top:1px solid rgba(0,0,0,0.06);
+    box-shadow:0 -4px 15px rgba(0,0,0,0.02);
+    padding-bottom:env(safe-area-inset-bottom);
+    z-index: 30;
   }
   .tabbar .tabitem{
     flex:1;
-    padding:14px 0 11px;
+    padding:10px 0 8px;
     display:flex;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
     position:relative;
     cursor:pointer;
+    color:var(--muted);
+    gap:4px;
+    transition:color 0.2s ease;
+    -webkit-tap-highlight-color:transparent;
   }
   .tabbar .tabitem.active{
-    border-bottom:3px solid var(--tab-active);
+    color:var(--tab-active);
   }
   .tabbar .tabitem svg{
-    width:22px;
-    height:22px;
+    width:24px;
+    height:24px;
+    transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .tabbar .tabitem.active svg{
+    transform:translateY(-3px) scale(1.08);
+  }
+  .tab-label {
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.2px;
   }
   .tabbar .tabitem .badge{
     position:absolute;
-    top:8px;
-    right:calc(50% - 16px);
-    width:9px;
-    height:9px;
-    border-radius:50%;
+    top:4px;
+    right:calc(50% - 22px);
+    min-width:16px;
+    height:16px;
+    border-radius:8px;
     background:#e0433d;
-    border:1.5px solid #f7f9fa;
+    border:1.5px solid #fff;
+    color:#fff;
+    font-size:10px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 3px;
   }
 
   /* chat list */
@@ -335,7 +362,7 @@
   .fab{
     position:absolute;
     right:18px;
-    bottom:24px;
+    bottom:18px;
     width:56px;
     height:56px;
     border-radius:50%;
@@ -345,6 +372,12 @@
     justify-content:center;
     box-shadow:0 4px 14px rgba(0,0,0,0.25);
     cursor:pointer;
+    z-index: 20;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .fab:active{
+    transform: scale(0.95);
+    box-shadow:0 2px 8px rgba(0,0,0,0.2);
   }
   .fab svg{width:24px;height:24px;}
 
@@ -356,23 +389,6 @@
   }
   .logout-btn{
     cursor:pointer;
-  }
-  .tabbar .tabitem .badge{
-    position:absolute;
-    top:8px;
-    right:calc(50% - 16px);
-    min-width:16px;
-    height:16px;
-    border-radius:8px;
-    background:#e0433d;
-    border:1.5px solid #f7f9fa;
-    color:#fff;
-    font-size:10px;
-    font-weight:700;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:0 3px;
   }
 
   /* dropdown menu titik tiga */
@@ -488,7 +504,7 @@
     cursor:pointer;
   }
 
-  /* ---------- Panel switching (tab tidak pindah halaman) ---------- */
+  /* ---------- Panel switching ---------- */
   .tab-panel{
     display:none;
     flex:1;
@@ -675,7 +691,7 @@
     </div>
     <div class="right">
       <div class="icon-btn" id="menuBtn" title="Menu lainnya">
-        <svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+        <svg viewBox="0 0 24 24" fill="#fff" width="22" height="22"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
         <div class="dropdown-menu" id="dropdownMenu">
           <div class="dd-item" id="ddChatBaru">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg>
@@ -731,22 +747,6 @@
     </div>
   </div>
 
-  <div class="tabbar">
-    <div class="tabitem active" id="tabChats">
-      <svg viewBox="0 0 24 24" fill="#0092d1"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
-    </div>
-    <div class="tabitem" id="tabStatus">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4.5 9a8 8 0 0114-4.5M19.5 15a8 8 0 01-14 4.5"/></svg>
-    </div>
-    <div class="tabitem" id="tabKontak">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>
-    </div>
-    <div class="tabitem" id="tabNotif">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-      <span class="badge" id="notifBadge" style="display:none;"></span>
-    </div>
-  </div>
-
   <!-- ===== Panel: Chats (tab default) ===== -->
   <div class="tab-panel active" id="panelChats">
     <div class="chatlist" id="chatlist"></div>
@@ -796,6 +796,28 @@
     <div id="updateList"></div>
   </div>
 
+  <!-- ===== TABBAR PINDAH KE BAWAH SINI ===== -->
+  <div class="tabbar">
+    <div class="tabitem active" id="tabChats">
+      <svg viewBox="0 0 24 24" fill="#0092d1"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+      <span class="tab-label">Chats</span>
+    </div>
+    <div class="tabitem" id="tabStatus">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4.5 9a8 8 0 0114-4.5M19.5 15a8 8 0 01-14 4.5"/></svg>
+      <span class="tab-label">Status</span>
+    </div>
+    <div class="tabitem" id="tabKontak">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg>
+      <span class="tab-label">Kontak</span>
+    </div>
+    <div class="tabitem" id="tabNotif">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#7a8a92" stroke-width="2"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <span class="tab-label">Notif</span>
+      <span class="badge" id="notifBadge" style="display:none;"></span>
+    </div>
+  </div>
+  <!-- ======================================= -->
+
 </div>
 
 <script>
@@ -809,8 +831,7 @@
   function initials(username){
     return (username || '?').slice(0,2).toUpperCase();
   }
-  // Cegah stored XSS: semua data yang berasal dari user lain (username,
-  // isi pesan) WAJIB lewat sini sebelum disisipkan ke innerHTML.
+  // Cegah stored XSS
   function escapeHtml(str){
     const d = document.createElement('div');
     d.textContent = str == null ? '' : String(str);
@@ -826,7 +847,6 @@
   }
 
   // Ikon centang gaya BBM/WhatsApp:
-  // 1 centang abu = terkirim, 2 centang abu = diterima, 2 centang biru = dibaca
   function tickSvg(deliveredAt, readAt){
     if(readAt){
       return `<svg viewBox="0 0 20 15" width="15" height="11" fill="none" stroke="#2b8fe0" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
@@ -878,7 +898,6 @@
     const list = document.getElementById('chatlist');
     list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);font-size:13.5px;">Memuat...</div>';
 
-    // Kontak yang sudah berteman (accepted)
     const { data: contactRows } = await supabaseClient
       .from('contacts')
       .select('requester_id, addressee_id')
@@ -894,8 +913,6 @@
       return;
     }
 
-    // Ambil pesan terbaru yang melibatkan kita, lalu ambil satu pesan
-    // terakhir per lawan bicara (pesan sudah terurut dari yang terbaru).
     const { data: msgRows } = await supabaseClient
       .from('messages')
       .select('sender_id, receiver_id, content, created_at, delivered_at, read_at')
@@ -903,8 +920,6 @@
       .order('created_at', { ascending: false })
       .limit(300);
 
-    // Ambil daftar "titik hapus chat" per lawan bicara, biar preview di sini
-    // juga ikut nyembunyiin pesan yang sudah di-"Hapus Chat" dari tampilan kita.
     const { data: clearRows } = await supabaseClient
       .from('chat_clears')
       .select('peer_id, cleared_before')
@@ -916,7 +931,7 @@
       const partner = m.sender_id === userId ? m.receiver_id : m.sender_id;
       if(!acceptedIds.has(partner)) return;
       const cutoff = clearedMap.get(partner);
-      if(cutoff && m.created_at <= cutoff) return; // sudah "dihapus" dari tampilan kita
+      if(cutoff && m.created_at <= cutoff) return;
       if(!lastByPartner.has(partner)) lastByPartner.set(partner, m);
     });
 
@@ -952,8 +967,6 @@
     render(chats);
   }
 
-  // Tandai semua pesan masuk sebagai "diterima" begitu aplikasi dibuka
-  // (menandakan pesan sudah sampai di perangkat penerima).
   async function markInboxDelivered(userId){
     await supabaseClient
       .from('messages')
@@ -964,7 +977,7 @@
 
   let presenceTracked = false;
   function trackOnlinePresence(userId){
-    if(presenceTracked) return; // refreshNotifBadge() bisa terpanggil berkali-kali, cukup subscribe 1x
+    if(presenceTracked) return;
     presenceTracked = true;
     const channel = supabaseClient.channel('online-users', {
       config: { presence: { key: userId } }
@@ -976,7 +989,6 @@
     });
   }
 
-  // Proteksi halaman: kalau belum login, lempar ke login.html
   async function refreshNotifBadge(){
     const { data: { session } } = await supabaseClient.auth.getSession();
     if(!session){
@@ -998,15 +1010,9 @@
       document.getElementById('drawerAvatar').style.background = colorFor(session.user.id);
     }
 
-    // Aktifkan push notification (minta izin & simpan subscription)
     initPushNotifications(session.user.id);
-
-    // Tandai diri sendiri "online" selama app ini terbuka, biar lawan chat
-    // bisa lihat status "Sedang Online" walau kita cuma di halaman daftar chat.
     trackOnlinePresence(session.user.id);
 
-    // Hitung notifikasi: permintaan pertemanan masuk yang belum dijawab
-    // + notifikasi diterima/ditolak yang belum dilihat, tampilkan di badge
     const { count: pendingCount } = await supabaseClient
       .from('contacts')
       .select('id', { count: 'exact', head: true })
@@ -1034,7 +1040,7 @@
   }
 
   // ============================================================
-  // Panel Kontak (dulunya kontak.html)
+  // Panel Kontak
   // ============================================================
   let foundProfile = null;
   const pinInput = document.getElementById('pinInput');
@@ -1175,7 +1181,7 @@
   }
 
   // ============================================================
-  // Panel Notifikasi (dulunya notifikasi.html)
+  // Panel Notifikasi
   // ============================================================
   const reqList = document.getElementById('reqList');
   const updateList = document.getElementById('updateList');
@@ -1255,8 +1261,6 @@
       }
     }, 300);
 
-    // Kalau diterima, kontak baru ini otomatis nongol lain kali tab
-    // Kontak dibuka. Refresh badge & daftar chat juga.
     refreshNotifBadge();
   }
 
@@ -1318,9 +1322,6 @@
 
   refreshNotifBadge();
 
-  // Halaman yang dipulihkan dari cache browser (mis. tombol back dari
-  // notifikasi.html) tidak menjalankan ulang script di atas secara otomatis,
-  // jadi kita paksa cek ulang badge tiap kali halaman ini kembali ditampilkan.
   window.addEventListener('pageshow', (e) => {
     if(e.persisted){
       refreshNotifBadge();
@@ -1333,28 +1334,21 @@
   });
 
   // ============================================================
-  // Tab switching di dalam satu halaman (SPA) — Chats / Status /
-  // Kontak / Notifikasi tidak lagi pindah ke file .html terpisah,
-  // cuma ganti-ganti panel yang ditampilkan.
+  // Tab switching 
   // ============================================================
   const tabDefs = {
-    chats:  { tabEl: 'tabChats',  panelEl: 'panelChats',  title: 'BBM Chats',   showSub: true,  showFab: true  },
-    status: { tabEl: 'tabStatus', panelEl: 'panelStatus', title: 'Status',      showSub: false, showFab: false },
-    kontak: { tabEl: 'tabKontak', panelEl: 'panelKontak', title: 'Kontak',      showSub: false, showFab: false },
-    notif:  { tabEl: 'tabNotif',  panelEl: 'panelNotif',  title: 'Notifikasi',  showSub: false, showFab: false }
+    chats:  { tabEl: 'tabChats',  panelEl: 'panelChats',  title: 'BBM Chats',   showFab: true  },
+    status: { tabEl: 'tabStatus', panelEl: 'panelStatus', title: 'Status',      showFab: false },
+    kontak: { tabEl: 'tabKontak', panelEl: 'panelKontak', title: 'Kontak',      showFab: false },
+    notif:  { tabEl: 'tabNotif',  panelEl: 'panelNotif',  title: 'Notifikasi',  showFab: false }
   };
   let activeTab = 'chats';
-  let onNonChatTab = false; // lagi ada 1 history entry "nyangkut" buat tab non-Chat
+  let onNonChatTab = false;
 
   function switchTab(name, fromPopstate){
     if(!tabDefs[name]) return;
     activeTab = name;
 
-    // Atur history: dari tab Chat -> tab lain = numpuk 1 entry baru (biar back
-    // bisa balik ke Chat). Antar tab non-Chat (Status<->Kontak<->Notif) = replace
-    // entry yang sama, jangan numpuk lagi, biar back cuma butuh 1x pencet buat
-    // balik ke Chat dari tab manapun. Dari tab Chat sendiri = gak ada entry
-    // nyangkut, jadi back berikutnya bakal nutup app (bukan cuma balik ke SPA).
     if(!fromPopstate){
       if(name !== 'chats'){
         if(!onNonChatTab){
@@ -1364,10 +1358,8 @@
         }
         onNonChatTab = true;
       } else if(onNonChatTab){
-        // User klik tab "Chats" manual (bukan lewat back) waktu lagi di tab lain
-        // -> buang entry yang nyangkut itu, biar balik ke kondisi "bersih".
         history.back();
-        return; // switchTab beneran akan dipanggil ulang lewat event popstate
+        return; 
       }
     }
 
@@ -1377,6 +1369,7 @@
       const isActive = key === name;
       tabEl.classList.toggle('active', isActive);
       panelEl.classList.toggle('active', isActive);
+      
       const svg = tabEl.querySelector('svg');
       if(svg){
         if(isActive){
@@ -1394,7 +1387,7 @@
     document.getElementById('fabNewChat').style.display = def.showFab ? 'flex' : 'none';
 
     if(name === 'status'){
-      // Placeholder — belum ada data untuk dimuat.
+      // Placeholder
     } else if(name === 'kontak'){
       loadContacts();
     } else if(name === 'notif'){
@@ -1412,9 +1405,6 @@
   document.getElementById('tabKontak').addEventListener('click', () => switchTab('kontak'));
   document.getElementById('tabNotif').addEventListener('click', () => switchTab('notif'));
 
-  // Tombol back Android: kalau lagi di tab Status/Kontak/Notif -> balik ke tab
-  // Chat. Kalau lagi di tab Chat (gak ada entry nyangkut) -> biarkan browser/TWA
-  // proses back seperti biasa, yang artinya app-nya nutup.
   window.addEventListener('popstate', () => {
     if(onNonChatTab){
       onNonChatTab = false;
@@ -1427,7 +1417,7 @@
     window.location.replace('login.html');
   });
 
-  // Side drawer (menu garis tiga)
+  // Side drawer
   const hamburgerBtn = document.getElementById('hamburgerBtn');
   const drawer = document.getElementById('drawer');
   const drawerOverlay = document.getElementById('drawerOverlay');
@@ -1452,10 +1442,9 @@
   const installBtn = document.getElementById('drawerInstallApp');
   let deferredInstallPrompt = null;
 
-  // Deteksi apakah sudah berjalan sebagai app terinstall (standalone mode)
   function isRunningStandalone(){
     return window.matchMedia('(display-mode: standalone)').matches
-      || window.navigator.standalone === true; // iOS Safari
+      || window.navigator.standalone === true; 
   }
 
   window.addEventListener('beforeinstallprompt', (e) => {
