@@ -4,6 +4,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "com.bbmessage.yungz",
-        "sha256_cert_fingerprints": ["BB:44:1A:7A:4A:7F:48:9D:FB:1F:99:CE:48:8D:DD:45:C6:2A:A5:9A:92:3D:52:57:E2:FD:BC:C8:4C:EE:E5:D1"]
+        "sha256_cert_fingerprints": ["38:00:0C:EE:A5:7B:28:FC:BB:DE:BE:3E:B2:C6:67:5E:34:A8:16:98:F3:29:00:B7:3F:20:1A:AC:C8:58:1A:D0"]
       }
     }]
