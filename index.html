@@ -309,7 +309,7 @@
       b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Masuk';
       return;
     }
-    window.location.replace('dashboard.html');
+    window.location.replace('dashboard');
   });
 
   // Daftar
@@ -355,7 +355,7 @@
   // Setelah lihat PIN, lanjut langsung ke dashboard. PIN Enkripsi TIDAK
   // ditanya di sini -- baru ditawarkan nanti saat user pertama kali buka sebuah chat
   // (lihat chat.html).
-  document.getElementById('pinContinueBtn').addEventListener('click', () => { window.location.replace('dashboard.html'); });
+  document.getElementById('pinContinueBtn').addEventListener('click', () => { window.location.replace('dashboard'); });
 
   // Buka panel sesuai hash URL (index.html#daftar), default: login
   if(location.hash === '#daftar'){ switchPanel('daftar'); }
@@ -363,7 +363,7 @@
   // Kalau sesi masih aktif, langsung lempar ke dashboard tanpa perlu login ulang.
   (async()=>{
     const {data:{session}}=await supabaseClient.auth.getSession();
-    if(session){ window.location.replace('dashboard.html'); return; }
+    if(session){ window.location.replace('dashboard'); return; }
     document.getElementById('authGate').style.display='none';
   })();
 </script>
