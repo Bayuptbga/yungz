@@ -189,7 +189,7 @@
       <div class="found-card" id="foundCard"><div class="avatar" id="foundAvatar">?</div><div class="info"><div class="uname" id="foundUname">—</div><div class="pin-label">Ditemukan</div></div><button id="sendRequestBtn">Kirim</button></div>
     </div><div class="section-title">Kontak Saya</div><div id="contactList"></div>
   </div>
-  <div class="tab-panel" id="panelNotif"><div class="section-title">Permintaan</div><div id="reqList"></div><div class="section-title">Pembaruan</div><div id="updateList"></div></div>
+  <div class="tab-panel" id="panelNotif"><div id="notifList"></div></div>
   <div class="tabbar">
     <div class="tabitem active" id="tabChats"><svg viewBox="0 0 24 24" fill="var(--ink)" stroke="none"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg><span class="tlabel">Chat</span></div>
     <div class="tabitem" id="tabStatus"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4.5 9a8 8 0 0114-4.5M19.5 15a8 8 0 01-14 4.5"/></svg><span class="tlabel">Status</span></div>
@@ -290,26 +290,31 @@
     cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${id}" data-uname="${pMap[id]}"><div class="avatar" style="background:${colorFor(id)}">${initials(pMap[id])}</div><div class="uname">${pMap[id]}</div></div>`).join('');
     document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
   }
-  async function loadRequests(){
-    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const rl=document.getElementById('reqList');rl.innerHTML=skeletonRow().repeat(3);
-    const {data:rows}=await supabaseClient.from('contacts').select('id, requester_id').eq('addressee_id',session.user.id).eq('status','pending');
-    if(!rows||rows.length===0){rl.innerHTML='<div class="panel-empty"><div class="icon"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg></div>Tidak ada permintaan pertemanan.</div>';return;}
-    const rIds=rows.map(r=>r.requester_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',rIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
-    rl.innerHTML=rows.map(r=>`<div class="req-item"><div class="avatar" style="background:${colorFor(r.requester_id)}">${initials(pMap[r.requester_id])}</div><div class="info"><div class="uname">@${pMap[r.requester_id]}</div><div class="sub">Ingin berteman dengan kamu</div></div><div class="req-actions"><button class="btn-accept" onclick="respondReq('${r.id}','accepted',this)">✓ Terima</button><button class="btn-decline" onclick="respondReq('${r.id}','declined',this)">Tolak</button></div></div>`).join('');
+  async function loadNotifications(){
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const nl=document.getElementById('notifList');nl.innerHTML=skeletonRow().repeat(4);
+    const [{data:reqRows},{data:updRows}]=await Promise.all([
+      supabaseClient.from('contacts').select('id, requester_id').eq('addressee_id',session.user.id).eq('status','pending'),
+      supabaseClient.from('contacts').select('id, addressee_id, status, seen_by_requester').eq('requester_id',session.user.id).in('status',['accepted','declined'])
+    ]);
+    const items=[
+      ...(reqRows||[]).map(r=>({kind:'request',id:r.id,uid:r.requester_id})),
+      ...(updRows||[]).map(r=>({kind:'update',id:r.id,uid:r.addressee_id,status:r.status,seen:r.seen_by_requester}))
+    ].sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+    if(items.length===0){nl.innerHTML='<div class="panel-empty"><div class="icon"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="var(--muted)" stroke-width="1.6"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>Belum ada notifikasi.</div>';return;}
+    const uids=[...new Set(items.map(i=>i.uid))];const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',uids);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
+    nl.innerHTML=items.map(it=>{
+      if(it.kind==='request'){
+        return `<div class="req-item"><div class="avatar" style="background:${colorFor(it.uid)}">${initials(pMap[it.uid])}</div><div class="info"><div class="uname">@${pMap[it.uid]}</div><div class="sub">Ingin berteman dengan kamu</div></div><div class="req-actions"><button class="btn-accept" onclick="respondReq('${it.id}','accepted',this)">✓ Terima</button><button class="btn-decline" onclick="respondReq('${it.id}','declined',this)">Tolak</button></div></div>`;
+      }
+      return `<div class="notif-item ${it.seen?'':'unseen'}"><div class="avatar" style="background:${colorFor(it.uid)}">${initials(pMap[it.uid])}</div><div class="info"><div class="uname">@${pMap[it.uid]}</div><div class="sub">${it.status==='accepted'?'✅ Diterima':'❌ Ditolak'}</div></div>${it.seen?'':'<span class="status-dot new"></span>'}</div>`;
+    }).join('');
+    const uIds=items.filter(i=>i.kind==='update'&&!i.seen).map(i=>i.id);if(uIds.length>0){await supabaseClient.from('contacts').update({seen_by_requester:true}).in('id',uIds);refreshNotifBadge();}
   }
   window.respondReq=async(id,st,btn)=>{
     const item=btn.closest('.req-item');item.querySelectorAll('button').forEach(b=>b.disabled=true);
     await supabaseClient.from('contacts').update({status:st,seen_by_requester:false}).eq('id',id);
     item.classList.add('removing');setTimeout(()=>{item.remove();refreshNotifBadge();},300);
   };
-  async function loadUpdates(){
-    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const ul=document.getElementById('updateList');ul.innerHTML=skeletonRow().repeat(3);
-    const {data:rows}=await supabaseClient.from('contacts').select('id, addressee_id, status, seen_by_requester').eq('requester_id',session.user.id).in('status',['accepted','declined']).order('id',{ascending:false});
-    if(!rows||rows.length===0){ul.innerHTML='<div class="panel-empty"><div class="icon"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="var(--muted)" stroke-width="1.6"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>Belum ada pembaruan.</div>';return;}
-    const oIds=rows.map(r=>r.addressee_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
-    ul.innerHTML=rows.map(r=>`<div class="notif-item ${r.seen_by_requester?'':'unseen'}"><div class="avatar" style="background:${colorFor(r.addressee_id)}">${initials(pMap[r.addressee_id])}</div><div class="info"><div class="uname">@${pMap[r.addressee_id]}</div><div class="sub">${r.status==='accepted'?'✅ Diterima':'❌ Ditolak'}</div></div>${r.seen_by_requester?'':'<span class="status-dot new"></span>'}</div>`).join('');
-    const uIds=rows.filter(r=>!r.seen_by_requester).map(r=>r.id);if(uIds.length>0){await supabaseClient.from('contacts').update({seen_by_requester:true}).in('id',uIds);refreshNotifBadge();}
-  }
   async function boot(){
     const {data:{session}}=await supabaseClient.auth.getSession();
     if(!session){window.location.replace('index.html');return;}
@@ -339,7 +344,7 @@
       if(svg){if(ia){svg.setAttribute('fill',k==='chats'?'var(--ink)':'none');svg.setAttribute('stroke','var(--ink)');}else{svg.setAttribute('fill','none');svg.setAttribute('stroke','var(--muted)');}}
     });
     document.querySelector('.appbar h1').textContent=tabDefs[name].title;document.getElementById('fabNewChat').style.display=name==='chats'?'flex':'none';
-    if(name==='kontak')loadContacts();if(name==='notif'){loadRequests();loadUpdates();}if(name==='chats')supabaseClient.auth.getSession().then(({data:{session}})=>{if(session)loadChats(session.user.id);});
+    if(name==='kontak')loadContacts();if(name==='notif'){loadNotifications();}if(name==='chats')supabaseClient.auth.getSession().then(({data:{session}})=>{if(session)loadChats(session.user.id);});
   }
   document.getElementById('tabChats').addEventListener('click',()=>switchTab('chats'));document.getElementById('tabStatus').addEventListener('click',()=>switchTab('status'));document.getElementById('tabKontak').addEventListener('click',()=>switchTab('kontak'));document.getElementById('tabNotif').addEventListener('click',()=>switchTab('notif'));
   window.addEventListener('popstate',()=>{if(onNonChatTab){onNonChatTab=false;switchTab('chats',true);}});
