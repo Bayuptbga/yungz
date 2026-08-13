@@ -174,7 +174,7 @@
     if(prof){
       currentPin = prof.pin;
       currentUsername = prof.username;
-      document.getElementById('pUsername').textContent = '@'+prof.username;
+      document.getElementById('pUsername').textContent = prof.username;
       document.getElementById('pPin').textContent = prof.pin;
       document.getElementById('pAvatar').textContent = initials(prof.username);
       document.getElementById('pAvatar').style.background = colorFor(session.user.id);
