@@ -188,6 +188,7 @@
   .status-card .sc-like.liked{color:#53bdeb;}
   .status-card .sc-like.liked svg{fill:#53bdeb;}
   .status-card .sc-like:active{background:var(--border);}
+  .status-card .like-count{font-size:12.5px;font-weight:700;}
   .composer-box{ display:flex; align-items:center; gap:6px; margin:14px 16px 0; background:var(--card-bg); border:1px solid var(--border); border-radius:26px; padding:6px 6px 6px 18px; flex-shrink:0; }
   .composer-input{ flex:1; min-width:0; background:transparent; border:none; outline:none; color:var(--ink); font-size:14.5px; font-family:inherit; padding:9px 0; }
   .composer-input::placeholder{ color:var(--muted); }
@@ -376,10 +377,15 @@
     const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
     const oIds=(rows||[]).map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
     const allIds=[session.user.id,...oIds];
-    const {data:sRows}=await supabaseClient.from('statuses').select('user_id, content, created_at, expires_at').in('user_id',allIds).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
+    const {data:sRows}=await supabaseClient.from('statuses').select('id, user_id, content, created_at, expires_at').in('user_id',allIds).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
     if(!sRows||sRows.length===0){sList.innerHTML='<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada pembaruan status.</div>';return;}
     const uIds=sRows.map(s=>s.user_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',uIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
-    sList.innerHTML=sRows.map(s=>`<div class="status-card">
+    const sIds=sRows.map(s=>s.id);const {data:likeRows}=await supabaseClient.from('status_likes').select('status_id, user_id').in('status_id',sIds);
+    const likeCountMap={},myLikedSet=new Set();
+    (likeRows||[]).forEach(l=>{likeCountMap[l.status_id]=(likeCountMap[l.status_id]||0)+1;if(l.user_id===session.user.id)myLikedSet.add(l.status_id);});
+    sList.innerHTML=sRows.map(s=>{
+      const count=likeCountMap[s.id]||0,liked=myLikedSet.has(s.id);
+      return `<div class="status-card">
       <div class="sc-head">
         <div class="sc-avatar" style="background:${colorFor(s.user_id)}">${escapeHtml(initials(pMap[s.user_id]))}</div>
         <div class="sc-head-info">
@@ -391,10 +397,12 @@
       <div class="sc-divider"></div>
       <div class="sc-content">&quot;${escapeHtml(s.content)}&quot;</div>
       <div class="sc-divider"></div>
-      <div class="sc-like" onclick="toggleLike(this)">
+      <div class="sc-like${liked?' liked':''}" data-id="${escapeHtml(s.id)}" onclick="toggleLike(this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 22h-3a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/></svg>
+        <span class="like-count">${count>0?count:''}</span>
       </div>
-    </div>`).join('');
+    </div>`;
+    }).join('');
   }
   async function loadNotifications(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const nl=document.getElementById('notifList');nl.innerHTML=skeletonRow().repeat(4);
@@ -416,7 +424,24 @@
     }).join('');
     const uIds=items.filter(i=>i.kind==='update'&&!i.seen).map(i=>i.id);if(uIds.length>0){await supabaseClient.from('contacts').update({seen_by_requester:true}).in('id',uIds);refreshNotifBadge();}
   }
-  window.toggleLike=(el)=>{ el.classList.toggle('liked'); };
+  window.toggleLike=async(el)=>{
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
+    const statusId=el.dataset.id;if(!statusId||el.dataset.busy==='1')return;
+    el.dataset.busy='1';
+    const countEl=el.querySelector('.like-count');
+    const wasLiked=el.classList.contains('liked');
+    let count=parseInt(countEl.textContent||'0',10)||0;
+    if(wasLiked){
+      el.classList.remove('liked');count=Math.max(0,count-1);countEl.textContent=count>0?count:'';
+      const {error}=await supabaseClient.from('status_likes').delete().eq('status_id',statusId).eq('user_id',session.user.id);
+      if(error){el.classList.add('liked');count+=1;countEl.textContent=count>0?count:'';}
+    }else{
+      el.classList.add('liked');count+=1;countEl.textContent=count>0?count:'';
+      const {error}=await supabaseClient.from('status_likes').insert({status_id:statusId,user_id:session.user.id});
+      if(error){el.classList.remove('liked');count=Math.max(0,count-1);countEl.textContent=count>0?count:'';}
+    }
+    el.dataset.busy='0';
+  };
   window.respondReq=async(id,st,btn)=>{
     const item=btn.closest('.req-item');item.querySelectorAll('button').forEach(b=>b.disabled=true);
     await supabaseClient.from('contacts').update({status:st,seen_by_requester:false}).eq('id',id);
