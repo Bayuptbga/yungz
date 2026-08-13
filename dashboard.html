@@ -173,7 +173,7 @@
   <div class="tab-panel active" id="panelChats"><div class="chatlist" id="chatlist"></div><div class="fab" title="Chat baru" id="fabNewChat"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg></div></div>
   <div class="tab-panel" id="panelStatus"><div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada status.<br>Fitur segera hadir.</div></div>
   <div class="tab-panel" id="panelKontak">
-    <div class="add-section"><div class="label">Tambah kontak via PIN</div><div class="add-row"><input type="text" id="pinInput" placeholder="Masukkan 8 digit PIN" maxlength="8" inputmode="numeric"><button id="searchBtn">Cari</button></div><div class="search-msg" id="searchMsg"></div>
+    <div class="add-section"><div class="label">Tambah kontak via PIN</div><div class="add-row"><input type="text" id="pinInput" placeholder="Masukkan 8 karakter PIN" maxlength="8" autocapitalize="characters"><button id="searchBtn">Cari</button></div><div class="search-msg" id="searchMsg"></div>
       <div class="found-card" id="foundCard"><div class="avatar" id="foundAvatar">?</div><div class="info"><div class="uname" id="foundUname">@—</div><div class="pin-label">Ditemukan</div></div><button id="sendRequestBtn">Kirim</button></div>
     </div><div class="section-title">Kontak Saya</div><div id="contactList"></div>
   </div>
@@ -230,9 +230,9 @@
   }
   let foundProfile=null;const searchBtn=document.getElementById('searchBtn'),searchMsg=document.getElementById('searchMsg'),foundCard=document.getElementById('foundCard');
   searchBtn.addEventListener('click',async()=>{
-    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const pin=document.getElementById('pinInput').value.trim();
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const pin=document.getElementById('pinInput').value.trim().toUpperCase();
     searchMsg.textContent='';searchMsg.className='search-msg';foundCard.classList.remove('show');foundProfile=null;
-    if(!/^\d{8}$/.test(pin)){searchMsg.textContent='PIN 8 digit.';searchMsg.className='search-msg err';return;}
+    if(!/^[A-Za-z0-9]{8}$/.test(pin)){searchMsg.textContent='PIN 8 karakter (huruf/angka).';searchMsg.className='search-msg err';return;}
     searchBtn.disabled=true;searchBtn.textContent='...';
     const {data:rows,error}=await supabaseClient.rpc('search_profile_by_pin',{p_pin:pin});
     searchBtn.disabled=false;searchBtn.textContent='Cari';
