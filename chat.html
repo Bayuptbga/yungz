@@ -45,6 +45,9 @@
     width:100%; max-width:420px; height:100%; background:var(--bg);
     box-shadow:0 0 40px rgba(0,0,0,0.5); display:flex; flex-direction:column; position:relative; overflow:hidden;
   }
+  #authGate{ position:absolute; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center; }
+  #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:#53bdeb; animation:authSpin .75s linear infinite; }
+  @keyframes authSpin{ to{ transform:rotate(360deg); } }
   .appbar{
     background:linear-gradient(120deg,var(--bbm-blue-dark),var(--bbm-blue) 55%,var(--bbm-blue-light));
     color:#fff; padding:calc(12px + env(safe-area-inset-top)) 14px 12px; display:flex; align-items:center; gap:10px;
@@ -113,6 +116,7 @@
 </head>
 <body>
 <div class="phone">
+  <div id="authGate"><div class="spinner"></div></div>
   <div class="appbar">
     <div class="back" onclick="window.location.href='index.html'"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
     <div class="avatar" id="peerAvatar">?</div>
@@ -154,6 +158,7 @@
       if(sessErr) throw sessErr;
       if(!session){window.location.replace('login.html');return;}
       currentUserId=session.user.id;
+      document.getElementById('authGate').style.display='none';
       const {data:rel,error:relErr}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
       if(relErr) throw relErr;
       if(!rel){msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.6 3-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/><path d="M18 8v5M15.5 10.5h5"/></svg></div><div class="es-title">Belum berteman</div><span>Tambahkan lewat tab Kontak dulu ya.</span></div>`;return;}
@@ -162,6 +167,7 @@
       await loadMessages();await markIncomingAsRead();subscribeRealtime();subscribePresence();msgInput.disabled=false;
     }catch(err){
       console.error('init error:',err);
+      document.getElementById('authGate').style.display='none';
       msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#f15c6d" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div><div class="es-title">Gagal memuat percakapan</div><span>Cek koneksi internet lalu tarik-turun atau buka ulang chat ini.</span></div>`;
     }
   }
