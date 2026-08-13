@@ -131,7 +131,7 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
-<script src="e2e.js?v=1"></script>
+<script src="e2e.js?v=2"></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js');});}</script>
 </head>
 <body>
@@ -190,8 +190,10 @@
       if(sessErr) throw sessErr;
       if(!session){window.location.replace('index.html');return;}
       currentUserId=session.user.id;
+      const kp=await E2E.ensureKeypair(currentUserId);
+      if(kp.status!=='ready'){ window.location.replace('index.html'); return; }
+      myPrivateKey=kp.privateKey;
       document.getElementById('authGate').style.display='none';
-      const kp=await E2E.ensureKeypair(currentUserId);myPrivateKey=kp.privateKey;
       const {data:rel,error:relErr}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
       if(relErr) throw relErr;
       if(!rel){msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.6 3-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/><path d="M18 8v5M15.5 10.5h5"/></svg></div><div class="es-title">Belum berteman</div><span>Tambahkan lewat tab Kontak dulu ya.</span></div>`;return;}
