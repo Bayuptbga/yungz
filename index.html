@@ -225,7 +225,7 @@
     <div class="tabs"><div class="tab active" id="tabDaftar2" onclick="switchPanel('daftar')">Daftar</div><div class="tab" id="tabLogin2" onclick="switchPanel('login')">Masuk</div></div>
     <form id="daftarForm">
       <div class="field"><label>Username</label><div class="input-wrap"><span class="prefix">@</span><input type="text" id="daftarUsername" required autocomplete="username"></div><div class="hint" id="uHint"></div></div>
-      <div class="field"><label>Kata Sandi</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="daftarPassword" required autocomplete="new-password"><span class="toggle-pw" onclick="const p=document.getElementById('daftarPassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div></div>
+      <div class="field"><label>Kata Sandi</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="daftarPassword" required minlength="6" autocomplete="new-password"><span class="toggle-pw" onclick="const p=document.getElementById('daftarPassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div><div class="hint" id="pHint">Minimal 6 karakter</div></div>
       <button type="submit" class="btn" id="daftarSubmitBtn"><span class="spinner"></span><span class="btn-label">Daftar</span></button>
     </form>
   </div>
@@ -245,6 +245,15 @@
   </div>
 </div>
 <script>
+  function translateAuthError(msg){
+    const m = (msg||'').toLowerCase();
+    if(m.includes('at least 6')) return 'Kata sandi minimal 6 karakter.';
+    if(m.includes('already registered') || m.includes('already exists') || m.includes('already been registered')) return 'Username sudah dipakai, coba yang lain.';
+    if(m.includes('invalid') && m.includes('email')) return 'Username mengandung karakter yang tidak valid.';
+    if(m.includes('rate limit')) return 'Terlalu banyak percobaan, coba lagi sebentar lagi.';
+    return 'Terjadi kesalahan, coba lagi.';
+  }
+
   function switchPanel(which){
     const isLogin = which==='login';
     document.getElementById('panelLogin').classList.toggle('active', isLogin);
@@ -276,11 +285,16 @@
   document.getElementById('daftarForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const u=document.getElementById('daftarUsername').value.trim(), p=document.getElementById('daftarPassword').value,
-          b=document.getElementById('daftarSubmitBtn'), hint=document.getElementById('uHint');
+          b=document.getElementById('daftarSubmitBtn'), hint=document.getElementById('uHint'), pHint=document.getElementById('pHint');
+    pHint.textContent='Minimal 6 karakter'; pHint.className='hint';
+    if(p.length < 6){
+      pHint.textContent='Kata sandi minimal 6 karakter'; pHint.className='hint err';
+      return;
+    }
     b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Membuat...';
     const {data:sData, error:sErr} = await supabaseClient.auth.signUp({email: usernameToEmail(u), password: p});
     if(sErr){
-      hint.textContent=sErr.message; hint.className='hint err';
+      hint.textContent=translateAuthError(sErr.message); hint.className='hint err';
       b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Daftar';
       return;
     }
