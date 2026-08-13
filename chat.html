@@ -81,8 +81,22 @@
   .e2e-banner{
     align-self:center; max-width:88%; text-align:center; background:rgba(83,189,235,0.1); border:1px solid rgba(83,189,235,0.22);
     color:#bcdff2; font-size:11.5px; line-height:16px; padding:9px 14px; border-radius:10px; margin:6px 0 12px; flex-shrink:0;
-    display:flex; align-items:center; gap:7px;
+    display:flex; align-items:center; gap:7px; cursor:pointer;
   }
+  .e2e-banner .e2e-learn{ font-weight:700; color:#53bdeb; text-decoration:underline; }
+
+  /* ---- Popup "Pelajari selengkapnya" enkripsi E2E ---- */
+  .e2e-info-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:flex-end; justify-content:center; z-index:320; opacity:0; pointer-events:none; transition:opacity .2s ease; }
+  .e2e-info-overlay.open{ opacity:1; pointer-events:auto; }
+  .e2e-info-sheet{ width:100%; max-width:420px; background:var(--card-bg); border:1px solid var(--border); border-top-left-radius:22px; border-top-right-radius:22px; padding:10px 24px calc(28px + env(safe-area-inset-bottom)); box-shadow:0 -10px 40px rgba(0,0,0,0.5); transform:translateY(16px); transition:transform .2s ease; text-align:center; }
+  .e2e-info-overlay.open .e2e-info-sheet{ transform:translateY(0); }
+  .e2e-info-grip{ width:36px; height:4px; border-radius:3px; background:var(--border); margin:0 auto 18px; }
+  .e2e-info-icon{ width:64px; height:64px; border-radius:18px; background:rgba(83,189,235,0.14); display:flex; align-items:center; justify-content:center; margin:0 auto 18px; }
+  .e2e-info-icon svg{ width:30px; height:30px; stroke:#53bdeb; }
+  .e2e-info-sheet h3{ font-size:18px; font-weight:700; color:var(--ink); margin:0 0 12px; line-height:1.35; }
+  .e2e-info-sheet p{ font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 22px; }
+  .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(83,189,235,0.14); color:#53bdeb; border:1px solid rgba(83,189,235,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .e2e-info-close-btn:active{ background:rgba(83,189,235,0.22); }
   .e2e-banner svg{width:14px;height:14px;flex-shrink:0;stroke:#53bdeb;}
   .day-sep{
     align-self:center; position:sticky; top:6px; background:rgba(27,42,50,0.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
@@ -236,6 +250,17 @@
     </div>
   </div>
   <div class="msg-area" id="msgArea"><div class="empty-state"><div class="loading-spinner"></div><span>Memuat percakapan…</span></div></div>
+
+  <!-- Popup "Pelajari selengkapnya" tentang enkripsi end-to-end, dipicu dari banner di atas area pesan -->
+  <div class="e2e-info-overlay" id="e2eInfoOverlay">
+    <div class="e2e-info-sheet">
+      <div class="e2e-info-grip"></div>
+      <div class="e2e-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
+      <h3>Obrolan Anda bersifat privat</h3>
+      <p>Enkripsi end-to-end menjaga pesan pribadi hanya diketahui oleh Anda dan orang yang Anda pilih. Tidak seorang pun di luar obrolan ini, termasuk kami, bisa membaca atau membagikannya.</p>
+      <button type="button" class="e2e-info-close-btn" id="e2eInfoCloseBtn">Mengerti</button>
+    </div>
+  </div>
   <div class="confirm-overlay" id="confirmOverlay">
     <div class="confirm-box">
       <div class="confirm-title" id="confirmTitle">Konfirmasi</div>
@@ -597,7 +622,7 @@
     let query=supabaseClient.from('messages').select('id, sender_id, content, created_at, delivered_at, read_at').or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`).order('created_at',{ascending:true});
     if(clearedBefore)query=query.gt('created_at',clearedBefore);
     const {data:rows,error}=await query;
-    const banner=`<div class="e2e-banner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Pesan terkunci PIN Enkripsi</span></div>`;
+    const banner=`<div class="e2e-banner" id="e2eBanner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Pesan terenkripsi secara end-to-end. Hanya orang di obrolan ini yang bisa membaca atau membagikannya. <span class="e2e-learn">Pelajari selengkapnya</span>.</span></div>`;
     if(error||!rows||rows.length===0){msgArea.innerHTML=banner+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`;return;}
     for(const m of rows){m.content=await E2E.decryptMessage(sharedKey,m.content);}
     msgArea.innerHTML=banner;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});scrollToBottom();
@@ -608,6 +633,18 @@
     row.querySelector('.txt').textContent=normalizeText(m.content);msgArea.appendChild(row);
   }
   function scrollToBottom(){msgArea.scrollTop=msgArea.scrollHeight;}
+
+  // ---- Popup "Pelajari selengkapnya" (info enkripsi E2E) ----
+  // Pakai event delegation karena banner di dalam msgArea di-render ulang tiap loadMessages().
+  document.addEventListener('click', (e) => {
+    if(e.target.closest('#e2eBanner')) document.getElementById('e2eInfoOverlay').classList.add('open');
+  });
+  document.getElementById('e2eInfoCloseBtn').addEventListener('click', () => {
+    document.getElementById('e2eInfoOverlay').classList.remove('open');
+  });
+  document.getElementById('e2eInfoOverlay').addEventListener('click', (e) => {
+    if(e.target.id==='e2eInfoOverlay') document.getElementById('e2eInfoOverlay').classList.remove('open');
+  });
   async function markIncomingAsRead(){const n=new Date().toISOString();await supabaseClient.from('messages').update({delivered_at:n,read_at:n}).eq('sender_id',peerId).eq('receiver_id',currentUserId).is('read_at',null);}
   function subscribeRealtime(){
     supabaseClient.channel('chat-'+[currentUserId,peerId].sort().join('-')).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`receiver_id=eq.${currentUserId}`},async(p)=>{
