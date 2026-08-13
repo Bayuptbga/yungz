@@ -20,7 +20,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_LcTHxYsZJsvZWkdsdQWfoQ_JsV7ahbT';
 // standalone, yang cuma true kalau app dijalankan dari ikon TWA di
 // homescreen (tanpa address bar Chrome), bukan dari tab browser biasa.
 // ==================================================================
-const MOBILE_ONLY_ACCESS = false;
+const MOBILE_ONLY_ACCESS = false; // TEMPORARY: dimatikan sementara buat debugging bug "kebuka e2e.js". Nyalakan lagi (true) setelah bug ketemu & fix.
 
 function isRunningInInstalledApp(){
   // TWA (Android) / PWA yang di-install: browsing context berjalan
