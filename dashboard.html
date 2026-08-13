@@ -313,6 +313,31 @@
   }
   document.getElementById('tabChats').addEventListener('click',()=>switchTab('chats'));document.getElementById('tabStatus').addEventListener('click',()=>switchTab('status'));document.getElementById('tabKontak').addEventListener('click',()=>switchTab('kontak'));document.getElementById('tabNotif').addEventListener('click',()=>switchTab('notif'));
   window.addEventListener('popstate',()=>{if(onNonChatTab){onNonChatTab=false;switchTab('chats',true);}});
+
+  // ---- Geser (swipe) kiri/kanan untuk pindah tab ----
+  (function(){
+    const order=['chats','status','kontak','notif'];
+    const zone=document.querySelector('.phone');
+    let sx=0, sy=0, tracking=false;
+    function blocked(){
+      return document.getElementById('drawer').classList.contains('open')
+        || document.getElementById('pinModalOverlay').classList.contains('open')
+        || document.getElementById('dropdownMenu').classList.contains('open');
+    }
+    zone.addEventListener('touchstart', e=>{
+      if(blocked() || e.touches.length!==1){ tracking=false; return; }
+      sx=e.touches[0].clientX; sy=e.touches[0].clientY; tracking=true;
+    }, {passive:true});
+    zone.addEventListener('touchend', e=>{
+      if(!tracking) return; tracking=false;
+      const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+      if(Math.abs(dx)<60 || Math.abs(dx) < Math.abs(dy)*1.5) return; // terlalu pendek atau lebih vertikal
+      const idx=order.indexOf(activeTab);
+      const nextIdx = dx<0 ? idx+1 : idx-1;
+      if(nextIdx<0 || nextIdx>=order.length) return;
+      switchTab(order[nextIdx]);
+    }, {passive:true});
+  })();
   document.getElementById('logoutBtn').addEventListener('click',async()=>{await supabaseClient.auth.signOut();window.location.replace('index.html');});
   const drawer=document.getElementById('drawer'),drwOverlay=document.getElementById('drawerOverlay');
   document.getElementById('hamburgerBtn').addEventListener('click',()=>{drawer.classList.add('open');drwOverlay.classList.add('open');});
