@@ -432,11 +432,33 @@
     const {error}=await supabaseClient.from('contacts').delete().or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`);
     if(!error)window.location.href='dashboard.html';
   });
+  const PING_MAX=3, PING_WINDOW_MS=3*60*1000;
+  function pingTimestamps(){
+    try{ return JSON.parse(sessionStorage.getItem('ping_ts_'+peerId)||'[]'); }catch(e){ return []; }
+  }
+  function pruneAndGetPings(){
+    const now=Date.now();
+    const kept=pingTimestamps().filter(t=>now-t<PING_WINDOW_MS);
+    return kept;
+  }
   document.getElementById('menuPing').addEventListener('click',async(e)=>{
-    e.stopPropagation();chatMenu.classList.remove('open');if(!sharedKey)return;if(navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
+    e.stopPropagation();chatMenu.classList.remove('open');if(!sharedKey)return;
+    const recent=pruneAndGetPings();
+    if(recent.length>=PING_MAX){
+      const waitMs=PING_WINDOW_MS-(Date.now()-recent[0]);
+      const waitSec=Math.ceil(waitMs/1000);
+      const mm=Math.floor(waitSec/60), ss=waitSec%60;
+      alert(`Kirim ping terlalu sering. Coba lagi dalam ${mm}:${String(ss).padStart(2,'0')}.`);
+      return;
+    }
+    if(navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
     const encrypted=await E2E.encryptMessage(sharedKey,'🔔 PING!!!');
     const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted}).select().single();
-    if(!error){data.content='🔔 PING!!!';if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(data);scrollToBottom();}
+    if(!error){
+      recent.push(Date.now());
+      sessionStorage.setItem('ping_ts_'+peerId,JSON.stringify(recent));
+      data.content='🔔 PING!!!';if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(data);scrollToBottom();
+    }
   });
   history.pushState({page:'chat'},'',location.href);window.addEventListener('popstate',()=>{window.location.href='dashboard.html';});
   if(typeof supabaseClient==='undefined'){
