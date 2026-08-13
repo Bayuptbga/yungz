@@ -119,7 +119,7 @@
     <div class="who"><div class="uname"><span id="peerUname">@—</span><span class="status-dot" id="statusDot"></span></div><div class="sub" id="peerSub">-</div></div>
     <div class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
       <div class="chat-menu" id="chatMenu">
-        <div class="item" id="menuHapusChat">🗑️ Hapus Chat</div><div class="item danger" id="menuHapusKontak">🚫 Hapus Kontak</div><div class="item ping" id="menuPing">🔔 PING!!!</div>
+        <div class="item" id="menuHapusChat">🗑️ Hapus dari Perangkat Saya</div><div class="item danger" id="menuHapusPermanen">🔥 Hapus Permanen (Semua)</div><div class="item danger" id="menuHapusKontak">🚫 Hapus Kontak</div><div class="item ping" id="menuPing">🔔 PING!!!</div>
       </div>
     </div>
   </div>
@@ -216,9 +216,18 @@
   const menuBtn=document.getElementById('menuBtn'),chatMenu=document.getElementById('chatMenu');
   menuBtn.addEventListener('click',(e)=>{e.stopPropagation();chatMenu.classList.toggle('open');});document.addEventListener('click',()=>{chatMenu.classList.remove('open');});
   document.getElementById('menuHapusChat').addEventListener('click',async(e)=>{
-    e.stopPropagation();chatMenu.classList.remove('open');if(!confirm('Hapus riwayat chat ini?'))return;
+    e.stopPropagation();chatMenu.classList.remove('open');if(!confirm('Sembunyikan riwayat chat ini dari perangkat kamu? (Pesan tetap ada di server, dan tetap terlihat oleh lawan bicara.)'))return;
     const n=new Date().toISOString();const {error}=await supabaseClient.from('chat_clears').upsert({user_id:currentUserId,peer_id:peerId,cleared_before:n},{onConflict:'user_id,peer_id'});
     if(!error){clearedBefore=n;msgArea.innerHTML=`<div class="empty-state"><span>Belum ada pesan.</span></div>`;}
+  });
+  document.getElementById('menuHapusPermanen').addEventListener('click',async(e)=>{
+    e.stopPropagation();chatMenu.classList.remove('open');
+    if(!confirm('Hapus SEMUA pesan di percakapan ini secara permanen dari server? Ini tidak bisa dibatalkan dan akan menghapusnya juga untuk lawan bicara.'))return;
+    const {error}=await supabaseClient.from('messages').delete().or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`);
+    if(error){alert('Gagal menghapus permanen. Coba lagi.');return;}
+    clearedBefore=null;
+    await supabaseClient.from('chat_clears').delete().eq('user_id',currentUserId).eq('peer_id',peerId);
+    msgArea.innerHTML=`<div class="empty-state"><span>Belum ada pesan.</span></div>`;
   });
   document.getElementById('menuHapusKontak').addEventListener('click',async(e)=>{
     e.stopPropagation();chatMenu.classList.remove('open');if(!confirm('Hapus kontak ini?'))return;
