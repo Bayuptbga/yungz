@@ -172,7 +172,7 @@
     <div class="badge-row" id="topBadge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Akses dibatasi kontak &amp; PIN pribadi</span></div>
   </div>
   <div class="body" id="formBody">
-    <div class="tabs"><div class="tab active">Daftar</div><div class="tab" onclick="location.replace('login.html')">Masuk</div></div>
+    <div class="tabs"><div class="tab active">Daftar</div><div class="tab" onclick="location.replace('index.html')">Masuk</div></div>
     <form id="daftarForm">
       <div class="field"><label>Username</label><div class="input-wrap"><span class="prefix">@</span><input type="text" id="username" required autocomplete="username"></div><div class="hint" id="uHint"></div></div>
       <div class="field"><label>Kata Sandi</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="password" required autocomplete="new-password"><span class="toggle-pw" onclick="const p=document.getElementById('password');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div></div>
@@ -189,7 +189,7 @@
       <button class="pin-copy" id="pinCopyBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg><span id="pinCopyLabel">Salin PIN</span></button>
     </div>
     <div class="pin-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>PIN ini kunci orang lain menemukanmu</span></div>
-    <button class="btn" onclick="location.replace('index.html')"><span class="btn-label">Lanjut ke Chat</span></button>
+    <button class="btn" onclick="location.replace('dashboard.html')"><span class="btn-label">Lanjut ke Chat</span></button>
   </div>
 </div>
 <script>
