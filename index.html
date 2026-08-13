@@ -336,8 +336,7 @@
     const pin = generatePin();
     await supabaseClient.from('profiles').insert({id: sData.user.id, username: u, pin: pin});
     // Buat & publish keypair ECDH secara diam-diam di background (biar orang lain
-    // langsung bisa kirim pesan terenkripsi ke akun ini). PIN Enkripsi untuk
-    // BACKUP kunci ini baru ditawarkan nanti saat user pertama kali buka sebuah chat.
+    // langsung bisa kirim pesan terenkripsi ke akun ini).
     try{ await E2E.ensureKeypair(sData.user.id); }
     catch(e){ console.error('Gagal setup kunci enkripsi:', e); }
     document.getElementById('panelDaftar').style.display='none';
