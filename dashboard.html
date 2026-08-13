@@ -71,6 +71,7 @@
   .tabbar .tabitem .tlabel{ font-size:9px; font-weight:600; color:var(--muted); line-height:1; }
   .tabbar .tabitem.active .tlabel{ color:var(--ink); }
   .tabbar .tabitem .badge{ position:absolute; top:3px; right:12px; width:7px; height:7px; border-radius:50%; background:var(--error); border:1.5px solid var(--card-bg); }
+  .e2e-strip{ display:flex; align-items:center; justify-content:center; gap:6px; padding:8px 10px; background:rgba(83,189,235,0.08); color:#8fc3dd; font-size:11px; font-weight:600; flex-shrink:0; }
   .chatlist{ flex:1; overflow-y:auto; }
   .skel-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; }
   .skel-avatar{ width:52px; height:52px; border-radius:50%; flex-shrink:0; background:var(--border); }
@@ -154,6 +155,7 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
+<script src="e2e.js?v=1"></script>
 <script src="push-notif.js"></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js');});}</script>
 </head>
@@ -172,7 +174,7 @@
     </div>
     <div class="drawer-footer"><div class="drawer-item" id="logoutBtn"><svg viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/></svg><span>Keluar</span></div></div>
   </div>
-  <div class="tab-panel active" id="panelChats"><div class="chatlist" id="chatlist"></div><div class="fab" title="Chat baru" id="fabNewChat"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg></div></div>
+  <div class="tab-panel active" id="panelChats"><div class="e2e-strip" id="e2eStrip"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Chat kamu dienkripsi end-to-end</span></div><div class="chatlist" id="chatlist"></div><div class="fab" title="Chat baru" id="fabNewChat"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg></div></div>
   <div class="tab-panel" id="panelStatus"><div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada status.<br>Fitur segera hadir.</div></div>
   <div class="tab-panel" id="panelKontak">
     <div class="add-section"><div class="label">Tambah kontak via PIN</div><div class="add-row"><input type="text" id="pinInput" placeholder="Masukkan 8 karakter PIN" maxlength="8" autocapitalize="characters"><button id="searchBtn">Cari</button></div><div class="search-msg" id="searchMsg"></div>
@@ -188,7 +190,7 @@
   </div>
 </div>
 <script>
-  let currentUserPin=null;const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
+  let currentUserPin=null,myPrivateKey=null;const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return(u||'?').slice(0,2).toUpperCase();}
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
@@ -212,9 +214,17 @@
     const lastByPartner=new Map();
     (msgRows||[]).forEach(m=>{const p=m.sender_id===userId?m.receiver_id:m.sender_id;if(!acceptedIds.has(p))return;const cutoff=clearedMap.get(p);if(cutoff&&m.created_at<=cutoff)return;if(!lastByPartner.has(p))lastByPartner.set(p,m);});
     if(lastByPartner.size===0){render([]);return;}
-    const pIds=[...lastByPartner.keys()];const {data:profilesData}=await supabaseClient.from('profiles').select('id, username').in('id',pIds);
-    const pMap={};(profilesData||[]).forEach(p=>pMap[p.id]=p.username);
-    render(pIds.map(pid=>{const m=lastByPartner.get(pid);const mine=m.sender_id===userId;return {uid:pid,uname:pMap[pid]||'Pengguna',preview:(mine?'Kamu: ':'')+m.content,time:m.created_at,mine,deliveredAt:m.delivered_at,readAt:m.read_at,unread:!mine&&!m.read_at};}));
+    const pIds=[...lastByPartner.keys()];const {data:profilesData}=await supabaseClient.from('profiles').select('id, username, public_key').in('id',pIds);
+    const pMap={};(profilesData||[]).forEach(p=>pMap[p.id]=p);
+    const chats=await Promise.all(pIds.map(async pid=>{
+      const m=lastByPartner.get(pid);const mine=m.sender_id===userId;const prof=pMap[pid]||{};
+      let previewText=m.content;
+      if(myPrivateKey&&prof.public_key){
+        try{const sk=await E2E.getSharedKey(myPrivateKey,pid,prof.public_key);previewText=await E2E.decryptMessage(sk,m.content);}catch(e){}
+      }
+      return {uid:pid,uname:prof.username||'Pengguna',preview:(mine?'Kamu: ':'')+previewText,time:m.created_at,mine,deliveredAt:m.delivered_at,readAt:m.read_at,unread:!mine&&!m.read_at};
+    }));
+    render(chats);
   }
   async function markInboxDelivered(userId){await supabaseClient.from('messages').update({delivered_at:new Date().toISOString()}).eq('receiver_id',userId).is('delivered_at',null);}
   let presenceTracked=false;function trackOnlinePresence(userId){if(presenceTracked)return;presenceTracked=true;supabaseClient.channel('online-users',{config:{presence:{key:userId}}}).subscribe(async(s)=>{if(s==='SUBSCRIBED')await supabaseClient.channel('online-users').track({online_at:new Date().toISOString()});});}
@@ -285,6 +295,7 @@
   async function boot(){
     const {data:{session}}=await supabaseClient.auth.getSession();
     if(!session){window.location.replace('index.html');return;}
+    const kp=await E2E.ensureKeypair(session.user.id);myPrivateKey=kp.privateKey;
     document.getElementById('authGate').style.display='none';
     refreshNotifBadge();
   }
