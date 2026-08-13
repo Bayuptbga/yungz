@@ -363,7 +363,7 @@
     if(!content){myStatusMsg.textContent='Status tidak boleh kosong.';myStatusMsg.className='search-msg err';return;}
     postStatusBtn.classList.add('disabled');
     const expiresAt=new Date(Date.now()+24*60*60*1000).toISOString();
-    const {error}=await supabaseClient.from('statuses').upsert({user_id:session.user.id,content,created_at:new Date().toISOString(),expires_at:expiresAt},{onConflict:'user_id'});
+    const {error}=await supabaseClient.from('statuses').insert({user_id:session.user.id,content,created_at:new Date().toISOString(),expires_at:expiresAt});
     postStatusBtn.classList.remove('disabled');
     if(error){myStatusMsg.textContent='Gagal mengirim status.';myStatusMsg.className='search-msg err';return;}
     myStatusMsg.textContent='Status diperbarui, aktif 24 jam.';myStatusMsg.className='search-msg ok';
