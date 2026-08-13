@@ -1,4 +1,4 @@
-// Service Worker - BBM Private Chat
+// Service Worker - Private Chat
 const CACHE_NAME = 'private-chat-v3';
 
 // File "app shell" yang dicache saat instalasi, biar bisa dibuka offline
@@ -73,7 +73,7 @@ self.addEventListener('fetch', (event) => {
 
 // Terima push notification dari server (dikirim lewat Supabase Edge Function)
 self.addEventListener('push', (event) => {
-  let payload = { title: 'BBM Private Chat', body: 'Ada pesan baru', url: './index.html' };
+  let payload = { title: 'Private Chat', body: 'Ada pesan baru', url: './index.html' };
   try {
     if (event.data) payload = { ...payload, ...event.data.json() };
   } catch (e) {
