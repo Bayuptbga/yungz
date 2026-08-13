@@ -118,7 +118,7 @@
 <div class="phone">
   <div id="authGate"><div class="spinner"></div></div>
   <div class="appbar">
-    <div class="back" onclick="window.location.href='index.html'"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <div class="back" onclick="window.location.href='dashboard.html'"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
     <div class="avatar" id="peerAvatar">?</div>
     <div class="who"><div class="uname"><span id="peerUname">@—</span><span class="status-dot" id="statusDot"></span></div><div class="sub" id="peerSub">-</div></div>
     <div class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
@@ -153,10 +153,10 @@
   }
   async function init(){
     try{
-      if(!peerId){window.location.href='index.html';return;}
+      if(!peerId){window.location.href='dashboard.html';return;}
       const {data:{session},error:sessErr} = await supabaseClient.auth.getSession();
       if(sessErr) throw sessErr;
-      if(!session){window.location.replace('login.html');return;}
+      if(!session){window.location.replace('index.html');return;}
       currentUserId=session.user.id;
       document.getElementById('authGate').style.display='none';
       const {data:rel,error:relErr}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
@@ -238,14 +238,14 @@
   document.getElementById('menuHapusKontak').addEventListener('click',async(e)=>{
     e.stopPropagation();chatMenu.classList.remove('open');if(!confirm('Hapus kontak ini?'))return;
     const {error}=await supabaseClient.from('contacts').delete().or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`);
-    if(!error)window.location.href='index.html';
+    if(!error)window.location.href='dashboard.html';
   });
   document.getElementById('menuPing').addEventListener('click',async(e)=>{
     e.stopPropagation();chatMenu.classList.remove('open');if(navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
     const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:'🔔 PING!!!'}).select().single();
     if(!error){if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(data);scrollToBottom();}
   });
-  history.pushState({page:'chat'},'',location.href);window.addEventListener('popstate',()=>{window.location.href='index.html';});
+  history.pushState({page:'chat'},'',location.href);window.addEventListener('popstate',()=>{window.location.href='dashboard.html';});
   if(typeof supabaseClient==='undefined'){
     msgArea.innerHTML=`<div class="empty-state"><div class="es-title">Gagal terhubung</div><span>supabaseClient.js gagal dimuat (cek path file / koneksi internet / console browser).</span></div>`;
     console.error('supabaseClient belum terdefinisi — supabase-js CDN atau supabaseClient.js gagal load.');
