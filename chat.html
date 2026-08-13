@@ -204,8 +204,7 @@
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const peerId = (rawUid && UUID_RE.test(rawUid)) ? rawUid : null;
   let currentUserId = null; let peerUsername = params.get('uname') || '';
-  let myPrivateKey = null, sharedKey = null, peerPublicKeyB64 = null;
-  let myKeyVersion = 1, peerKeyVersion = 1, peerProfile = null;
+  let myPrivateKey = null, sharedKey = null, peerPublicKeyB64 = null, peerProfile = null;
   const msgArea = document.getElementById('msgArea'), msgInput = document.getElementById('msgInput'), sendBtn = document.getElementById('sendBtn'), peerAvatar = document.getElementById('peerAvatar'), peerUnameEl = document.getElementById('peerUname');
   const colorPalette = ['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
@@ -230,26 +229,25 @@
       if(sessErr) throw sessErr;
       if(!session){window.location.replace('index.html');return;}
       currentUserId=session.user.id;
-      // Device baru otomatis dapat keypair baru (versi kunci naik). Private key
-      // lama tidak pernah tersimpan di mana pun selain device lamanya -> pesan
-      // lama saya sendiri tidak bisa dibuka lagi di device ini (disengaja,
-      // memperketat end-to-end: server tidak pernah punya cara memulihkannya).
-      // TAPI lawan bicara
-      // yang tidak ganti device tetap bisa buka semua histori seperti biasa,
-      // karena kunci publik lama saya diarsipkan di server (public_key_history).
+      // Device baru otomatis dapat keypair baru. Private key lama tidak pernah
+      // tersimpan di mana pun selain device lamanya -> pesan lama tidak bisa
+      // dibuka lagi di device ini (disengaja, memperketat end-to-end: server
+      // tidak pernah punya cara memulihkannya). Tidak ada lagi skema versi
+      // kunci -- begitu SATU public key baru dipublikasikan, itu menimpa yang
+      // lama, jadi histori lama jadi tidak terbaca buat KEDUA belah pihak
+      // (bukan cuma yang gantinya) sampai keduanya kirim pesan baru lagi.
       let kp=await E2E.ensureKeypair(currentUserId);
-      myPrivateKey=kp.privateKey;myKeyVersion=kp.version||1;
+      myPrivateKey=kp.privateKey;
       document.getElementById('authGate').style.display='none';
       const {data:rel,error:relErr}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
       if(relErr) throw relErr;
       if(!rel){msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.6 3-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/><path d="M18 8v5M15.5 10.5h5"/></svg></div><div class="es-title">Belum berteman</div><span>Tambahkan lewat tab Kontak dulu ya.</span></div>`;return;}
-      const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, public_key, key_version, public_key_history').eq('id',peerId).maybeSingle();
+      const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, public_key').eq('id',peerId).maybeSingle();
       if(profErr) throw profErr;
       if(!peerUsername) peerUsername=prof?prof.username:'Pengguna';
       peerProfile=prof||null;
       peerPublicKeyB64=prof&&prof.public_key?prof.public_key:null;
-      peerKeyVersion=(prof&&prof.key_version)?prof.key_version:1;
-      if(myPrivateKey&&peerPublicKeyB64) sharedKey=await E2E.getSharedKeyForVersions(myPrivateKey,myKeyVersion,peerId,peerKeyVersion,peerPublicKeyB64);
+      if(myPrivateKey&&peerPublicKeyB64) sharedKey=await E2E.getSharedKey(myPrivateKey,peerId,peerPublicKeyB64);
       peerAvatar.textContent=initials(peerUsername);peerAvatar.style.background=colorFor(peerId);peerUnameEl.textContent=peerUsername;
       updateInputAvailability();
       await loadMessages();maybeShowKeyChangeNotice();await markIncomingAsRead();subscribeRealtime();subscribePresence();
@@ -261,20 +259,18 @@
   }
 
   // ---- Perbaikan race condition kunci ----
-  // peerProfile/peerPublicKeyB64/peerKeyVersion sebelumnya cuma diambil SEKALI
-  // saat init(). Kalau lawan bicara rotasi kunci (ganti device/install ulang)
-  // SEMENTARA chat ini masih terbuka, pesan yang saya kirim akan terenkripsi
-  // pakai public key LAMA dia yang sudah basi di variabel JS -- akibatnya dia
-  // terima pesan itu sebagai "kunci tidak tersedia" walau pesannya baru.
-  // Perbaikan: ambil ulang profil lawan bicara TEPAT sebelum tiap kali kirim,
-  // supaya kunci yang dipakai enkripsi selalu yang benar-benar aktif saat itu.
+  // peerProfile/peerPublicKeyB64 sebelumnya cuma diambil SEKALI saat init().
+  // Kalau lawan bicara rotasi kunci (ganti device/install ulang) SEMENTARA
+  // chat ini masih terbuka, pesan yang saya kirim akan terenkripsi pakai
+  // public key LAMA dia yang sudah basi di variabel JS. Perbaikan: ambil ulang
+  // profil lawan bicara TEPAT sebelum tiap kali kirim, supaya kunci yang
+  // dipakai enkripsi selalu yang benar-benar aktif saat itu.
   async function refreshPeerKey(){
-    const {data:prof,error}=await supabaseClient.from('profiles').select('username, public_key, key_version, public_key_history').eq('id',peerId).maybeSingle();
+    const {data:prof,error}=await supabaseClient.from('profiles').select('username, public_key').eq('id',peerId).maybeSingle();
     if(error||!prof) return;
     peerProfile=prof;
     peerPublicKeyB64=prof.public_key||null;
-    peerKeyVersion=prof.key_version||1;
-    sharedKey=(myPrivateKey&&peerPublicKeyB64)?await E2E.getSharedKeyForVersions(myPrivateKey,myKeyVersion,peerId,peerKeyVersion,peerPublicKeyB64):null;
+    sharedKey=(myPrivateKey&&peerPublicKeyB64)?await E2E.getSharedKey(myPrivateKey,peerId,peerPublicKeyB64):null;
     updateInputAvailability();
   }
 
@@ -295,48 +291,30 @@
     if(!presenceChannel)return;const isOnline=!!presenceChannel.presenceState()[peerId];
     if(isOnline){peerSubEl.textContent='Online';peerSubEl.classList.add('online');statusDotEl.classList.add('online');}else{peerSubEl.textContent='Offline';peerSubEl.classList.remove('online');statusDotEl.classList.remove('online');}
   }
-  // Tentukan shared key yang TEPAT untuk sebuah pesan, berdasarkan versi kunci
-  // pengirim & penerima yang tercatat saat pesan itu dibuat (bukan versi kunci
-  // sekarang). Pesan lama (sebelum fitur versi ada) dianggap versi 1.
-  async function resolveSharedKeyFor(m){
-    const senderVer = m.sender_key_version || 1;
-    const receiverVer = m.receiver_key_version || 1;
-    const iAmSender = m.sender_id===currentUserId;
-    const myVerAtSend = iAmSender ? senderVer : receiverVer;
-    const peerVerAtSend = iAmSender ? receiverVer : senderVer;
-    if(myVerAtSend !== myKeyVersion){
-      // Saya sudah rotasi kunci (ganti device) SETELAH pesan ini dibuat ->
-      // private key lama saya sudah tidak ada, pesan ini tidak bisa dibuka lagi.
-      return null;
-    }
-    const peerKeyB64 = E2E.getPeerPublicKeyAtVersion(peerProfile, peerVerAtSend);
-    if(!peerKeyB64) return null;
-    return E2E.getSharedKeyForVersions(myPrivateKey, myKeyVersion, peerId, peerVerAtSend, peerKeyB64);
-  }
   // ---- Notifikasi "Kode keamanan berubah" (mirip WhatsApp) ----
-  // Disimpan per-device di localStorage: versi kunci lawan bicara TERAKHIR yang
-  // pernah kita lihat. Kalau versi sekarang beda dari yang tersimpan, berarti
-  // lawan bicara baru saja rotasi kunci (ganti device / install ulang) -> tampilkan
-  // notifikasi, lalu update penyimpanan supaya tidak diulang terus tiap buka chat.
-  const KC_PREFIX='e2e_seen_peer_ver_';
-  function getSeenPeerVersion(myId,peerId){
-    const raw=localStorage.getItem(KC_PREFIX+myId+'_'+peerId);
-    return raw?parseInt(raw,10):null;
+  // Disimpan per-device di localStorage: public key lawan bicara TERAKHIR yang
+  // pernah kita lihat. Kalau public key sekarang beda dari yang tersimpan,
+  // berarti lawan bicara baru saja rotasi kunci (ganti device / install ulang)
+  // -> tampilkan notifikasi, lalu update penyimpanan supaya tidak diulang
+  // terus tiap buka chat.
+  const KC_PREFIX='e2e_seen_peer_key_';
+  function getSeenPeerKey(myId,peerId){
+    return localStorage.getItem(KC_PREFIX+myId+'_'+peerId);
   }
-  function setSeenPeerVersion(myId,peerId,version){
-    localStorage.setItem(KC_PREFIX+myId+'_'+peerId,String(version));
+  function setSeenPeerKey(myId,peerId,keyB64){
+    if(keyB64) localStorage.setItem(KC_PREFIX+myId+'_'+peerId,keyB64);
   }
   function keyChangeNoticeHTML(){
     return `<div class="keychange-sep"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>🔒 Kode keamanan enkripsi dengan ${peerUsername||'kontak ini'} telah berubah. Ketuk untuk info lebih lanjut.</span></div>`;
   }
   function maybeShowKeyChangeNotice(){
-    const seen=getSeenPeerVersion(currentUserId,peerId);
-    if(seen!==null && seen!==peerKeyVersion){
+    const seen=getSeenPeerKey(currentUserId,peerId);
+    if(seen!==null && peerPublicKeyB64 && seen!==peerPublicKeyB64){
       if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';
       const div=document.createElement('div');div.innerHTML=keyChangeNoticeHTML();msgArea.appendChild(div.firstElementChild);
       scrollToBottom();
     }
-    setSeenPeerVersion(currentUserId,peerId,peerKeyVersion);
+    setSeenPeerKey(currentUserId,peerId,peerPublicKeyB64);
   }
   document.addEventListener('click',(e)=>{ if(e.target.closest('.keychange-sep')) document.getElementById('e2eInfoOverlay').classList.add('open'); });
 
@@ -344,12 +322,12 @@
   async function loadMessages(){
     const {data:clearRow}=await supabaseClient.from('chat_clears').select('cleared_before').eq('user_id',currentUserId).eq('peer_id',peerId).maybeSingle();
     clearedBefore=clearRow?clearRow.cleared_before:null;
-    let query=supabaseClient.from('messages').select('id, sender_id, content, created_at, delivered_at, read_at, sender_key_version, receiver_key_version').or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`).order('created_at',{ascending:true});
+    let query=supabaseClient.from('messages').select('id, sender_id, content, created_at, delivered_at, read_at').or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`).order('created_at',{ascending:true});
     if(clearedBefore)query=query.gt('created_at',clearedBefore);
     const {data:rows,error}=await query;
     const banner=`<div class="e2e-banner" id="e2eBanner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Pesan terenkripsi secara end-to-end. Hanya orang di obrolan ini yang bisa membaca atau membagikannya. <span class="e2e-learn">Pelajari selengkapnya</span>.</span></div>`;
     if(error||!rows||rows.length===0){msgArea.innerHTML=banner+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`;return;}
-    for(const m of rows){const key=await resolveSharedKeyFor(m);m.content=await E2E.decryptMessage(key,m.content);}
+    for(const m of rows){m.content=await E2E.decryptMessage(sharedKey,m.content);}
     msgArea.innerHTML=banner;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});scrollToBottom();
   }
   function appendBubble(m,sending){
@@ -373,7 +351,9 @@
   async function markIncomingAsRead(){const n=new Date().toISOString();await supabaseClient.from('messages').update({delivered_at:n,read_at:n}).eq('sender_id',peerId).eq('receiver_id',currentUserId).is('read_at',null);}
   function subscribeRealtime(){
     supabaseClient.channel('chat-'+[currentUserId,peerId].sort().join('-')).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`receiver_id=eq.${currentUserId}`},async(p)=>{
-      const m=p.new;if(m.sender_id!==peerId)return;const key=await resolveSharedKeyFor(m);m.content=await E2E.decryptMessage(key,m.content);
+      const m=p.new;if(m.sender_id!==peerId)return;
+      await refreshPeerKey(); // pastikan pakai public key lawan bicara yang terkini sebelum dekripsi
+      m.content=await E2E.decryptMessage(sharedKey,m.content);
       if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(m);scrollToBottom();
       if(m.content==='🔔 PING!!!'&&navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
       const n=new Date().toISOString();if(document.visibilityState==='visible')await supabaseClient.from('messages').update({delivered_at:n,read_at:n}).eq('id',m.id);else await supabaseClient.from('messages').update({delivered_at:n}).eq('id',m.id).is('delivered_at',null);
@@ -390,7 +370,7 @@
     const tempRow0=msgArea.querySelector(`[data-id="${tempId}"]`);
     if(!sharedKey){if(tempRow0){tempRow0.classList.add('send-failed');tempRow0.classList.remove('sending');}msgInput.value=text;return;}
     const encrypted=await E2E.encryptMessage(sharedKey,text);
-    const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted,sender_key_version:myKeyVersion,receiver_key_version:peerKeyVersion}).select().single();
+    const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted}).select().single();
     msgInput.focus();const tempRow=msgArea.querySelector(`[data-id="${tempId}"]`);
     if(error){if(tempRow){tempRow.classList.add('send-failed');tempRow.classList.remove('sending');}msgInput.value=text;return;}
     if(tempRow)tempRow.remove();data.content=text;appendBubble(data);
@@ -432,7 +412,7 @@
     await refreshPeerKey();if(!sharedKey)return;
     if(navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
     const encrypted=await E2E.encryptMessage(sharedKey,'🔔 PING!!!');
-    const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted,sender_key_version:myKeyVersion,receiver_key_version:peerKeyVersion}).select().single();
+    const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted}).select().single();
     if(!error){data.content='🔔 PING!!!';if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(data);scrollToBottom();}
   });
   history.pushState({page:'chat'},'',location.href);window.addEventListener('popstate',()=>{window.location.href='dashboard.html';});
