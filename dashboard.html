@@ -64,8 +64,8 @@
   .drawer-item svg{ width:20px;height:20px; flex-shrink:0; }
   .drawer-footer{ flex-shrink:0; border-top:1px solid var(--border); padding:6px 0; }
   .drawer-footer .drawer-item{ color:var(--error); }
-  .tabbar{ position:absolute; left:14px; right:14px; bottom:calc(14px + env(safe-area-inset-bottom)); display:flex; align-items:center; gap:2px; background:var(--card-bg); border-radius:999px; padding:5px; box-shadow:0 6px 22px rgba(0,0,0,0.5); z-index:25; border:1px solid var(--border);}
-  .tabbar .tabitem{ flex:1; padding:5px 4px 6px; border-radius:999px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; position:relative; cursor:pointer; transition:background-color .2s ease; }
+  .tabbar{ position:absolute; left:50%; bottom:calc(14px + env(safe-area-inset-bottom)); transform:translateX(-50%); display:flex; align-items:center; gap:2px; background:var(--card-bg); border-radius:999px; padding:5px; box-shadow:0 6px 22px rgba(0,0,0,0.5); z-index:25; border:1px solid var(--border);}
+  .tabbar .tabitem{ flex:none; width:64px; padding:5px 4px 6px; border-radius:999px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; position:relative; cursor:pointer; transition:background-color .2s ease; }
   .tabbar .tabitem.active{ background:var(--border); }
   .tabbar .tabitem svg{ width:17px; height:17px; }
   .tabbar .tabitem .tlabel{ font-size:9px; font-weight:600; color:var(--muted); line-height:1; }
