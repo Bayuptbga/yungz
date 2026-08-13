@@ -2,47 +2,136 @@
 <html lang="id">
 <head>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>BBM Private Chat - Daftar</title>
+<title>Private Chat - Daftar</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1b2a32">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{ --bbm-blue-dark:#0b141a; --bbm-blue:#1b2a32; --bbm-blue-light:#233138; --bg:#121b22; --card-bg:#1b2a32; --ink:#e9edf0; --muted:#8696a0; --border:#2a3942; --ok:#2ecc71; --error:#f15c6d; }
-  *{box-sizing:border-box;} html{overscroll-behavior:none;} body{margin:0;font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;justify-content:center;}
-  .phone{width:100%;max-width:420px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;}
-  .topbar{background:var(--bbm-blue);color:#fff;padding:18px 20px 22px;text-align:center;}
-  .logo-mark{width:56px;height:56px;border-radius:14px;background:#fff;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;}
-  .body{flex:1;padding:26px 24px 40px;}
-  .tabs{display:flex;background:var(--card-bg);border-radius:10px;padding:4px;margin-bottom:24px;}
-  .tab{flex:1;text-align:center;padding:9px;font-size:13.5px;font-weight:600;color:var(--muted);border-radius:8px;cursor:pointer;}
+  :root{
+    --bbm-blue-dark:#0b141a;
+    --bbm-blue:#1b2a32;
+    --bbm-blue-light:#233138;
+    --bg:#121b22;
+    --card-bg:#1b2a32;
+    --ink:#e9edf0;
+    --muted:#8696a0;
+    --border:#2a3942;
+    --ok:#2ecc71;
+    --error:#f15c6d;
+    --accent:#53bdeb;
+    --accent-soft:rgba(83,189,235,0.16);
+  }
+  *{box-sizing:border-box;}
+  html{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0;font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--ink);
+    min-height:100vh;display:flex;justify-content:center;-webkit-font-smoothing:antialiased;
+  }
+  input{user-select:text;}
+  .phone{width:100%;max-width:420px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden;}
+  .phone::before{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 0);
+    background-size:22px 22px;
+  }
+  .topbar{
+    position:relative;padding:calc(40px + env(safe-area-inset-top)) 24px 30px;text-align:center;overflow:hidden;
+    background:linear-gradient(180deg,var(--bbm-blue-dark) 0%,var(--bg) 100%);
+  }
+  .topbar::before{
+    content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);
+    width:260px;height:260px;border-radius:50%;
+    background:radial-gradient(circle, rgba(83,189,235,0.22) 0%, rgba(83,189,235,0) 70%);
+    pointer-events:none;
+  }
+  .logo-mark{
+    position:relative;width:74px;height:74px;border-radius:22px;margin:0 auto 18px;
+    background:linear-gradient(145deg,#1c3138,#0d3a42);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 1px rgba(83,189,235,0.22), 0 14px 32px -10px rgba(83,189,235,0.5);
+    animation:glowPulse 3.4s ease-in-out infinite;
+  }
+  @keyframes glowPulse{
+    0%,100%{box-shadow:0 0 0 1px rgba(83,189,235,0.22), 0 14px 32px -10px rgba(83,189,235,0.5);}
+    50%{box-shadow:0 0 0 1px rgba(83,189,235,0.4), 0 16px 42px -6px rgba(83,189,235,0.7);}
+  }
+  @media (prefers-reduced-motion:reduce){ .logo-mark{animation:none;} }
+  .logo-mark svg.bubble{width:34px;height:34px;}
+  .logo-lock{
+    position:absolute;right:-6px;bottom:-6px;width:28px;height:28px;border-radius:50%;
+    background:var(--accent);display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 3px var(--bg);
+  }
+  .logo-lock svg{width:14px;height:14px;}
+  .topbar h1{margin:0 0 6px;font-family:'Space Grotesk',sans-serif;font-size:23px;font-weight:700;letter-spacing:-0.2px;}
+  .topbar p{margin:0 0 12px;font-size:12.5px;color:var(--muted);}
+  .badge-row{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.2px;}
+  .badge-row svg{width:12px;height:12px;flex-shrink:0;}
+  .body{position:relative;flex:1;padding:26px 24px 40px;}
+  .tabs{position:relative;display:flex;background:var(--card-bg);border-radius:12px;padding:4px;margin-bottom:26px;border:1px solid var(--border);}
+  .tab{flex:1;text-align:center;padding:10px 0;font-size:13.5px;font-weight:600;color:var(--muted);border-radius:9px;cursor:pointer;transition:color .2s ease;}
   .tab.active{background:var(--border);color:var(--ink);}
-  .field{margin-bottom:16px;} .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;}
-  .input-wrap{display:flex;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:0 12px;}
-  .input-wrap input{border:none;background:transparent;padding:12px 8px;color:var(--ink);width:100%;outline:none;}
-  .hint{font-size:11.5px;color:var(--muted);margin-top:5px;min-height:14px;} .hint.err{color:var(--error);} .hint.ok{color:var(--ok);}
-  .btn{width:100%;padding:13px;background:var(--bbm-blue-light);color:#fff;border:none;border-radius:10px;font-weight:700;}
-  .pin-screen{display:none;flex-direction:column;align-items:center;text-align:center;} .pin-screen.show{display:flex;}
-  .pin-box{background:var(--card-bg);border:1.5px dashed var(--muted);border-radius:12px;padding:18px 26px;}
-  .pin-box .pin{font-size:30px;color:var(--ink);font-weight:800;letter-spacing:4px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:0.4px;}
+  .input-wrap{display:flex;align-items:center;gap:2px;border:1.5px solid var(--border);border-radius:11px;background:var(--bbm-blue-dark);padding:0 12px;transition:border-color .15s ease, box-shadow .15s ease;}
+  .input-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .input-wrap svg{width:16px;height:16px;color:var(--muted);flex-shrink:0;stroke:var(--muted);}
+  .input-wrap .prefix{color:var(--muted);font-weight:700;}
+  .input-wrap input{border:none;background:transparent;padding:12px 8px;color:var(--ink);width:100%;outline:none;font-size:15px;font-family:'Inter',sans-serif;}
+  .toggle-pw{font-size:11px;color:var(--accent);font-weight:700;cursor:pointer;letter-spacing:0.3px;flex-shrink:0;}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:6px;min-height:14px;} .hint.err{color:var(--error);} .hint.ok{color:var(--ok);}
+  .btn{margin-top:6px;width:100%;padding:14px 0;background:linear-gradient(135deg,var(--accent) 0%,#2e9bd1 100%);color:#062733;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px -8px rgba(83,189,235,0.6);transition:transform .12s ease;font-family:'Inter',sans-serif;}
+  .btn:active{transform:scale(0.98);}
+  .btn:disabled{opacity:0.6;}
+  .pin-screen{display:none;flex-direction:column;align-items:center;text-align:center;padding-top:18px;}
+  .pin-screen.show{display:flex;}
+  .pin-screen .check-mark{width:56px;height:56px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+  .pin-screen .check-mark svg{width:26px;height:26px;stroke:var(--accent);}
+  .pin-screen h2{font-family:'Space Grotesk',sans-serif;font-size:20px;margin:0 0 4px;}
+  .pin-screen p{color:var(--muted);font-size:13px;margin:0 0 20px;max-width:280px;}
+  .pin-box{position:relative;background:var(--card-bg);border:1.5px dashed rgba(83,189,235,0.45);border-radius:14px;padding:20px 28px;box-shadow:0 0 0 1px rgba(83,189,235,0.08);}
+  .pin-box .pin{font-family:'Space Grotesk',monospace;font-size:28px;color:var(--ink);font-weight:700;letter-spacing:5px;}
+  .pin-note{display:flex;align-items:center;gap:6px;justify-content:center;font-size:11px;color:var(--muted);margin-top:14px;}
+  .pin-note svg{width:12px;height:12px;flex-shrink:0;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
 </head>
 <body>
 <div class="phone">
-  <div class="topbar"><div class="logo-mark"><svg viewBox="0 0 24 24" width="32" height="32" fill="#1b2a32"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg></div><h2>Private Chat</h2></div>
+  <div class="topbar">
+    <div class="logo-mark">
+      <svg class="bubble" viewBox="0 0 24 24" fill="#fff"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
+      <div class="logo-lock"><svg viewBox="0 0 24 24" fill="none" stroke="#06222c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
+    </div>
+    <h1>Private Chat</h1>
+    <p>Buat akun untuk mulai ngobrol</p>
+    <div class="badge-row" id="topBadge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Akses dibatasi kontak &amp; PIN pribadi</span></div>
+  </div>
   <div class="body" id="formBody">
     <div class="tabs"><div class="tab active">Daftar</div><div class="tab" onclick="location.replace('login.html')">Masuk</div></div>
     <form id="daftarForm">
-      <div class="field"><label>Username</label><div class="input-wrap"><input type="text" id="username" required></div><div class="hint" id="uHint"></div></div>
-      <div class="field"><label>Kata Sandi</label><div class="input-wrap"><input type="password" id="password" required></div></div>
+      <div class="field"><label>Username</label><div class="input-wrap"><span class="prefix">@</span><input type="text" id="username" required autocomplete="username"></div><div class="hint" id="uHint"></div></div>
+      <div class="field"><label>Kata Sandi</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="password" required autocomplete="new-password"><span class="toggle-pw" onclick="const p=document.getElementById('password');p.type=p.type==='password'?'text':'password';">LIHAT</span></div></div>
       <button type="submit" class="btn" id="submitBtn">Daftar</button>
     </form>
   </div>
   <div class="body pin-screen" id="pinScreen">
-    <h2>Berhasil!</h2><p>Simpan PIN ini untuk temanmu.</p>
-    <div class="pin-box"><div class="pin" id="pinValue"></div></div><br>
+    <div class="check-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+    <h2>Akun berhasil dibuat</h2>
+    <p>Simpan PIN ini baik-baik dan bagikan hanya ke teman yang kamu percaya.</p>
+    <div class="pin-box"><div class="pin" id="pinValue"></div></div>
+    <div class="pin-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>PIN ini kunci orang lain menemukanmu</span></div>
+    <br>
     <button class="btn" onclick="location.replace('index.html')">Lanjut ke Chat</button>
   </div>
 </div>
@@ -51,10 +140,11 @@
     e.preventDefault(); const u=document.getElementById('username').value.trim(), p=document.getElementById('password').value, b=document.getElementById('submitBtn'), hint=document.getElementById('uHint');
     b.disabled=true; b.textContent='Membuat...';
     const {data:sData, error:sErr} = await supabaseClient.auth.signUp({email: usernameToEmail(u), password: p});
-    if(sErr){ hint.textContent=sErr.message; hint.className='hint err'; b.disabled=false; return; }
+    if(sErr){ hint.textContent=sErr.message; hint.className='hint err'; b.disabled=false; b.textContent='Daftar'; return; }
     const pin = generatePin();
     await supabaseClient.from('profiles').insert({id: sData.user.id, username: u, pin: pin});
     document.getElementById('formBody').style.display='none';
+    document.getElementById('topBadge').style.display='none';
     document.getElementById('pinValue').textContent=pin;
     document.getElementById('pinScreen').classList.add('show');
   });
