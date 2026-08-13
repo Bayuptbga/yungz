@@ -1,20 +1,218 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>BBM Private Chat - Setelan</title><link rel="manifest" href="manifest.json">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>BBM Private Chat - Setelan</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1b2a32">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Private Chat">
 <style>
   @view-transition { navigation: auto; }
-  :root{ --bbm-blue:#1b2a32; --bg:#121b22; --ink:#e9edf0; --muted:#8696a0; --border:#2a3942; }
-  body, .phone{ margin:0; font-family:sans-serif; background:var(--bg); color:var(--ink); height:100vh; }
-  .appbar{ background:var(--bbm-blue); color:#fff; padding:16px; display:flex; gap:14px; align-items:center; }
-  .empty-state{ padding:60px; text-align:center; color:var(--muted); }
+  :root{
+    --bbm-blue-dark:#0b141a;
+    --bbm-blue:#1b2a32;
+    --bg:#121b22;
+    --card-bg:#1b2a32;
+    --ink:#e9edf0;
+    --muted:#8696a0;
+    --border:#2a3942;
+    --ok:#2ecc71;
+    --error:#f15c6d;
+    --accent:#53bdeb;
+  }
+  *{box-sizing:border-box;}
+  html{ overscroll-behavior:none; -webkit-tap-highlight-color:transparent; }
+  body{
+    margin:0; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink);
+    min-height:100vh; display:flex; justify-content:center; -webkit-font-smoothing:antialiased; position:relative;
+  }
+  input{user-select:text;}
+  .phone{ width:100%; max-width:420px; min-height:100vh; background:var(--bg); display:flex; flex-direction:column; position:relative; }
+  #authGate{ position:absolute; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center; }
+  #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent); animation:authSpin .75s linear infinite; }
+  @keyframes authSpin{ to{ transform:rotate(360deg); } }
+
+  .appbar{ background:var(--bbm-blue); color:#fff; padding:calc(14px + env(safe-area-inset-top)) 16px 14px; display:flex; gap:16px; align-items:center; flex-shrink:0; }
+  .appbar .back{ cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .appbar .back svg{ width:22px; height:22px; }
+  .appbar h1{ margin:0; font-size:19px; font-weight:600; }
+
+  .content{ flex:1; overflow-y:auto; padding:18px 16px 40px; }
+  .section-title{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; margin:22px 4px 8px; }
+  .section-title:first-child{ margin-top:0; }
+
+  .profile-card{ display:flex; align-items:center; gap:14px; background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:16px; }
+  .p-avatar{ width:56px; height:56px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:19px; color:#fff; background:var(--border); }
+  .p-info{ min-width:0; flex:1; }
+  .p-uname{ font-size:16px; font-weight:700; word-break:break-word; }
+  .p-pin-row{ display:flex; align-items:center; gap:8px; margin-top:5px; font-size:12.5px; color:var(--muted); font-family:'Courier New',monospace; }
+  .p-pin-row .pin-val{ color:var(--ink); font-weight:700; letter-spacing:1.5px; }
+  .pin-copy-btn{ background:rgba(83,189,235,0.14); color:var(--accent); border:1px solid rgba(83,189,235,0.3); border-radius:7px; padding:3px 9px; font-size:11px; font-weight:700; cursor:pointer; font-family:'Segoe UI',sans-serif; }
+  .pin-copy-btn:active{ transform:scale(0.96); }
+
+  .card{ background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:16px; }
+  .field{ margin-bottom:14px; }
+  .field:last-of-type{ margin-bottom:0; }
+  .field label{ display:block; font-size:11px; font-weight:700; color:var(--muted); margin-bottom:7px; text-transform:uppercase; letter-spacing:0.5px; }
+  .input-wrap{ display:flex; align-items:center; gap:2px; border:1.5px solid var(--border); border-radius:10px; background:var(--bbm-blue-dark); padding:0 12px; }
+  .input-wrap:focus-within{ border-color:var(--accent); }
+  .input-wrap input{ border:none; outline:none; background:transparent; padding:12px 8px; font-size:14.5px; width:100%; color:var(--ink); }
+  .toggle-pw{ font-size:10.5px; color:var(--accent); font-weight:700; cursor:pointer; letter-spacing:0.4px; flex-shrink:0; }
+  .hint{ font-size:12px; color:var(--muted); margin-top:9px; min-height:14px; }
+  .hint.err{ color:var(--error); }
+  .hint.ok{ color:var(--ok); }
+
+  .btn{ margin-top:14px; width:100%; padding:12.5px 0; background:linear-gradient(135deg,var(--accent) 0%,#1f8fc7 100%); color:#062733; border:none; border-radius:10px; font-size:14.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .btn:active{ transform:scale(0.98); }
+  .btn:disabled{ opacity:0.7; cursor:default; }
+  .btn .spinner{ width:14px; height:14px; border-radius:50%; border:2px solid rgba(6,39,51,0.3); border-top-color:#062733; animation:spin .7s linear infinite; display:none; }
+  .btn.loading .spinner{ display:inline-block; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .setting-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:4px 0; }
+  .setting-row + .setting-row{ margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
+  .setting-row .s-label{ font-size:14.5px; font-weight:600; }
+  .setting-row .s-sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .setting-row .s-value{ font-size:13px; color:var(--muted); font-family:'Courier New',monospace; }
+  .btn-small{ background:rgba(83,189,235,0.14); color:var(--accent); border:1px solid rgba(83,189,235,0.3); border-radius:8px; padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer; }
+  .btn-small:active{ transform:scale(0.97); }
+  .installed-badge{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ok); font-weight:600; }
+  .installed-badge svg{ width:16px; height:16px; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js?v=2"></script>
 </head>
 <body>
 <div class="phone">
-  <div class="appbar"><div onclick="location.href='dashboard.html'">←</div><h1>Setelan</h1></div>
-  <div class="empty-state">Belum ada pengaturan.</div>
+  <div id="authGate"><div class="spinner"></div></div>
+  <div class="appbar">
+    <div class="back" onclick="location.href='dashboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <h1>Setelan</h1>
+  </div>
+  <div class="content">
+    <div class="section-title">Profil</div>
+    <div class="profile-card">
+      <div class="p-avatar" id="pAvatar">?</div>
+      <div class="p-info">
+        <div class="p-uname" id="pUsername">@—</div>
+        <div class="p-pin-row">PIN: <span class="pin-val" id="pPin">—</span><button class="pin-copy-btn" id="pinCopyBtn" type="button">Salin</button></div>
+      </div>
+    </div>
+
+    <div class="section-title">Ganti Kata Sandi</div>
+    <div class="card">
+      <form id="pwForm">
+        <div class="field">
+          <label>Kata Sandi Baru</label>
+          <div class="input-wrap"><input type="password" id="newPassword" required minlength="6" autocomplete="new-password"><span class="toggle-pw" onclick="const p=document.getElementById('newPassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
+        </div>
+        <div class="field">
+          <label>Ulangi Kata Sandi Baru</label>
+          <div class="input-wrap"><input type="password" id="confirmPassword" required minlength="6" autocomplete="new-password"></div>
+        </div>
+        <div class="hint" id="pwHint">Minimal 6 karakter</div>
+        <button type="submit" class="btn" id="pwSubmitBtn"><span class="spinner"></span><span class="btn-label">Simpan Kata Sandi</span></button>
+      </form>
+    </div>
+
+    <div class="section-title">Aplikasi</div>
+    <div class="card">
+      <div class="setting-row" id="installRow" style="display:none;">
+        <div><div class="s-label">Instal Aplikasi</div><div class="s-sub">Buka lebih cepat langsung dari layar utama</div></div>
+        <button class="btn-small" id="installBtn" type="button">Instal</button>
+      </div>
+      <div class="setting-row" id="installedRow" style="display:none;">
+        <div class="installed-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Aplikasi sudah terpasang</span></div>
+      </div>
+      <div class="setting-row" id="versionRow">
+        <div class="s-label">Versi</div>
+        <div class="s-value" id="versionValue">1.0.0</div>
+      </div>
+    </div>
+  </div>
 </div>
+<script>
+  const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
+  function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
+  function initials(u){return(u||'?').slice(0,2).toUpperCase();}
+  function translatePwError(msg){
+    const m=(msg||'').toLowerCase();
+    if(m.includes('at least 6')) return 'Kata sandi minimal 6 karakter.';
+    if(m.includes('same') && m.includes('password')) return 'Kata sandi baru harus beda dari yang lama.';
+    if(m.includes('rate limit')) return 'Terlalu banyak percobaan, coba lagi sebentar lagi.';
+    return 'Gagal menyimpan kata sandi, coba lagi.';
+  }
+
+  let currentPin=null;
+
+  async function boot(){
+    const {data:{session}} = await supabaseClient.auth.getSession();
+    if(!session){ window.location.replace('index.html'); return; }
+    const {data:prof} = await supabaseClient.from('profiles').select('username, pin').eq('id', session.user.id).maybeSingle();
+    if(prof){
+      currentPin = prof.pin;
+      document.getElementById('pUsername').textContent = '@'+prof.username;
+      document.getElementById('pPin').textContent = prof.pin;
+      document.getElementById('pAvatar').textContent = initials(prof.username);
+      document.getElementById('pAvatar').style.background = colorFor(session.user.id);
+    }
+    document.getElementById('authGate').style.display = 'none';
+  }
+  boot();
+
+  document.getElementById('pinCopyBtn').addEventListener('click', async () => {
+    if(!currentPin) return;
+    const btn = document.getElementById('pinCopyBtn');
+    try{ await navigator.clipboard.writeText(currentPin); btn.textContent='Tersalin ✓'; }
+    catch(e){ btn.textContent='Gagal'; }
+    setTimeout(()=>{ btn.textContent='Salin'; }, 1600);
+  });
+
+  document.getElementById('pwForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const p1=document.getElementById('newPassword').value, p2=document.getElementById('confirmPassword').value,
+          b=document.getElementById('pwSubmitBtn'), hint=document.getElementById('pwHint');
+    if(p1.length<6){ hint.textContent='Kata sandi minimal 6 karakter.'; hint.className='hint err'; return; }
+    if(p1!==p2){ hint.textContent='Kata sandi tidak cocok.'; hint.className='hint err'; return; }
+    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Menyimpan...';
+    const {error} = await supabaseClient.auth.updateUser({password:p1});
+    b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan Kata Sandi';
+    if(error){ hint.textContent=translatePwError(error.message); hint.className='hint err'; return; }
+    hint.textContent='Kata sandi berhasil diperbarui.'; hint.className='hint ok';
+    document.getElementById('pwForm').reset();
+  });
+
+  // ---- Instal Aplikasi (PWA) ----
+  let deferredPrompt = null;
+  const installRow = document.getElementById('installRow'), installedRow = document.getElementById('installedRow');
+  function isStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  if(isStandalone()){ installedRow.style.display='flex'; }
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if(!isStandalone()){ installRow.style.display='flex'; }
+  });
+  document.getElementById('installBtn').addEventListener('click', async () => {
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const {outcome} = await deferredPrompt.userChoice;
+    if(outcome === 'accepted'){ installRow.style.display='none'; installedRow.style.display='flex'; }
+    deferredPrompt = null;
+  });
+  window.addEventListener('appinstalled', () => {
+    installRow.style.display='none'; installedRow.style.display='flex';
+  });
+</script>
 </body>
 </html>
