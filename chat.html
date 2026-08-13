@@ -165,7 +165,7 @@
 <div class="phone">
   <div id="authGate"><div class="spinner"></div></div>
   <div class="appbar">
-    <div class="back" onclick="window.location.href='dashboard.html'"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <div class="back" onclick="window.location.href='dashboard'"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
     <div class="avatar" id="peerAvatar">?</div>
     <div class="who"><div class="uname"><span id="peerUname">@—</span><span class="status-dot" id="statusDot"></span></div><div class="sub" id="peerSub">-</div></div>
     <div class="e2e-lock" id="e2eLock" title="Pesan di chat ini dienkripsi end-to-end"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
@@ -245,10 +245,10 @@
   }
   async function init(){
     try{
-      if(!peerId){window.location.href='dashboard.html';return;}
+      if(!peerId){window.location.href='dashboard';return;}
       const {data:{session},error:sessErr} = await supabaseClient.auth.getSession();
       if(sessErr) throw sessErr;
-      if(!session){window.location.replace('index.html');return;}
+      if(!session){window.location.replace('./');return;}
       currentUserId=session.user.id;
       let kp=await E2E.ensureKeypair(currentUserId);
       if(kp.status==='needs_restore'){
@@ -431,7 +431,7 @@
     const ok=await showConfirm('Hapus Kontak Ini?','Menghapus kontak akan menghapus juga kontak anda dari teman ini.','Hapus');
     if(!ok)return;
     const {error}=await supabaseClient.from('contacts').delete().or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`);
-    if(!error)window.location.href='dashboard.html';
+    if(!error)window.location.href='dashboard';
   });
   const PING_MAX=3, PING_WINDOW_MS=3*60*1000;
   function pingTimestamps(){
@@ -461,7 +461,7 @@
       data.content='🔔 PING!!!';if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(data);scrollToBottom();
     }
   });
-  history.pushState({page:'chat'},'',location.href);window.addEventListener('popstate',()=>{window.location.href='dashboard.html';});
+  history.pushState({page:'chat'},'',location.href);window.addEventListener('popstate',()=>{window.location.href='dashboard';});
   if(typeof supabaseClient==='undefined'){
     msgArea.innerHTML=`<div class="empty-state"><div class="es-title">Gagal terhubung</div><span>supabaseClient.js gagal dimuat (cek path file / koneksi internet / console browser).</span></div>`;
     console.error('supabaseClient belum terdefinisi — supabase-js CDN atau supabaseClient.js gagal load.');
