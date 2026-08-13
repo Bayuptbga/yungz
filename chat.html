@@ -1,474 +1,230 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Private Chat - Chat</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1b2a32">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Private Chat">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  @view-transition { navigation: auto; }
-  :root{
-    --bbm-blue-dark:#0b141a;
-    --bbm-blue:#1b2a32;
-    --bbm-blue-light:#233138;
-    --bg:#121b22;
-    --card-bg:#1b2a32;
-    --ink:#e9edf0;
-    --ink-soft:#aab8c2;
-    --muted:#8696a0;
-    --border:#2a3942;
-  }
-  *{box-sizing:border-box;}
-  html{ overscroll-behavior:none; -webkit-tap-highlight-color:transparent; }
-  body{
-    overscroll-behavior:none; touch-action:pan-y; user-select:none; -webkit-touch-callout:none;
-    margin:0; font-family:'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-    background:var(--bg); color:var(--ink);
-    position:fixed; inset:0; width:100%; height:100%; overflow:hidden;
-    display:flex; align-items:flex-start; justify-content:center; -webkit-font-smoothing:antialiased;
-  }
-  input, textarea{ user-select:text; }
-  .phone{
-    width:100%; max-width:420px; height:100%; background:var(--bg);
-    box-shadow:0 0 40px rgba(0,0,0,0.5); display:flex; flex-direction:column; position:relative; overflow:hidden;
-  }
-  #authGate{ position:absolute; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center; }
-  #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:#53bdeb; animation:authSpin .75s linear infinite; }
-  @keyframes authSpin{ to{ transform:rotate(360deg); } }
-  .appbar{
-    background:linear-gradient(120deg,var(--bbm-blue-dark),var(--bbm-blue) 55%,var(--bbm-blue-light));
-    color:#fff; padding:calc(12px + env(safe-area-inset-top)) 14px 12px; display:flex; align-items:center; gap:10px;
-    flex-shrink:0; box-shadow:0 3px 10px rgba(0,0,0,0.3); position:relative; z-index:10;
-  }
-  .appbar .back{ cursor:pointer; width:34px;height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s ease; }
-  .appbar .back:active{ background:rgba(255,255,255,0.16); }
-  .appbar .avatar{ width:38px;height:38px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:14px;flex-shrink:0; box-shadow:0 0 0 2px rgba(255,255,255,0.35); }
-  .appbar .who{flex:1;min-width:0;}
-  .appbar .uname{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .appbar .sub{font-size:11.5px;opacity:0.82;margin-top:1px;}
-  .appbar .sub.online{opacity:1;color:#2ecc71;font-weight:600;}
-  .status-dot{ display:inline-block; width:8px;height:8px; border-radius:50%; margin-left:6px; background:#8696a0; vertical-align:middle; box-shadow:0 0 0 2px rgba(255,255,255,0.25); }
-  .status-dot.online{ background:#2ecc71; }
-  .e2e-lock{ width:26px;height:26px; border-radius:50%; background:rgba(83,189,235,0.16); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .appbar .menu-btn{ cursor:pointer; width:34px;height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s ease; position:relative; }
-  .appbar .menu-btn:active{ background:rgba(255,255,255,0.16); }
-  .chat-menu{ position:absolute; top:calc(100% + 6px); right:10px; background:var(--card-bg); border-radius:12px; box-shadow:0 6px 24px rgba(0,0,0,0.5); min-width:180px; overflow:hidden; z-index:50; display:none; }
-  .chat-menu.open{display:block;}
-  .chat-menu .item{ padding:13px 16px; font-size:14.5px; color:var(--ink); cursor:pointer; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); }
-  .chat-menu .item:last-child{border-bottom:none;}
-  .chat-menu .item:active{background:var(--border);}
-  .chat-menu .item.danger{color:#f15c6d;}
-  .chat-menu .item.ping{color:#e08a00;font-weight:600;}
-  .msg-area{
-    flex:1; overflow-y:auto; overflow-x:hidden; padding:14px 12px 6px; display:flex; flex-direction:column; gap:2px;
-    background-color:var(--bg); background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0); background-size:20px 20px; scroll-behavior:smooth;
-  }
-  .msg-area::-webkit-scrollbar{ width:6px; }
-  .msg-area::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.1); border-radius:3px; }
-  .e2e-banner{
-    align-self:center; max-width:88%; text-align:center; background:rgba(83,189,235,0.1); border:1px solid rgba(83,189,235,0.22);
-    color:#bcdff2; font-size:11.5px; line-height:16px; padding:9px 14px; border-radius:10px; margin:6px 0 12px; flex-shrink:0;
-    display:flex; align-items:center; gap:7px;
-  }
-  .e2e-banner svg{width:14px;height:14px;flex-shrink:0;stroke:#53bdeb;}
-  .day-sep{
-    align-self:center; position:sticky; top:6px; background:rgba(27,42,50,0.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
-    color:var(--ink-soft); font-size:11px; font-weight:600; padding:5px 13px; border-radius:20px; margin:12px 0 10px; flex-shrink:0; box-shadow:0 1px 5px rgba(0,0,0,0.2); z-index:3;
-  }
-  .bubble-row{ display:flex; align-items:flex-end; width:100%; flex-shrink:0; margin:3px 0; animation:bubbleIn .2s ease both; }
-  @keyframes bubbleIn{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:translateY(0); } }
-  .bubble-row.mine{justify-content:flex-end;}
-  .bubble-row.theirs{justify-content:flex-start;}
-  .bubble-row.sending .bubble{ opacity:0.6; transition:opacity .15s ease; }
-  .bubble-row.send-failed .bubble{ opacity:1; background:#3f1d24 !important; border:1px solid #f15c6d; }
-  .bubble-row.send-failed .bubble::after{ content:"⚠ Gagal terkirim"; display:block; font-size:10.5px; color:#f15c6d; margin-top:3px; }
-  .bubble{
-    display:flex; flex-direction:column; align-items:flex-end; max-width:78%; width:fit-content; padding:8px 11px 6px; border-radius:16px;
-    font-size:14.5px; line-height:20px; word-wrap:break-word; overflow-wrap:break-word; box-shadow:0 1px 2px rgba(0,0,0,0.2);
-  }
-  .bubble-row.mine .bubble{ background:#005c4b; border:1px solid #005c4b; border-top-right-radius:4px; color:#e9edf0; }
-  .bubble-row.theirs .bubble{ background:var(--card-bg); border:1px solid var(--border); border-top-left-radius:4px; }
-  .bubble .txt{ align-self:stretch; min-width:36px; text-align:left; white-space:pre-wrap; word-wrap:break-word; }
-  .bubble .meta{ display:flex; align-items:center; gap:4px; margin-top:3px; font-size:10.5px; color:var(--ink-soft); white-space:nowrap; }
-  .empty-state{ margin:auto; text-align:center; color:var(--muted); font-size:13.5px; padding:32px 30px; display:flex; flex-direction:column; align-items:center; gap:12px; }
-  .empty-state .es-icon{ width:54px;height:54px; border-radius:50%; background:var(--card-bg); display:flex;align-items:center;justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
-  .empty-state .es-title{ font-size:14px; font-weight:600; color:var(--ink); }
-  .loading-spinner{ width:30px;height:30px; border:3px solid var(--border); border-top-color:#005c4b; border-radius:50%; animation:spin .75s linear infinite; }
-  @keyframes spin{ to{ transform:rotate(360deg); } }
-  .input-bar{ display:flex; align-items:flex-end; gap:8px; padding:10px 10px calc(10px + env(safe-area-inset-bottom)); background:var(--card-bg); border-top:1px solid var(--border); flex-shrink:0; }
-  .input-bar textarea{ flex:1; resize:none; border:1.5px solid var(--border); border-radius:22px; padding:11px 17px; font-size:14.5px; font-family:inherit; outline:none; max-height:100px; background:var(--bg); color:var(--ink); transition:border-color .15s ease; }
-  .input-bar textarea::placeholder{ color:var(--muted); }
-  .input-bar textarea:disabled{background:var(--border);color:var(--muted);}
-  .input-bar textarea:focus{ border-color:#005c4b; box-shadow:none; }
-  .send-btn{ width:43px;height:43px; border-radius:50%; background:linear-gradient(135deg,#005c4b,#004236); border:none; display:flex;align-items:center;justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
-  .send-btn:not(:disabled):active{ transform:scale(0.94); }
-  .send-btn:disabled{background:var(--border);box-shadow:none;}
-  .confirm-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity .18s ease; padding:24px; }
-  .confirm-overlay.open{ opacity:1; pointer-events:auto; }
-  .confirm-box{ background:var(--card-bg); border:1px solid var(--border); border-radius:16px; width:100%; max-width:320px; padding:22px 20px 16px; box-shadow:0 10px 40px rgba(0,0,0,0.5); transform:translateY(10px) scale(0.97); transition:transform .18s ease; }
-  .confirm-overlay.open .confirm-box{ transform:translateY(0) scale(1); }
-  .confirm-title{ font-size:16px; font-weight:700; color:var(--ink); margin-bottom:8px; }
-  .confirm-msg{ font-size:13.5px; line-height:19px; color:var(--ink-soft); margin-bottom:20px; }
-  .confirm-actions{ display:flex; gap:10px; justify-content:flex-end; }
-  .confirm-actions button{ border:none; border-radius:10px; padding:10px 16px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; }
-  .confirm-cancel{ background:var(--border); color:var(--ink); }
-  .confirm-cancel:active{ background:var(--bbm-blue-light); }
-  .confirm-ok{ background:#f15c6d; color:#1b0a0c; }
-  .confirm-ok:active{ background:#e14758; }
+// e2e.js — End-to-End Encryption untuk Private Chat
+// Skema: ECDH (P-256) per user untuk sepakat kunci rahasia bersama per pasangan chat,
+// lalu AES-GCM 256-bit buat enkripsi/dekripsi isi pesan.
+// Private key TIDAK PERNAH dikirim ke server dalam bentuk terbuka — hanya disimpan
+// di perangkat (localStorage). Server (Supabase) hanya pernah melihat ciphertext,
+// dan (opsional) backup key yang dienkripsi pakai Password Enkripsi milik user.
+const E2E = (() => {
+  const LS_PREFIX = 'e2e_priv_';
+  const sharedKeyCache = new Map(); // peerId -> CryptoKey (AES-GCM), cache per sesi halaman
 
-  /* ---- Modal PIN Enkripsi (restore key / tawarkan setel key) ---- */
-  .kmodal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center; z-index:300; opacity:0; pointer-events:none; transition:opacity .2s ease; padding:24px; }
-  .kmodal-overlay.open{ opacity:1; pointer-events:auto; }
-  .kmodal{ background:var(--card-bg); border:1px solid var(--border); border-radius:16px; width:100%; max-width:340px; padding:24px 20px 20px; box-shadow:0 20px 50px rgba(0,0,0,0.5); }
-  .kmodal .km-icon{width:46px;height:46px;border-radius:50%;background:rgba(83,189,235,0.14);display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
-  .kmodal .km-icon svg{width:22px;height:22px;stroke:#53bdeb;}
-  .kmodal h3{font-size:16px;margin:0 0 6px;color:var(--ink);}
-  .kmodal p{font-size:12.5px;color:var(--muted);line-height:1.5;margin:0 0 16px;}
-  .kmodal .field{margin-bottom:12px;}
-  .kmodal .input-wrap{display:flex;align-items:center;gap:2px;border:1.5px solid var(--border);border-radius:11px;background:var(--bg);padding:0 12px;}
-  .kmodal .input-wrap:focus-within{border-color:#53bdeb;}
-  .kmodal .input-wrap svg{width:16px;height:16px;color:var(--muted);flex-shrink:0;stroke:var(--muted);}
-  .kmodal .input-wrap input{border:none;outline:none;background:transparent;padding:12px 8px;font-size:14.5px;width:100%;color:var(--ink);font-family:inherit;}
-  .kmodal .toggle-pw{font-size:10.5px;color:#53bdeb;font-weight:700;cursor:pointer;letter-spacing:0.5px;flex-shrink:0;}
-  .kmodal .hint{font-size:11.5px;min-height:14px;margin-top:2px;color:var(--muted);}
-  .kmodal .hint.err{color:#f15c6d;}
-  .kmodal .btn{width:100%;padding:13px 0;background:linear-gradient(135deg,#53bdeb,#1f8fc7);color:#062733;border:none;border-radius:11px;font-size:14.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;}
-  .kmodal .btn .spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(6,39,51,0.3);border-top-color:#062733;animation:spin .7s linear infinite;display:none;}
-  .kmodal .btn.loading .spinner{display:inline-block;}
-  .kmodal .btn:disabled{cursor:default;opacity:0.85;}
-  .kmodal .skip-link{display:block;text-align:center;font-size:12px;color:var(--muted);margin-top:14px;cursor:pointer;text-decoration:underline;}
-
-  /* ---- Banner: ajakan buat PIN Enkripsi (di atas area pesan) ---- */
-  .pin-banner{ display:none; flex-shrink:0; background:var(--card-bg); border-bottom:1px solid var(--border); padding:14px; gap:12px; align-items:flex-start; }
-  .pin-banner.show{ display:flex; }
-  .pin-banner .pb-icon{ width:36px;height:36px;border-radius:10px; background:rgba(83,189,235,0.14); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .pin-banner .pb-icon svg{ width:18px;height:18px; stroke:#53bdeb; }
-  .pin-banner .pb-body{ flex:1; min-width:0; }
-  .pin-banner .pb-title{ font-size:14px; font-weight:700; color:var(--ink); margin-bottom:3px; }
-  .pin-banner .pb-sub{ font-size:12px; color:var(--muted); line-height:1.45; margin-bottom:10px; }
-  .pin-banner .pb-actions{ display:flex; gap:10px; align-items:center; }
-  .pin-banner .pb-btn{ background:#53bdeb; color:#062733; border:none; border-radius:8px; padding:8px 14px; font-size:12.5px; font-weight:700; cursor:pointer; }
-  .pin-banner .pb-btn:active{ transform:scale(0.97); }
-  .pin-banner .pb-dismiss{ background:none; border:none; color:var(--muted); font-size:12px; font-weight:600; cursor:pointer; padding:8px 4px; }
-</style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabaseClient.js?v=2"></script>
-<script src="e2e.js?v=2"></script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js');});}</script>
-</head>
-<body>
-<div class="phone">
-  <div id="authGate"><div class="spinner"></div></div>
-  <div class="appbar">
-    <div class="back" onclick="window.location.href='dashboard.html'"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
-    <div class="avatar" id="peerAvatar">?</div>
-    <div class="who"><div class="uname"><span id="peerUname">@—</span><span class="status-dot" id="statusDot"></span></div><div class="sub" id="peerSub">-</div></div>
-    <div class="e2e-lock" id="e2eLock" title="Pesan di chat ini dienkripsi end-to-end"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
-    <div class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
-      <div class="chat-menu" id="chatMenu">
-        <div class="item danger" id="menuHapusPermanen">Hapus Semua Orang</div><div class="item danger" id="menuHapusKontak">Hapus Kontak</div><div class="item ping" id="menuPing">🔔 PING!!!</div>
-      </div>
-    </div>
-  </div>
-  <div class="pin-banner" id="pinBanner">
-    <div class="pb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
-    <div class="pb-body">
-      <div class="pb-title">Buat PIN Anda</div>
-      <div class="pb-sub">Buat PIN Enkripsi untuk memulihkan riwayat obrolan kalau kamu login dari perangkat lain. Tanpa PIN ini, chat lama tidak bisa dibuka lagi di perangkat baru.</div>
-      <div class="pb-actions"><button class="pb-btn" id="pinBannerBtn">Buat PIN</button><button class="pb-dismiss" id="pinBannerDismiss">Nanti saja</button></div>
-    </div>
-  </div>
-  <div class="msg-area" id="msgArea"><div class="empty-state"><div class="loading-spinner"></div><span>Memuat percakapan…</span></div></div>
-  <div class="confirm-overlay" id="confirmOverlay">
-    <div class="confirm-box">
-      <div class="confirm-title" id="confirmTitle">Konfirmasi</div>
-      <div class="confirm-msg" id="confirmMsg"></div>
-      <div class="confirm-actions">
-        <button class="confirm-cancel" id="confirmCancelBtn">Batal</button>
-        <button class="confirm-ok" id="confirmOkBtn">Hapus</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: minta PIN Enkripsi buat buka kunci chat (login dari device/browser baru) -->
-  <div class="kmodal-overlay" id="restoreOverlay">
-    <div class="kmodal">
-      <div class="km-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
-      <h3>Buka Kunci Chat</h3>
-      <p>Kamu login dari perangkat/browser baru. Masukkan <b>PIN Enkripsi</b> 6 digit supaya percakapan lamamu bisa dibaca lagi di sini.</p>
-      <form id="restoreForm">
-        <div class="field"><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="restorePw" placeholder="PIN enkripsi (6 digit)" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);"><span class="toggle-pw" onclick="const p=document.getElementById('restorePw');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div></div>
-        <div class="hint err" id="restoreHint"></div>
-        <button type="submit" class="btn" id="restoreBtn"><span class="spinner"></span><span class="btn-label">Buka Kunci</span></button>
-      </form>
-      <span class="skip-link" id="restoreForgetLink">Lupa PIN? Mulai percakapan baru</span>
-    </div>
-  </div>
-
-  <!-- Modal: tawarkan setel PIN Enkripsi (device baru, belum pernah ada backup) -->
-  <div class="kmodal-overlay" id="offerSetupOverlay">
-    <div class="kmodal">
-      <div class="km-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
-      <h3>Amankan Chat Kamu</h3>
-      <p>Kamu belum punya PIN Enkripsi. Setel sekarang biar nanti kalau login dari HP/browser lain, percakapanmu masih bisa dibuka lagi. <b>Beda dari kata sandi login</b>, dan tidak bisa dipulihkan kalau lupa.</p>
-      <form id="offerSetupForm">
-        <div class="field"><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="offerPw1" placeholder="PIN enkripsi (6 digit)" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);"></div></div>
-        <div class="field"><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="offerPw2" placeholder="Ulangi PIN enkripsi" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);"></div></div>
-        <div class="hint err" id="offerSetupHint"></div>
-        <button type="submit" class="btn" id="offerSetupBtn"><span class="spinner"></span><span class="btn-label">Simpan</span></button>
-      </form>
-      <span class="skip-link" id="offerSetupSkip">Lewati untuk sekarang</span>
-    </div>
-  </div>
-
-  <div class="input-bar">
-    <textarea id="msgInput" rows="1" placeholder="Ketik pesan..." disabled></textarea>
-    <button class="send-btn" id="sendBtn" disabled><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
-  </div>
-</div>
-<script>
-  const params = new URLSearchParams(window.location.search);
-  const rawUid = params.get('uid');
-  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const peerId = (rawUid && UUID_RE.test(rawUid)) ? rawUid : null;
-  let currentUserId = null; let peerUsername = params.get('uname') || '';
-  let myPrivateKey = null, sharedKey = null;
-  const msgArea = document.getElementById('msgArea'), msgInput = document.getElementById('msgInput'), sendBtn = document.getElementById('sendBtn'), peerAvatar = document.getElementById('peerAvatar'), peerUnameEl = document.getElementById('peerUname');
-  const colorPalette = ['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
-  function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
-  function initials(u){return (u||'?').slice(0,2).toUpperCase();}
-  function normalizeText(str){if(!str)return'';str=str.replace(/[\r\v\f\u2028\u2029]/g,'\n');const lines=str.split('\n').map(l=>l.replace(/[ \t]+$/,''));const out=[];let blankRun=0;for(const line of lines){if(line.trim()===''){blankRun++;if(blankRun<=1)out.push('');}else{blankRun=0;out.push(line);}}return out.join('\n').trim();}
-  function timeLabel(iso){return new Date(iso).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});}
-  function dayLabel(iso){const d=new Date(iso),t=new Date(),y=new Date();y.setDate(t.getDate()-1);const s=(a,b)=>a.toDateString()===b.toDateString();if(s(d,t))return'Hari ini';if(s(d,y))return'Kemarin';return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});}
-  function tickSvg(del,read){
-    if(read) return `<svg viewBox="0 0 20 15" width="16" height="12" fill="none" stroke="#53bdeb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
-    if(del) return `<svg viewBox="0 0 20 15" width="16" height="12" fill="none" stroke="#8696a0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
-    return `<svg viewBox="0 0 16 15" width="13" height="12" fill="none" stroke="#8696a0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L14 3"/></svg>`;
+  function b64FromBuf(buf) {
+    const bytes = new Uint8Array(buf);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
   }
-  async function init(){
-    try{
-      if(!peerId){window.location.href='dashboard.html';return;}
-      const {data:{session},error:sessErr} = await supabaseClient.auth.getSession();
-      if(sessErr) throw sessErr;
-      if(!session){window.location.replace('index.html');return;}
-      currentUserId=session.user.id;
-      let kp=await E2E.ensureKeypair(currentUserId);
-      if(kp.status==='needs_restore'){
-        // Login dari perangkat/browser baru & sudah pernah ada PIN Enkripsi ->
-        // wajib buka kunci dulu sebelum bisa mulai chat ini.
-        document.getElementById('authGate').style.display='none';
-        kp=await new Promise(resolve=>openRestoreModal(currentUserId,resolve));
-      }
-      myPrivateKey=kp.privateKey;
-      document.getElementById('authGate').style.display='none';
-      const {data:rel,error:relErr}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
-      if(relErr) throw relErr;
-      if(!rel){msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.6 3-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/><path d="M18 8v5M15.5 10.5h5"/></svg></div><div class="es-title">Belum berteman</div><span>Tambahkan lewat tab Kontak dulu ya.</span></div>`;return;}
-      const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, public_key').eq('id',peerId).maybeSingle();
-      if(profErr) throw profErr;
-      if(!peerUsername) peerUsername=prof?prof.username:'Pengguna';
-      if(prof&&prof.public_key) sharedKey=await E2E.getSharedKey(myPrivateKey,peerId,prof.public_key);
-      peerAvatar.textContent=initials(peerUsername);peerAvatar.style.background=colorFor(peerId);peerUnameEl.textContent='@'+peerUsername;
-      if(!sharedKey){
-        msgInput.placeholder='Menunggu '+peerUsername+' membuka aplikasi buat aktifkan enkripsi...';
-      }
-      await loadMessages();await markIncomingAsRead();subscribeRealtime();subscribePresence();msgInput.disabled=!sharedKey;
-      // Tampilkan banner "Buat PIN Anda" (bukan langsung modal) kalau device ini
-      // sudah punya kunci aktif TAPI belum ada backup PIN Enkripsi sama sekali.
-      // Banner ini akan muncul lagi tiap kali chat dibuka selama PIN belum dibuat.
-      checkPinBanner(currentUserId);
-    }catch(err){
-      console.error('init error:',err);
-      document.getElementById('authGate').style.display='none';
-      msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#f15c6d" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div><div class="es-title">Gagal memuat percakapan</div><span>Cek koneksi internet lalu tarik-turun atau buka ulang chat ini.</span></div>`;
+  function bufFromB64(b64) {
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return arr.buffer;
+  }
+
+  function hasLocalKey(userId) {
+    return !!localStorage.getItem(LS_PREFIX + userId);
+  }
+
+  // Import private key JWK yang sudah tersimpan di localStorage device ini.
+  async function loadLocalKeypair(userId) {
+    const saved = localStorage.getItem(LS_PREFIX + userId);
+    const jwk = JSON.parse(saved);
+    const privateKey = await crypto.subtle.importKey(
+      'jwk', jwk, { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey', 'deriveBits']
+    );
+    const pubJwk = { kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y, ext: true };
+    const pubKey = await crypto.subtle.importKey('jwk', pubJwk, { name: 'ECDH', namedCurve: 'P-256' }, true, []);
+    const raw = await crypto.subtle.exportKey('raw', pubKey);
+    return { privateKey, publicKeyB64: b64FromBuf(raw) };
+  }
+
+  // Generate keypair ECDH baru, simpan private key ke localStorage device ini,
+  // dan publikasikan public key ke profiles.public_key (server).
+  async function generateAndPublishKeypair(userId) {
+    const pair = await crypto.subtle.generateKey(
+      { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey', 'deriveBits']
+    );
+    const jwk = await crypto.subtle.exportKey('jwk', pair.privateKey);
+    localStorage.setItem(LS_PREFIX + userId, JSON.stringify(jwk));
+    const raw = await crypto.subtle.exportKey('raw', pair.publicKey);
+    const publicKeyB64 = b64FromBuf(raw);
+    try {
+      await supabaseClient.from('profiles').update({ public_key: publicKeyB64 }).eq('id', userId);
+    } catch (e) {
+      console.error('Gagal upload public key:', e);
+    }
+    return { privateKey: pair.privateKey, publicKeyB64 };
+  }
+
+  // Pastikan user punya keypair ECDH siap dipakai di device ini.
+  // Return salah satu dari:
+  //  { status:'ready', privateKey, publicKeyB64 }        -> siap pakai langsung
+  //  { status:'needs_restore' }                            -> device baru TAPI user sudah
+  //                                                           pernah setel Password Enkripsi;
+  //                                                           UI wajib minta password lalu panggil restorePrivateKey()
+  //  { status:'needs_setup', privateKey, publicKeyB64 }    -> device baru & belum pernah ada
+  //                                                           backup sama sekali; keypair BARU
+  //                                                           sudah dibuat (chat lama di device
+  //                                                           lain jadi tidak terbaca); UI
+  //                                                           sebaiknya tawarkan setel Password
+  //                                                           Enkripsi sekarang biar next time aman.
+  async function ensureKeypair(userId) {
+    if (hasLocalKey(userId)) {
+      const kp = await loadLocalKeypair(userId);
+      return { status: 'ready', ...kp };
+    }
+    let hasBackupOnServer = false;
+    try {
+      const { data: prof } = await supabaseClient.from('profiles').select('key_backup').eq('id', userId).maybeSingle();
+      hasBackupOnServer = !!(prof && prof.key_backup);
+    } catch (e) {
+      console.error('Gagal cek backup key:', e);
+    }
+    if (hasBackupOnServer) {
+      return { status: 'needs_restore' };
+    }
+    const kp = await generateAndPublishKeypair(userId);
+    return { status: 'needs_setup', ...kp };
+  }
+
+  // ---- Backup & restore private key pakai Password Enkripsi ----
+
+  async function deriveKeyFromPassword(password, saltBytes) {
+    const baseKey = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']
+    );
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: saltBytes, iterations: 250000, hash: 'SHA-256' },
+      baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+    );
+  }
+
+  // Enkripsi private key device ini pakai password, lalu upload ke profiles.key_backup.
+  async function backupPrivateKey(userId, privateKey, password) {
+    const jwk = await crypto.subtle.exportKey('jwk', privateKey);
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const aesKey = await deriveKeyFromPassword(password, salt);
+    const ctBuf = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv }, aesKey, new TextEncoder().encode(JSON.stringify(jwk))
+    );
+    const payload = JSON.stringify({ v: 1, salt: b64FromBuf(salt), iv: b64FromBuf(iv), ct: b64FromBuf(ctBuf) });
+    const { error } = await supabaseClient.from('profiles').update({ key_backup: payload }).eq('id', userId);
+    if (error) throw error;
+  }
+
+  // Ambil backup dari server, coba buka pakai password, lalu simpan sebagai
+  // private key aktif di device ini (TIDAK generate keypair baru / TIDAK ubah public_key).
+  // Throw Error('WRONG_PASSWORD') kalau password salah.
+  // Throw Error('NO_BACKUP') kalau ternyata tidak ada backup di server.
+  async function restorePrivateKey(userId, password) {
+    const { data: prof, error } = await supabaseClient.from('profiles').select('key_backup').eq('id', userId).maybeSingle();
+    if (error) throw error;
+    if (!prof || !prof.key_backup) throw new Error('NO_BACKUP');
+    const payload = JSON.parse(prof.key_backup);
+    const salt = new Uint8Array(bufFromB64(payload.salt));
+    const iv = new Uint8Array(bufFromB64(payload.iv));
+    const aesKey = await deriveKeyFromPassword(password, salt);
+    let ptBuf;
+    try {
+      ptBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, aesKey, bufFromB64(payload.ct));
+    } catch (e) {
+      throw new Error('WRONG_PASSWORD');
+    }
+    const jwk = JSON.parse(new TextDecoder().decode(ptBuf));
+    localStorage.setItem(LS_PREFIX + userId, JSON.stringify(jwk));
+    const privateKey = await crypto.subtle.importKey(
+      'jwk', jwk, { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey', 'deriveBits']
+    );
+    const pubJwk = { kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y, ext: true };
+    const pubKey = await crypto.subtle.importKey('jwk', pubJwk, { name: 'ECDH', namedCurve: 'P-256' }, true, []);
+    const raw = await crypto.subtle.exportKey('raw', pubKey);
+    return { privateKey, publicKeyB64: b64FromBuf(raw) };
+  }
+
+  async function hasBackup(userId) {
+    try {
+      const { data: prof } = await supabaseClient.from('profiles').select('key_backup').eq('id', userId).maybeSingle();
+      return !!(prof && prof.key_backup);
+    } catch (e) {
+      return false;
     }
   }
 
-  // ---- Modal: restore kunci pakai PIN Enkripsi (device/browser baru, backup ada) ----
-  // Blocking: chat baru lanjut dimuat setelah promise ini resolve.
-  let restoreResolve=null;
-  function openRestoreModal(userId,resolve){
-    restoreResolve=resolve;
-    document.getElementById('restoreForm').dataset.uid=userId;
-    document.getElementById('restoreOverlay').classList.add('open');
-    document.getElementById('restorePw').focus();
+  // Ganti Password Enkripsi: pakai privateKey device ini (yang sedang aktif) sebagai
+  // sumber, lalu simpan ulang backup dengan password baru.
+  async function changeBackupPassword(userId, currentPrivateKey, newPassword) {
+    await backupPrivateKey(userId, currentPrivateKey, newPassword);
   }
-  document.getElementById('restoreForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const uid=e.target.dataset.uid, pw=document.getElementById('restorePw').value,
-          b=document.getElementById('restoreBtn'), hint=document.getElementById('restoreHint');
-    hint.textContent='';
-    if(!/^\d{6}$/.test(pw)){ hint.textContent='Masukkan PIN enkripsi 6 digit kamu.'; return; }
-    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Membuka...';
-    try{
-      const kp=await E2E.restorePrivateKey(uid,pw);
-      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Buka Kunci';
-      document.getElementById('restoreOverlay').classList.remove('open');
-      if(restoreResolve) restoreResolve({status:'ready', ...kp});
-    }catch(err){
-      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Buka Kunci';
-      if(err.message==='WRONG_PASSWORD'){ hint.textContent='PIN salah, coba lagi.'; }
-      else{ hint.textContent='Gagal membuka kunci, coba lagi.'; console.error(err); }
-    }
-  });
-  document.getElementById('restoreForgetLink').addEventListener('click', async () => {
-    const uid=document.getElementById('restoreForm').dataset.uid;
-    const ok=confirm('Semua percakapan lama tidak akan bisa dibaca lagi di perangkat manapun setelah ini. Yakin mau lanjut tanpa PIN?');
-    if(!ok) return;
-    try{
-      const kp=await E2E.forceNewKeypair(uid);
-      document.getElementById('restoreOverlay').classList.remove('open');
-      if(restoreResolve) restoreResolve({status:'ready', ...kp});
-    }catch(err){ console.error(err); alert('Gagal membuat kunci baru, coba lagi.'); }
-  });
 
-  // ---- Banner "Buat PIN Anda": muncul tiap kali chat dibuka selama device ini
-  // punya kunci aktif tapi belum ada backup PIN Enkripsi di server. ----
-  async function checkPinBanner(userId){
-    if(!myPrivateKey) return;
-    let hasBackup=false;
-    try{ hasBackup=await E2E.hasBackup(userId); }catch(e){ return; }
-    if(hasBackup) return; // sudah aman, tidak perlu ditawarkan
-    document.getElementById('offerSetupForm').dataset.uid=userId;
-    document.getElementById('pinBanner').classList.add('show');
-  }
-  document.getElementById('pinBannerBtn').addEventListener('click', () => {
-    document.getElementById('offerSetupHint').textContent='';
-    document.getElementById('offerSetupForm').reset();
-    document.getElementById('offerSetupOverlay').classList.add('open');
-  });
-  document.getElementById('pinBannerDismiss').addEventListener('click', () => {
-    document.getElementById('pinBanner').classList.remove('show');
-  });
-  document.getElementById('offerSetupForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const uid=e.target.dataset.uid, p1=document.getElementById('offerPw1').value, p2=document.getElementById('offerPw2').value,
-          b=document.getElementById('offerSetupBtn'), hint=document.getElementById('offerSetupHint');
-    hint.textContent='';
-    if(!/^\d{6}$/.test(p1)){ hint.textContent='PIN harus 6 digit angka.'; return; }
-    if(p1!==p2){ hint.textContent='PIN tidak cocok.'; return; }
-    if(!myPrivateKey) return;
-    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Menyimpan...';
-    try{
-      await E2E.backupPrivateKey(uid,myPrivateKey,p1);
-      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan';
-      document.getElementById('offerSetupOverlay').classList.remove('open');
-      document.getElementById('pinBanner').classList.remove('show');
-    }catch(err){
-      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan';
-      hint.textContent='Gagal menyimpan, coba lagi.'; console.error(err);
+  // Kalau user pilih "abaikan, mulai percakapan baru" saat restore gagal/lupa password:
+  // generate keypair baru seperti device benar-benar baru (chat lama di device lama jadi
+  // tidak terbaca lagi, tapi ini pilihan sadar user, bukan default otomatis).
+  // PENTING: backup PIN lama (key_backup) juga dihapus di sini, karena backup itu
+  // mengenkripsi private key LAMA yang sudah tidak dipakai lagi. Kalau dibiarkan,
+  // hasBackup() akan salah mengira user "sudah aman", padahal keypair aktif yang
+  // sekarang belum pernah dibackup -- dan device lain yang restore pakai PIN lama
+  // bakal dapat private key yang sudah tidak nyambung dengan public_key terbaru.
+  async function forceNewKeypair(userId) {
+    const kp = await generateAndPublishKeypair(userId);
+    try {
+      await supabaseClient.from('profiles').update({ key_backup: null }).eq('id', userId);
+    } catch (e) {
+      console.error('Gagal menghapus backup PIN lama:', e);
     }
-  });
-  document.getElementById('offerSetupSkip').addEventListener('click', () => {
-    document.getElementById('offerSetupOverlay').classList.remove('open');
-  });
-  const peerSubEl=document.getElementById('peerSub'),statusDotEl=document.getElementById('statusDot');let presenceChannel=null;
-  function subscribePresence(){
-    presenceChannel=supabaseClient.channel('online-users',{config:{presence:{key:currentUserId}}});
-    presenceChannel.on('presence',{event:'sync'},updatePeerOnlineStatus).on('presence',{event:'join'},updatePeerOnlineStatus).on('presence',{event:'leave'},updatePeerOnlineStatus).subscribe(async(s)=>{if(s==='SUBSCRIBED')await presenceChannel.track({online_at:new Date().toISOString()});});
+    return kp;
   }
-  function updatePeerOnlineStatus(){
-    if(!presenceChannel)return;const isOnline=!!presenceChannel.presenceState()[peerId];
-    if(isOnline){peerSubEl.textContent='Online';peerSubEl.classList.add('online');statusDotEl.classList.add('online');}else{peerSubEl.textContent='Offline';peerSubEl.classList.remove('online');statusDotEl.classList.remove('online');}
+
+  // Turunkan AES-GCM key bersama dari private key kita + public key lawan bicara.
+  async function getSharedKey(privateKey, peerId, peerPublicKeyB64) {
+    if (!privateKey || !peerPublicKeyB64) return null;
+    if (sharedKeyCache.has(peerId)) return sharedKeyCache.get(peerId);
+    const peerPubKey = await crypto.subtle.importKey(
+      'raw', bufFromB64(peerPublicKeyB64), { name: 'ECDH', namedCurve: 'P-256' }, false, []
+    );
+    const sharedKey = await crypto.subtle.deriveKey(
+      { name: 'ECDH', public: peerPubKey }, privateKey,
+      { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+    );
+    sharedKeyCache.set(peerId, sharedKey);
+    return sharedKey;
   }
-  let clearedBefore=null;
-  async function loadMessages(){
-    const {data:clearRow}=await supabaseClient.from('chat_clears').select('cleared_before').eq('user_id',currentUserId).eq('peer_id',peerId).maybeSingle();
-    clearedBefore=clearRow?clearRow.cleared_before:null;
-    let query=supabaseClient.from('messages').select('id, sender_id, content, created_at, delivered_at, read_at').or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`).order('created_at',{ascending:true});
-    if(clearedBefore)query=query.gt('created_at',clearedBefore);
-    const {data:rows,error}=await query;
-    const banner=`<div class="e2e-banner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Pesan di chat ini dienkripsi end-to-end. Hanya kamu dan ${peerUsername||'lawan bicaramu'} yang bisa membacanya.</span></div>`;
-    if(error||!rows||rows.length===0){msgArea.innerHTML=banner+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`;return;}
-    for(const m of rows){m.content=await E2E.decryptMessage(sharedKey,m.content);}
-    msgArea.innerHTML=banner;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});scrollToBottom();
+
+  function clearSharedKeyCache() {
+    sharedKeyCache.clear();
   }
-  function appendBubble(m,sending){
-    const mine=m.sender_id===currentUserId;const row=document.createElement('div');row.className='bubble-row '+(mine?'mine':'theirs')+(sending?' sending':'');row.dataset.id=m.id;
-    row.innerHTML=`<div class="bubble"><div class="txt"></div><div class="meta"><span>${timeLabel(m.created_at)}</span>${mine?`<span class="tick">${tickSvg(m.delivered_at,m.read_at)}</span>`:''}</div></div>`;
-    row.querySelector('.txt').textContent=normalizeText(m.content);msgArea.appendChild(row);
+
+  async function encryptMessage(sharedKey, plaintext) {
+    if (!sharedKey) return plaintext; // fallback, tidak seharusnya kejadian di alur normal
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const enc = new TextEncoder().encode(plaintext);
+    const ctBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, sharedKey, enc);
+    return JSON.stringify({ e2e: 1, iv: b64FromBuf(iv), ct: b64FromBuf(ctBuf) });
   }
-  function scrollToBottom(){msgArea.scrollTop=msgArea.scrollHeight;}
-  async function markIncomingAsRead(){const n=new Date().toISOString();await supabaseClient.from('messages').update({delivered_at:n,read_at:n}).eq('sender_id',peerId).eq('receiver_id',currentUserId).is('read_at',null);}
-  function subscribeRealtime(){
-    supabaseClient.channel('chat-'+[currentUserId,peerId].sort().join('-')).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`receiver_id=eq.${currentUserId}`},async(p)=>{
-      const m=p.new;if(m.sender_id!==peerId)return;m.content=await E2E.decryptMessage(sharedKey,m.content);
-      if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(m);scrollToBottom();
-      if(m.content==='🔔 PING!!!'&&navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
-      const n=new Date().toISOString();if(document.visibilityState==='visible')await supabaseClient.from('messages').update({delivered_at:n,read_at:n}).eq('id',m.id);else await supabaseClient.from('messages').update({delivered_at:n}).eq('id',m.id).is('delivered_at',null);
-    }).on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:`sender_id=eq.${currentUserId}`},(p)=>{
-      const row=msgArea.querySelector(`.bubble-row[data-id="${p.new.id}"]`);if(row){const t=row.querySelector('.tick');if(t)t.innerHTML=tickSvg(p.new.delivered_at,p.new.read_at);}
-    }).subscribe();
-    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')markIncomingAsRead();});
+
+  async function decryptMessage(sharedKey, payload) {
+    let obj;
+    try {
+      obj = JSON.parse(payload);
+    } catch (e) {
+      return payload; // bukan JSON -> pesan lama/plaintext, tampilkan apa adanya
+    }
+    if (!obj || obj.e2e !== 1 || !obj.iv || !obj.ct) return payload; // bukan format e2e
+    if (!sharedKey) return '🔒 Pesan terenkripsi (kunci tidak tersedia di perangkat ini)';
+    try {
+      const iv = new Uint8Array(bufFromB64(obj.iv));
+      const ctBuf = bufFromB64(obj.ct);
+      const ptBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, sharedKey, ctBuf);
+      return new TextDecoder().decode(ptBuf);
+    } catch (e) {
+      // Format e2e valid tapi gagal didekripsi -> kunci di device ini tidak cocok
+      // (mis. pesan dikirim/diterima dari pairing kunci yang berbeda).
+      return '🔒 Pesan tidak bisa dibuka di perangkat ini';
+    }
   }
-  async function sendMessage(){
-    const text=normalizeText(msgInput.value);if(!text||!sharedKey)return;msgInput.value='';autoResize();
-    if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';const tempId='temp-'+Date.now();
-    appendBubble({id:tempId,sender_id:currentUserId,content:text,created_at:new Date().toISOString()},true);scrollToBottom();
-    const encrypted=await E2E.encryptMessage(sharedKey,text);
-    const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted}).select().single();
-    msgInput.focus();const tempRow=msgArea.querySelector(`[data-id="${tempId}"]`);
-    if(error){if(tempRow){tempRow.classList.add('send-failed');tempRow.classList.remove('sending');}msgInput.value=text;return;}
-    if(tempRow)tempRow.remove();data.content=text;appendBubble(data);
-  }
-  function autoResize(){msgInput.style.height='auto';msgInput.style.height=Math.min(msgInput.scrollHeight,100)+'px';}
-  function showConfirm(title,msg,okLabel){
-    return new Promise((resolve)=>{
-      const ov=document.getElementById('confirmOverlay'),ok=document.getElementById('confirmOkBtn'),cancel=document.getElementById('confirmCancelBtn');
-      document.getElementById('confirmTitle').textContent=title;document.getElementById('confirmMsg').textContent=msg;ok.textContent=okLabel||'Hapus';
-      ov.classList.add('open');
-      function cleanup(result){ov.classList.remove('open');ok.removeEventListener('click',onOk);cancel.removeEventListener('click',onCancel);ov.removeEventListener('click',onOverlay);resolve(result);}
-      function onOk(){cleanup(true);} function onCancel(){cleanup(false);} function onOverlay(e){if(e.target===ov)cleanup(false);}
-      ok.addEventListener('click',onOk);cancel.addEventListener('click',onCancel);ov.addEventListener('click',onOverlay);
-    });
-  }
-  msgInput.addEventListener('input',()=>{autoResize();sendBtn.disabled=msgInput.value.trim().length===0;});
-  msgInput.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});sendBtn.addEventListener('click',sendMessage);
-  const menuBtn=document.getElementById('menuBtn'),chatMenu=document.getElementById('chatMenu');
-  menuBtn.addEventListener('click',(e)=>{e.stopPropagation();chatMenu.classList.toggle('open');});document.addEventListener('click',()=>{chatMenu.classList.remove('open');});
-  document.getElementById('menuHapusPermanen').addEventListener('click',async(e)=>{
-    e.stopPropagation();chatMenu.classList.remove('open');
-    const ok=await showConfirm('Hapus Untuk Semua Orang','Semua percakapan ini akan di hapus untuk semua orang','Hapus Permanen');
-    if(!ok)return;
-    const {error}=await supabaseClient.from('messages').delete().or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`);
-    if(error){alert('Gagal menghapus permanen. Coba lagi.');return;}
-    clearedBefore=null;
-    await supabaseClient.from('chat_clears').delete().eq('user_id',currentUserId).eq('peer_id',peerId);
-    msgArea.innerHTML=`<div class="empty-state"><span>Belum ada pesan.</span></div>`;
-  });
-  document.getElementById('menuHapusKontak').addEventListener('click',async(e)=>{
-    e.stopPropagation();chatMenu.classList.remove('open');
-    const ok=await showConfirm('Hapus Kontak Ini?','Menghapus kontak akan menghapus juga kontak anda dari teman ini.','Hapus');
-    if(!ok)return;
-    const {error}=await supabaseClient.from('contacts').delete().or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`);
-    if(!error)window.location.href='dashboard.html';
-  });
-  document.getElementById('menuPing').addEventListener('click',async(e)=>{
-    e.stopPropagation();chatMenu.classList.remove('open');if(!sharedKey)return;if(navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
-    const encrypted=await E2E.encryptMessage(sharedKey,'🔔 PING!!!');
-    const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted}).select().single();
-    if(!error){data.content='🔔 PING!!!';if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(data);scrollToBottom();}
-  });
-  history.pushState({page:'chat'},'',location.href);window.addEventListener('popstate',()=>{window.location.href='dashboard.html';});
-  if(typeof supabaseClient==='undefined'){
-    msgArea.innerHTML=`<div class="empty-state"><div class="es-title">Gagal terhubung</div><span>supabaseClient.js gagal dimuat (cek path file / koneksi internet / console browser).</span></div>`;
-    console.error('supabaseClient belum terdefinisi — supabase-js CDN atau supabaseClient.js gagal load.');
-  }else{
-    init();
-  }
-</script>
-</body>
-</html>
+
+  return {
+    ensureKeypair, getSharedKey, encryptMessage, decryptMessage, clearSharedKeyCache,
+    hasLocalKey, hasBackup, backupPrivateKey, restorePrivateKey, changeBackupPassword, forceNewKeypair
+  };
+})();
