@@ -351,8 +351,9 @@
     if(!rows||rows.length===0){cList.innerHTML='<div class="panel-empty">Belum ada kontak.</div>';return;}
     const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
     const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
-    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${id}" data-uname="${pMap[id]}"><div class="avatar" style="background:${colorFor(id)}">${initials(pMap[id])}</div><div class="uname">${pMap[id]}</div></div>`).join('');
+    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${id}" data-uname="${pMap[id]}"><div class="avatar" data-profuid="${id}" style="background:${colorFor(id)}">${initials(pMap[id])}</div><div class="uname">${pMap[id]}</div></div>`).join('');
     document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
+    document.querySelectorAll('.contact-item .avatar').forEach(a=>a.addEventListener('click',e=>{e.stopPropagation();window.location.href=`profil.html?uid=${a.dataset.profuid}`;}));
   }
   function timeAgo(iso){
     const diffMin=Math.max(0,Math.round((Date.now()-new Date(iso).getTime())/60000));
