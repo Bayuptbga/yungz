@@ -97,7 +97,7 @@
 <div class="phone">
   <div id="authGate"><div class="spinner"></div></div>
   <div class="appbar">
-    <div class="back" onclick="location.href='dashboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <div class="back" onclick="location.href='dashboard'"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
     <h1>Setelan</h1>
   </div>
   <div class="content">
@@ -192,7 +192,7 @@
 
   async function boot(){
     const {data:{session}} = await supabaseClient.auth.getSession();
-    if(!session){ window.location.replace('index.html'); return; }
+    if(!session){ window.location.replace('./'); return; }
     currentUserId = session.user.id;
     const {data:prof} = await supabaseClient.from('profiles').select('username, pin').eq('id', session.user.id).maybeSingle();
     if(prof){
