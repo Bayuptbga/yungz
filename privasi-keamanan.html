@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Private Chat - Privasi & Keamanan</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1b2a32">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Private Chat">
+<style>
+  @view-transition { navigation: auto; }
+  :root{
+    --bbm-blue-dark:#0b141a;
+    --bbm-blue:#1b2a32;
+    --bg:#121b22;
+    --card-bg:#1b2a32;
+    --ink:#e9edf0;
+    --muted:#8696a0;
+    --border:#2a3942;
+    --ok:#2ecc71;
+    --error:#f15c6d;
+    --accent:#53bdeb;
+  }
+  *{box-sizing:border-box;}
+  html{ overscroll-behavior:none; -webkit-tap-highlight-color:transparent; }
+  body{
+    margin:0; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink);
+    min-height:100vh; display:flex; justify-content:center; -webkit-font-smoothing:antialiased; position:relative;
+  }
+  input{user-select:text;}
+  .phone{ width:100%; max-width:420px; min-height:100vh; background:var(--bg); display:flex; flex-direction:column; position:relative; }
+  #authGate{ position:absolute; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center; }
+  #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent); animation:authSpin .75s linear infinite; }
+  @keyframes authSpin{ to{ transform:rotate(360deg); } }
+
+  .appbar{ background:var(--bbm-blue); color:#fff; padding:calc(14px + env(safe-area-inset-top)) 16px 14px; display:flex; gap:16px; align-items:center; flex-shrink:0; }
+  .appbar .back{ cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .appbar .back svg{ width:22px; height:22px; }
+  .appbar h1{ margin:0; font-size:19px; font-weight:600; }
+
+  .content{ flex:1; overflow-y:auto; padding:18px 16px 40px; }
+  .section-title{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; margin:22px 4px 8px; }
+  .section-title:first-child{ margin-top:0; }
+
+  .card{ background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:16px; }
+  .field{ margin-bottom:14px; }
+  .field:last-of-type{ margin-bottom:0; }
+  .field label{ display:block; font-size:11px; font-weight:700; color:var(--muted); margin-bottom:7px; text-transform:uppercase; letter-spacing:0.5px; }
+  .input-wrap{ display:flex; align-items:center; gap:2px; border:1.5px solid var(--border); border-radius:10px; background:var(--bbm-blue-dark); padding:0 12px; }
+  .input-wrap:focus-within{ border-color:var(--accent); }
+  .input-wrap input{ border:none; outline:none; background:transparent; padding:12px 8px; font-size:14.5px; width:100%; color:var(--ink); }
+  .toggle-pw{ font-size:10.5px; color:var(--accent); font-weight:700; cursor:pointer; letter-spacing:0.4px; flex-shrink:0; }
+  .hint{ font-size:12px; color:var(--muted); margin-top:9px; min-height:14px; }
+  .hint.err{ color:var(--error); }
+  .hint.ok{ color:var(--ok); }
+
+  .btn{ margin-top:14px; width:100%; padding:12.5px 0; background:linear-gradient(135deg,var(--accent) 0%,#1f8fc7 100%); color:#062733; border:none; border-radius:10px; font-size:14.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .btn:active{ transform:scale(0.98); }
+  .btn:disabled{ opacity:0.7; cursor:default; }
+  .btn .spinner{ width:14px; height:14px; border-radius:50%; border:2px solid rgba(6,39,51,0.3); border-top-color:#062733; animation:spin .7s linear infinite; display:none; }
+  .btn.loading .spinner{ display:inline-block; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
+<script src="device-gate.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js?v=2"></script>
+</head>
+<body>
+<div class="phone">
+  <div id="authGate"><div class="spinner"></div></div>
+  <div class="appbar">
+    <div class="back" onclick="location.href='dashboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <h1>Privasi & Keamanan</h1>
+  </div>
+  <div class="content">
+    <div class="section-title">Ganti Kata Sandi</div>
+    <div class="card">
+      <form id="pwForm">
+        <div class="field">
+          <label>Kata Sandi Lama</label>
+          <div class="input-wrap"><input type="password" id="oldPassword" required autocomplete="current-password"><span class="toggle-pw" onclick="const p=document.getElementById('oldPassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
+        </div>
+        <div class="field">
+          <label>Kata Sandi Baru</label>
+          <div class="input-wrap"><input type="password" id="newPassword" required minlength="6" autocomplete="new-password"><span class="toggle-pw" onclick="const p=document.getElementById('newPassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
+        </div>
+        <div class="field">
+          <label>Ulangi Kata Sandi Baru</label>
+          <div class="input-wrap"><input type="password" id="confirmPassword" required minlength="6" autocomplete="new-password"></div>
+        </div>
+        <div class="hint" id="pwHint">Minimal 6 karakter</div>
+        <button type="submit" class="btn" id="pwSubmitBtn"><span class="spinner"></span><span class="btn-label">Simpan Kata Sandi</span></button>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  function translatePwError(msg){
+    const m=(msg||'').toLowerCase();
+    if(m.includes('at least 6')) return 'Kata sandi minimal 6 karakter.';
+    if(m.includes('same') && m.includes('password')) return 'Kata sandi baru harus beda dari yang lama.';
+    if(m.includes('rate limit')) return 'Terlalu banyak percobaan, coba lagi sebentar lagi.';
+    return 'Gagal menyimpan kata sandi, coba lagi.';
+  }
+  function translateOldPwError(msg){
+    const m=(msg||'').toLowerCase();
+    if(m.includes('rate limit')) return 'Terlalu banyak percobaan, coba lagi sebentar lagi.';
+    return 'Kata sandi lama salah.';
+  }
+
+  let currentUsername=null;
+  let currentUserId=null;
+
+  async function boot(){
+    const {data:{session}} = await supabaseClient.auth.getSession();
+    if(!session){ window.location.replace('index.html'); return; }
+    currentUserId = session.user.id;
+    const {data:prof} = await supabaseClient.from('profiles').select('username').eq('id', session.user.id).maybeSingle();
+    if(prof){ currentUsername = prof.username; }
+    document.getElementById('authGate').style.display = 'none';
+  }
+  boot();
+
+  document.getElementById('pwForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const p0=document.getElementById('oldPassword').value, p1=document.getElementById('newPassword').value, p2=document.getElementById('confirmPassword').value,
+          b=document.getElementById('pwSubmitBtn'), hint=document.getElementById('pwHint');
+    if(!p0){ hint.textContent='Masukkan kata sandi lama.'; hint.className='hint err'; return; }
+    if(p1.length<6){ hint.textContent='Kata sandi minimal 6 karakter.'; hint.className='hint err'; return; }
+    if(p1!==p2){ hint.textContent='Kata sandi tidak cocok.'; hint.className='hint err'; return; }
+    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Memeriksa...';
+    const {error:reauthErr} = await supabaseClient.auth.signInWithPassword({email: usernameToEmail(currentUsername), password: p0});
+    if(reauthErr){
+      hint.textContent=translateOldPwError(reauthErr.message); hint.className='hint err';
+      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan Kata Sandi';
+      return;
+    }
+    b.querySelector('.btn-label').textContent='Menyimpan...';
+    const {error} = await supabaseClient.auth.updateUser({password:p1});
+    b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan Kata Sandi';
+    if(error){ hint.textContent=translatePwError(error.message); hint.className='hint err'; return; }
+    hint.textContent='Kata sandi berhasil diperbarui.'; hint.className='hint ok';
+    document.getElementById('pwForm').reset();
+  });
+</script>
+</body>
+</html>
