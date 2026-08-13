@@ -155,7 +155,7 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
-<script src="e2e.js?v=1"></script>
+<script src="e2e.js?v=2"></script>
 <script src="push-notif.js"></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js');});}</script>
 </head>
@@ -302,7 +302,13 @@
   async function boot(){
     const {data:{session}}=await supabaseClient.auth.getSession();
     if(!session){window.location.replace('index.html');return;}
-    const kp=await E2E.ensureKeypair(session.user.id);myPrivateKey=kp.privateKey;
+    let kp;
+    try{ kp=await E2E.ensureKeypair(session.user.id); }
+    catch(e){ console.error('Gagal cek kunci enkripsi:',e); window.location.replace('index.html'); return; }
+    // Kalau kunci device ini belum siap (device baru, butuh restore/setel Password
+    // Enkripsi), urus semua itu di index.html biar tidak duplikasi UI di sini.
+    if(kp.status!=='ready'){ window.location.replace('index.html'); return; }
+    myPrivateKey=kp.privateKey;
     document.getElementById('authGate').style.display='none';
     refreshNotifBadge();
   }
