@@ -321,6 +321,10 @@
       pHint.textContent='Kata sandi minimal 6 karakter'; pHint.className='hint err';
       return;
     }
+    if(!validUsername(u)){
+      hint.textContent='Username 3-20 karakter, hanya huruf/angka/underscore.'; hint.className='hint err';
+      return;
+    }
     b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Membuat...';
     const {data:sData, error:sErr} = await supabaseClient.auth.signUp({email: usernameToEmail(u), password: p});
     if(sErr){
