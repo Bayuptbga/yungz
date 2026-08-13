@@ -533,15 +533,12 @@
   async function boot(){
     const {data:{session}}=await supabaseClient.auth.getSession();
     if(!session){window.location.replace('index.html');return;}
-    // Cek/siapkan kunci enkripsi diam-diam di background, TANPA nge-block atau minta
-    // PIN Enkripsi di sini. Kalau device ini baru & belum pernah setel PIN
-    // Enkripsi (needs_setup), kunci baru sudah otomatis dibuat & langsung bisa dipakai.
-    // Kalau device ini baru TAPI sudah pernah ada backup di server (needs_restore),
-    // myPrivateKey dibiarkan kosong -- chat lama tidak terbaca di sini (tampil 🔒) sampai
-    // user membuka salah satu chat dan memasukkan PIN Enkripsi di sana.
+    // Cek/siapkan kunci enkripsi diam-diam di background. Device baru otomatis
+    // dapat keypair baru sendiri (tidak ada backup/restore PIN, mirip default
+    // WhatsApp) -- jadi hasil ensureKeypair selalu langsung siap dipakai.
     try{
       const kp=await E2E.ensureKeypair(session.user.id);
-      if(kp.status==='ready'||kp.status==='needs_setup'){ myPrivateKey=kp.privateKey; }
+      myPrivateKey=kp.privateKey;
     }catch(e){ console.error('Gagal cek kunci enkripsi:',e); }
     document.getElementById('authGate').style.display='none';
     refreshNotifBadge();
