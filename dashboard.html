@@ -371,11 +371,11 @@
     if(error){myStatusMsg.textContent='Gagal mengirim status.';myStatusMsg.className='search-msg err';return;}
     myStatusMsg.textContent='Status diperbarui, aktif 24 jam.';myStatusMsg.className='search-msg ok';
     myStatusInput.value='';
-    await loadStatusTab();
+    await loadStatusTab(false);
   });
-  async function loadStatusTab(){
+  async function loadStatusTab(showSkeleton=true){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
-    const sList=document.getElementById('statusList');sList.innerHTML=skeletonRow().repeat(3);
+    const sList=document.getElementById('statusList');if(showSkeleton)sList.innerHTML=skeletonRow().repeat(3);
     const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
     const oIds=(rows||[]).map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
     const allIds=[session.user.id,...oIds];
