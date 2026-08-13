@@ -402,9 +402,9 @@
   }
   document.getElementById('restoreBannerBtn').addEventListener('click', () => {
     document.getElementById('restoreHint').textContent='';
-    clearPinBoxes(false);
+    clearPinBoxes(restoreBoxes, false);
     document.getElementById('restoreOverlay').classList.add('open');
-    pinBoxes[0].focus();
+    restoreBoxes[0].focus();
   });
   document.getElementById('restoreBannerDismiss').addEventListener('click', () => {
     document.getElementById('restoreBanner').classList.remove('show');
