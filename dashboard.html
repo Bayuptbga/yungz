@@ -299,7 +299,7 @@
   </div>
 </div>
 <script>
-  let currentUserPin=null,myPrivateKey=null,myKeyVersion=1;const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
+  let currentUserPin=null,myPrivateKey=null;const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return(u||'?').slice(0,2).toUpperCase();}
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
@@ -318,28 +318,21 @@
     const {data:contactRows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
     const acceptedIds=new Set((contactRows||[]).map(r=>r.requester_id===userId?r.addressee_id:r.requester_id));
     if(acceptedIds.size===0){render([]);return;}
-    const {data:msgRows}=await supabaseClient.from('messages').select('sender_id, receiver_id, content, created_at, delivered_at, read_at, sender_key_version, receiver_key_version').or(`sender_id.eq.${userId},receiver_id.eq.${userId}`).order('created_at',{ascending:false}).limit(300);
+    const {data:msgRows}=await supabaseClient.from('messages').select('sender_id, receiver_id, content, created_at, delivered_at, read_at').or(`sender_id.eq.${userId},receiver_id.eq.${userId}`).order('created_at',{ascending:false}).limit(300);
     const {data:clearRows}=await supabaseClient.from('chat_clears').select('peer_id, cleared_before').eq('user_id',userId);
     const clearedMap=new Map((clearRows||[]).map(c=>[c.peer_id,c.cleared_before]));
     const lastByPartner=new Map();
     (msgRows||[]).forEach(m=>{const p=m.sender_id===userId?m.receiver_id:m.sender_id;if(!acceptedIds.has(p))return;const cutoff=clearedMap.get(p);if(cutoff&&m.created_at<=cutoff)return;if(!lastByPartner.has(p))lastByPartner.set(p,m);});
     if(lastByPartner.size===0){render([]);return;}
-    const pIds=[...lastByPartner.keys()];const {data:profilesData}=await supabaseClient.from('profiles').select('id, username, public_key, key_version, public_key_history').in('id',pIds);
+    const pIds=[...lastByPartner.keys()];const {data:profilesData}=await supabaseClient.from('profiles').select('id, username, public_key').in('id',pIds);
     const pMap={};(profilesData||[]).forEach(p=>pMap[p.id]=p);
     const chats=await Promise.all(pIds.map(async pid=>{
       const m=lastByPartner.get(pid);const mine=m.sender_id===userId;const prof=pMap[pid]||{};
       let previewText=m.content;
       if(myPrivateKey&&prof.public_key){
         try{
-          const senderVer=m.sender_key_version||1,receiverVer=m.receiver_key_version||1;
-          const myVerAtSend=mine?senderVer:receiverVer,peerVerAtSend=mine?receiverVer:senderVer;
-          if(myVerAtSend===myKeyVersion){
-            const peerKeyB64=E2E.getPeerPublicKeyAtVersion(prof,peerVerAtSend);
-            if(peerKeyB64){
-              const sk=await E2E.getSharedKeyForVersions(myPrivateKey,myKeyVersion,pid,peerVerAtSend,peerKeyB64);
-              previewText=await E2E.decryptMessage(sk,m.content);
-            }else previewText='🔒 Pesan terenkripsi';
-          }else previewText='🔒 Pesan terenkripsi';
+          const sk=await E2E.getSharedKey(myPrivateKey,pid,prof.public_key);
+          previewText=await E2E.decryptMessage(sk,m.content);
         }catch(e){}
       }else if(looksEncrypted(m.content)){
         previewText='🔒 Pesan terenkripsi';
@@ -547,11 +540,12 @@
     const {data:{session}}=await supabaseClient.auth.getSession();
     if(!session){window.location.replace('index.html');return;}
     try{
-      // Tidak ada lagi pemulihan lewat cadangan server: device baru selalu
-      // dapat keypair baru (key_version naik). Ini yang memperketat model
-      // end-to-end -- private key tidak pernah punya jalan balik ke server.
+      // Tidak ada lagi pemulihan lewat cadangan server, dan tidak ada lagi
+      // versioning kunci: device baru selalu dapat keypair baru yang langsung
+      // menimpa public key lama di server. Ini yang memperketat & menyederhanakan
+      // model end-to-end -- private key tidak pernah punya jalan balik ke server.
       const kp=await E2E.ensureKeypair(session.user.id);
-      myPrivateKey=kp.privateKey;myKeyVersion=kp.version||1;
+      myPrivateKey=kp.privateKey;
     }catch(e){ console.error('Gagal cek kunci enkripsi:',e); }
     document.getElementById('authGate').style.display='none';
     refreshNotifBadge();
