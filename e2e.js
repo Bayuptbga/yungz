@@ -2,8 +2,10 @@
 // Skema: ECDH (P-256) per user untuk sepakat kunci rahasia bersama per pasangan chat,
 // lalu AES-GCM 256-bit buat enkripsi/dekripsi isi pesan.
 // Private key TIDAK PERNAH dikirim ke server dalam bentuk terbuka — hanya disimpan
-// di perangkat (localStorage). Server (Supabase) hanya pernah melihat ciphertext,
-// dan (opsional) backup key yang dienkripsi pakai Password Enkripsi milik user.
+// di perangkat (localStorage). Server (Supabase) hanya pernah melihat ciphertext.
+// CATATAN: versi ini TIDAK punya fitur backup/restore kunci (mirip default WhatsApp).
+// Kalau device baru/localStorage kehapus, keypair baru dibuat otomatis dan riwayat
+// chat lama TIDAK BISA dibuka lagi di device itu. Ini trade-off yang disengaja.
 const E2E = (() => {
   const LS_PREFIX = 'e2e_priv_';
   const sharedKeyCache = new Map(); // peerId -> CryptoKey (AES-GCM), cache per sesi halaman
@@ -57,120 +59,19 @@ const E2E = (() => {
   }
 
   // Pastikan user punya keypair ECDH siap dipakai di device ini.
-  // Return salah satu dari:
-  //  { status:'ready', privateKey, publicKeyB64 }        -> siap pakai langsung
-  //  { status:'needs_restore' }                            -> device baru TAPI user sudah
-  //                                                           pernah setel Password Enkripsi;
-  //                                                           UI wajib minta password lalu panggil restorePrivateKey()
-  //  { status:'needs_setup', privateKey, publicKeyB64 }    -> device baru & belum pernah ada
-  //                                                           backup sama sekali; keypair BARU
-  //                                                           sudah dibuat (chat lama di device
-  //                                                           lain jadi tidak terbaca); UI
-  //                                                           sebaiknya tawarkan setel Password
-  //                                                           Enkripsi sekarang biar next time aman.
+  // Return: { status:'ready'|'new', privateKey, publicKeyB64 }
+  //  'ready' -> sudah ada kunci lokal, langsung dipakai.
+  //  'new'   -> device baru (atau localStorage kosong); keypair BARU otomatis
+  //             dibuat & dipublikasikan. Riwayat chat lama TIDAK bisa dibuka lagi
+  //             di device ini (tidak ada mekanisme restore), sama seperti WhatsApp
+  //             kalau install ulang tanpa chat backup.
   async function ensureKeypair(userId) {
     if (hasLocalKey(userId)) {
       const kp = await loadLocalKeypair(userId);
       return { status: 'ready', ...kp };
     }
-    let hasBackupOnServer = false;
-    try {
-      const { data: prof } = await supabaseClient.from('profiles').select('key_backup').eq('id', userId).maybeSingle();
-      hasBackupOnServer = !!(prof && prof.key_backup);
-    } catch (e) {
-      console.error('Gagal cek backup key:', e);
-    }
-    if (hasBackupOnServer) {
-      return { status: 'needs_restore' };
-    }
     const kp = await generateAndPublishKeypair(userId);
-    return { status: 'needs_setup', ...kp };
-  }
-
-  // ---- Backup & restore private key pakai Password Enkripsi ----
-
-  async function deriveKeyFromPassword(password, saltBytes) {
-    const baseKey = await crypto.subtle.importKey(
-      'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']
-    );
-    return crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt: saltBytes, iterations: 250000, hash: 'SHA-256' },
-      baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
-    );
-  }
-
-  // Enkripsi private key device ini pakai password, lalu upload ke profiles.key_backup.
-  async function backupPrivateKey(userId, privateKey, password) {
-    const jwk = await crypto.subtle.exportKey('jwk', privateKey);
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const aesKey = await deriveKeyFromPassword(password, salt);
-    const ctBuf = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv }, aesKey, new TextEncoder().encode(JSON.stringify(jwk))
-    );
-    const payload = JSON.stringify({ v: 1, salt: b64FromBuf(salt), iv: b64FromBuf(iv), ct: b64FromBuf(ctBuf) });
-    const { error } = await supabaseClient.from('profiles').update({ key_backup: payload }).eq('id', userId);
-    if (error) throw error;
-  }
-
-  // Ambil backup dari server, coba buka pakai password, lalu simpan sebagai
-  // private key aktif di device ini (TIDAK generate keypair baru / TIDAK ubah public_key).
-  // Throw Error('WRONG_PASSWORD') kalau password salah.
-  // Throw Error('NO_BACKUP') kalau ternyata tidak ada backup di server.
-  async function restorePrivateKey(userId, password) {
-    const { data: prof, error } = await supabaseClient.from('profiles').select('key_backup').eq('id', userId).maybeSingle();
-    if (error) throw error;
-    if (!prof || !prof.key_backup) throw new Error('NO_BACKUP');
-    const payload = JSON.parse(prof.key_backup);
-    const salt = new Uint8Array(bufFromB64(payload.salt));
-    const iv = new Uint8Array(bufFromB64(payload.iv));
-    const aesKey = await deriveKeyFromPassword(password, salt);
-    let ptBuf;
-    try {
-      ptBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, aesKey, bufFromB64(payload.ct));
-    } catch (e) {
-      throw new Error('WRONG_PASSWORD');
-    }
-    const jwk = JSON.parse(new TextDecoder().decode(ptBuf));
-    localStorage.setItem(LS_PREFIX + userId, JSON.stringify(jwk));
-    const privateKey = await crypto.subtle.importKey(
-      'jwk', jwk, { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey', 'deriveBits']
-    );
-    const pubJwk = { kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y, ext: true };
-    const pubKey = await crypto.subtle.importKey('jwk', pubJwk, { name: 'ECDH', namedCurve: 'P-256' }, true, []);
-    const raw = await crypto.subtle.exportKey('raw', pubKey);
-    return { privateKey, publicKeyB64: b64FromBuf(raw) };
-  }
-
-  async function hasBackup(userId) {
-    try {
-      const { data: prof } = await supabaseClient.from('profiles').select('key_backup').eq('id', userId).maybeSingle();
-      return !!(prof && prof.key_backup);
-    } catch (e) {
-      return false;
-    }
-  }
-
-  // Ganti Password Enkripsi: pakai privateKey device ini (yang sedang aktif) sebagai
-  // sumber, lalu simpan ulang backup dengan password baru.
-  async function changeBackupPassword(userId, currentPrivateKey, newPassword) {
-    await backupPrivateKey(userId, currentPrivateKey, newPassword);
-  }
-
-  // Kalau user pilih "abaikan, mulai percakapan baru" saat restore gagal/lupa password:
-  // generate keypair baru seperti device benar-benar baru (chat lama di device lama jadi
-  // tidak terbaca lagi, tapi ini pilihan sadar user, bukan default otomatis).
-  // PENTING: backup PIN lama di server dihapus di sini juga, karena backup itu
-  // dienkripsi untuk private key yang LAMA -- kalau dibiarkan, hasBackup() akan
-  // terus mengira device ini "sudah aman" padahal PIN lama sudah tidak match
-  // dengan kunci baru ini, jadi banner "Buat PIN" tidak akan pernah muncul lagi.
-  async function forceNewKeypair(userId) {
-    try {
-      await supabaseClient.from('profiles').update({ key_backup: null }).eq('id', userId);
-    } catch (e) {
-      console.error('Gagal hapus backup PIN lama:', e);
-    }
-    return generateAndPublishKeypair(userId);
+    return { status: 'new', ...kp };
   }
 
   // Turunkan AES-GCM key bersama dari private key kita + public key lawan bicara.
@@ -223,6 +124,6 @@ const E2E = (() => {
 
   return {
     ensureKeypair, getSharedKey, encryptMessage, decryptMessage, clearSharedKeyCache,
-    hasLocalKey, hasBackup, backupPrivateKey, restorePrivateKey, changeBackupPassword, forceNewKeypair
+    hasLocalKey
   };
 })();
