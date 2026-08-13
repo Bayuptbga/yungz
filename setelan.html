@@ -88,16 +88,14 @@
   .installed-badge{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ok); font-weight:600; }
   .installed-badge svg{ width:16px; height:16px; }
 </style>
-<script src="device-gate.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
-<script src="e2e.js?v=2"></script>
 </head>
 <body>
 <div class="phone">
   <div id="authGate"><div class="spinner"></div></div>
   <div class="appbar">
-    <div class="back" onclick="location.href='dashboard'"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <div class="back" onclick="location.href='dashboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
     <h1>Setelan</h1>
   </div>
   <div class="content">
@@ -127,28 +125,6 @@
         </div>
         <div class="hint" id="pwHint">Minimal 6 karakter</div>
         <button type="submit" class="btn" id="pwSubmitBtn"><span class="spinner"></span><span class="btn-label">Simpan Kata Sandi</span></button>
-      </form>
-    </div>
-
-    <div class="section-title">PIN Enkripsi</div>
-    <div class="card">
-      <div class="hint" style="margin-top:0;margin-bottom:12px;">PIN ini beda dari kata sandi login — dipakai untuk memulihkan chat terenkripsi kalau kamu login dari HP/browser lain. <span id="pwBackupStatus">Memeriksa status...</span></div>
-      <form id="backupPwForm">
-        <div class="field" id="backupOldPwField" style="display:none;">
-          <label>PIN Enkripsi Saat Ini</label>
-          <div class="input-wrap"><input type="password" id="backupOldPw" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);"><span class="toggle-pw" onclick="const p=document.getElementById('backupOldPw');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
-          <div class="hint" style="margin-top:6px;">Device ini sudah dikenali, jadi kunci diambil langsung dari device — kolom ini opsional, cuma dipakai kalau kamu ingin verifikasi ulang.</div>
-        </div>
-        <div class="field">
-          <label id="backupPwLabel">PIN Enkripsi Baru</label>
-          <div class="input-wrap"><input type="password" id="backupNewPw" required inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);"><span class="toggle-pw" onclick="const p=document.getElementById('backupNewPw');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
-        </div>
-        <div class="field">
-          <label>Ulangi PIN</label>
-          <div class="input-wrap"><input type="password" id="backupConfirmPw" required inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);"></div>
-        </div>
-        <div class="hint" id="backupPwHint">PIN harus 6 digit angka</div>
-        <button type="submit" class="btn" id="backupPwSubmitBtn"><span class="spinner"></span><span class="btn-label" id="backupPwBtnLabel">Simpan PIN Enkripsi</span></button>
       </form>
     </div>
 
@@ -188,11 +164,10 @@
   let currentPin=null;
   let currentUsername=null;
   let currentUserId=null;
-  let myPrivateKey=null;
 
   async function boot(){
     const {data:{session}} = await supabaseClient.auth.getSession();
-    if(!session){ window.location.replace('./'); return; }
+    if(!session){ window.location.replace('index.html'); return; }
     currentUserId = session.user.id;
     const {data:prof} = await supabaseClient.from('profiles').select('username, pin').eq('id', session.user.id).maybeSingle();
     if(prof){
@@ -203,58 +178,9 @@
       document.getElementById('pAvatar').textContent = initials(prof.username);
       document.getElementById('pAvatar').style.background = colorFor(session.user.id);
     }
-    // Kunci enkripsi device ini. Kalau device ini baru & belum pernah dibuka kuncinya
-    // (butuh PIN Enkripsi buat restore), jangan block halaman Setelan -- cukup nonaktifkan
-    // form PIN Enkripsi & kasih tahu user untuk buka salah satu chat dulu.
-    let kp;
-    try{ kp = await E2E.ensureKeypair(session.user.id); }
-    catch(e){ console.error('Gagal cek kunci enkripsi:', e); }
-    const statusEl=document.getElementById('pwBackupStatus'), labelEl=document.getElementById('backupPwLabel'), btnLabel=document.getElementById('backupPwBtnLabel');
-    if(!kp || kp.status!=='ready'){
-      myPrivateKey=null;
-      statusEl.textContent='Buka salah satu chat dulu untuk mengaktifkan kunci enkripsi di device ini, baru PIN Enkripsi bisa disetel.';
-      document.getElementById('backupPwSubmitBtn').disabled=true;
-      document.getElementById('authGate').style.display = 'none';
-      return;
-    }
-    myPrivateKey = kp.privateKey;
-    const hasBackup = await E2E.hasBackup(session.user.id);
-    if(hasBackup){
-      statusEl.textContent='Kamu sudah punya PIN Enkripsi aktif.';
-      labelEl.textContent='PIN Enkripsi Baru';
-      btnLabel.textContent='Ganti PIN Enkripsi';
-    }else{
-      statusEl.textContent='Kamu belum punya PIN Enkripsi — disarankan untuk disetel.';
-      labelEl.textContent='Buat PIN Enkripsi';
-      btnLabel.textContent='Simpan PIN Enkripsi';
-    }
     document.getElementById('authGate').style.display = 'none';
   }
   boot();
-
-  document.getElementById('backupPwForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const p1=document.getElementById('backupNewPw').value, p2=document.getElementById('backupConfirmPw').value,
-          b=document.getElementById('backupPwSubmitBtn'), hint=document.getElementById('backupPwHint'), btnLabel=document.getElementById('backupPwBtnLabel');
-    hint.textContent='PIN harus 6 digit angka'; hint.className='hint';
-    if(!/^\d{6}$/.test(p1)){ hint.textContent='PIN harus 6 digit angka.'; hint.className='hint err'; return; }
-    if(p1!==p2){ hint.textContent='PIN tidak cocok.'; hint.className='hint err'; return; }
-    if(!myPrivateKey){ hint.textContent='Kunci device belum siap, muat ulang halaman.'; hint.className='hint err'; return; }
-    const prevLabel=btnLabel.textContent;
-    b.disabled=true; b.classList.add('loading'); btnLabel.textContent='Menyimpan...';
-    try{
-      await E2E.changeBackupPassword(currentUserId, myPrivateKey, p1);
-      hint.textContent='PIN Enkripsi berhasil disimpan.'; hint.className='hint ok';
-      document.getElementById('backupPwForm').reset();
-      document.getElementById('pwBackupStatus').textContent='Kamu sudah punya PIN Enkripsi aktif.';
-      document.getElementById('backupPwLabel').textContent='PIN Enkripsi Baru';
-      btnLabel.textContent='Ganti PIN Enkripsi';
-    }catch(err){
-      hint.textContent='Gagal menyimpan, coba lagi.'; hint.className='hint err'; console.error(err);
-      btnLabel.textContent=prevLabel;
-    }
-    b.disabled=false; b.classList.remove('loading');
-  });
 
   document.getElementById('pinCopyBtn').addEventListener('click', async () => {
     if(!currentPin) return;
