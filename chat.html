@@ -230,26 +230,7 @@
       </div>
     </div>
   </div>
-  <div class="pin-banner" id="pinBanner">
-    <div class="pb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
-    <div class="pb-body">
-      <div class="pb-title">Buat PIN Anda</div>
-      <div class="pb-sub">Buat PIN Enkripsi untuk memulihkan riwayat obrolan kalau kamu login dari perangkat lain. Tanpa PIN ini, chat lama tidak bisa dibuka lagi di perangkat baru.</div>
-      <div class="pb-actions"><button class="pb-btn" id="pinBannerBtn">Buat PIN</button><button class="pb-dismiss" id="pinBannerDismiss">Lewati</button></div>
-    </div>
-  </div>
-  <!-- Banner: perangkat baru & sudah pernah setel PIN Enkripsi -> tawarkan buka kunci,
-       bukan modal yang otomatis nutup layar. Chat tetap kebuka, cuma isi pesan lama
-       tampil terkunci sampai PIN dimasukkan. -->
-  <div class="pin-banner" id="restoreBanner">
-    <div class="pb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
-    <div class="pb-body">
-      <div class="pb-title">Buka Kunci Chat</div>
-      <div class="pb-sub">Kamu login dari perangkat baru. Masukkan PIN Enkripsi biar percakapan lamamu bisa dibaca lagi di sini.</div>
-      <div class="pb-actions"><button class="pb-btn" id="restoreBannerBtn">Masukkan PIN</button><button class="pb-dismiss" id="restoreBannerDismiss">Lewati</button></div>
-    </div>
-  </div>
-  <div class="msg-area" id="msgArea"><div class="empty-state"><div class="loading-spinner"></div><span>Memuat percakapan…</span></div></div>
+  <div class="msg-area" id="msgArea"<div class="empty-state"><div class="loading-spinner"></div><span>Memuat percakapan…</span></div></div>
 
   <!-- Popup "Pelajari selengkapnya" tentang enkripsi end-to-end, dipicu dari banner di atas area pesan -->
   <div class="e2e-info-overlay" id="e2eInfoOverlay">
@@ -269,69 +250,6 @@
         <button class="confirm-cancel" id="confirmCancelBtn">Batal</button>
         <button class="confirm-ok" id="confirmOkBtn">Hapus</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Halaman: pulihkan pesan pakai PIN Enkripsi (login dari device/browser baru) -->
-  <div class="kpage-overlay" id="restoreOverlay">
-    <div class="kpage-top">
-      <button type="button" class="kpage-back" id="restoreBackBtn" aria-label="Kembali"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-      <button type="button" class="kpage-skip" id="restoreSkipBtn">Lewati</button>
-    </div>
-    <div class="kpage-body">
-      <div class="kpage-title-row"><h2>Pulihkan pesan dengan memasukkan PIN Anda</h2></div>
-      <form id="restoreForm">
-        <div class="pin-boxes" id="pinBoxes">
-          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
-          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
-          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
-          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
-          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
-          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
-        </div>
-        <span class="kpage-forgot" id="restoreForgetLink">Lupa PIN?</span>
-        <div class="hint err" id="restoreHint"></div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Halaman: konfirmasi "Lupa PIN" — aksi PERMANEN (hapus backup lama, mulai kunci baru).
-       Ditumpuk di atas halaman Pulihkan Pesan, dipicu dari link "Lupa PIN?" di sana. -->
-  <div class="kpage-overlay kpage-overlay-danger" id="forgetPinOverlay">
-    <div class="kpage-top">
-      <button type="button" class="kpage-back" id="forgetPinBackBtn" aria-label="Kembali"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-    </div>
-    <div class="kpage-body kpage-body-center">
-      <div class="kpage-warn-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#f15c6d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div>
-      <h2 class="kpage-warn-title">Mulai Percakapan Baru Tanpa PIN Lama?</h2>
-      <p class="kpage-sub">Semua percakapan lama tidak akan bisa dibaca lagi di perangkat manapun setelah ini — termasuk kalau PIN lamanya nanti teringat lagi. <b>Tindakan ini tidak bisa dibatalkan.</b></p>
-    </div>
-    <div class="kpage-actions">
-      <button type="button" class="kpage-btn-cancel" id="forgetPinCancelBtn">Batal</button>
-      <button type="button" class="kpage-btn-danger" id="forgetPinConfirmBtn"><span class="spinner"></span><span class="btn-label">Ya, Hapus &amp; Mulai Baru</span></button>
-    </div>
-  </div>
-
-  <!-- Halaman: buat PIN Enkripsi (device ini punya kunci aktif, belum ada backup PIN) -->
-  <div class="kpage-overlay" id="offerSetupOverlay">
-    <div class="kpage-top">
-      <button type="button" class="kpage-back" id="offerBackBtn" aria-label="Kembali"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-      <button type="button" class="kpage-skip" id="offerSkipBtn">Lewati</button>
-    </div>
-    <div class="kpage-body">
-      <div class="kpage-title-row"><h2 id="offerTitle" class="has-sub">Buat PIN Enkripsi Anda</h2></div>
-      <p class="kpage-sub" id="offerSubtitle">PIN 6 digit ini beda dari kata sandi login. Kamu butuh PIN ini kalau nanti login dari HP/browser lain — dan tidak bisa dipulihkan kalau lupa.</p>
-      <form id="offerSetupForm">
-        <div class="pin-boxes" id="offerBoxes">
-          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
-          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
-          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
-          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
-          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
-          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
-        </div>
-        <div class="hint err" id="offerSetupHint"></div>
-      </form>
     </div>
   </div>
 
@@ -371,17 +289,10 @@
       if(sessErr) throw sessErr;
       if(!session){window.location.replace('index.html');return;}
       currentUserId=session.user.id;
+      // Device baru otomatis dapat keypair baru (tidak ada restore/backup PIN,
+      // mirip default WhatsApp: chat lama tidak terbaca lagi di device baru).
       let kp=await E2E.ensureKeypair(currentUserId);
-      if(kp.status==='needs_restore'){
-        // Login dari perangkat/browser baru & sudah pernah ada PIN Enkripsi ->
-        // dulu ini modal yang otomatis nutup layar. Sekarang: tampilkan banner
-        // "Buka Kunci Chat" saja (non-blocking), chat tetap kebuka tapi pesan
-        // lama muncul terkunci sampai user masukkan PIN lewat banner itu.
-        myPrivateKey=null;
-        showRestoreBanner(currentUserId);
-      }else{
-        myPrivateKey=kp.privateKey;
-      }
+      myPrivateKey=kp.privateKey;
       document.getElementById('authGate').style.display='none';
       const {data:rel,error:relErr}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
       if(relErr) throw relErr;
@@ -394,12 +305,6 @@
       peerAvatar.textContent=initials(peerUsername);peerAvatar.style.background=colorFor(peerId);peerUnameEl.textContent=peerUsername;
       updateInputAvailability();
       await loadMessages();await markIncomingAsRead();subscribeRealtime();subscribePresence();
-      // Tampilkan banner "Buat PIN Anda" (bukan langsung modal) kalau device ini
-      // sudah punya kunci aktif TAPI belum ada backup PIN Enkripsi sama sekali.
-      // Banner ini akan muncul lagi tiap kali chat dibuka selama PIN belum dibuat.
-      // (Tidak relevan kalau banner "Buka Kunci Chat" lagi tampil, karena device
-      // ini justru sudah PUNYA PIN, cuma belum dibuka di device ini.)
-      if(myPrivateKey) checkPinBanner(currentUserId);
     }catch(err){
       console.error('init error:',err);
       document.getElementById('authGate').style.display='none';
@@ -407,205 +312,14 @@
     }
   }
 
-  // ---- Input dikunci selama belum ada sharedKey (device baru belum buka PIN,
-  // atau lawan bicara belum pernah buka aplikasi buat publish public key-nya). ----
+  // ---- Input dikunci selama belum ada sharedKey (lawan bicara belum pernah
+  // buka aplikasi buat publish public key-nya). ----
   function updateInputAvailability(){
     msgInput.disabled=!sharedKey;
     if(sharedKey) return;
-    msgInput.placeholder = !myPrivateKey
-      ? 'Masukkan PIN Enkripsi dulu untuk membuka chat ini...'
-      : 'Menunggu '+(peerUsername||'lawan bicara')+' membuka aplikasi buat aktifkan enkripsi...';
+    msgInput.placeholder = 'Menunggu '+(peerUsername||'lawan bicara')+' membuka aplikasi buat aktifkan enkripsi...';
   }
 
-  // ---- Banner "Buka Kunci Chat": muncul non-blocking kalau device ini login
-  // dari perangkat/browser baru & user sudah pernah setel PIN Enkripsi sebelumnya.
-  // Klik tombolnya baru buka modal isi PIN; chat sendiri tetap kebuka dari awal,
-  // pesan lama cuma tampil terkunci sampai PIN dimasukkan. ----
-  function showRestoreBanner(userId){
-    document.getElementById('restoreForm').dataset.uid=userId;
-    document.getElementById('restoreBanner').classList.add('show');
-  }
-  document.getElementById('restoreBannerBtn').addEventListener('click', () => {
-    document.getElementById('restoreHint').textContent='';
-    clearPinBoxes(restoreBoxes, false);
-    document.getElementById('restoreOverlay').classList.add('open');
-    restoreBoxes[0].focus();
-  });
-  document.getElementById('restoreBannerDismiss').addEventListener('click', () => {
-    document.getElementById('restoreBanner').classList.remove('show');
-  });
-
-  // Dipanggil setelah kunci berhasil didapat (restore PIN benar, atau mulai
-  // percakapan baru lewat "Lupa PIN"). Update state chat & render ulang pesan
-  // supaya yang tadinya tampil terkunci jadi kebuka.
-  async function onKeyReady(kp){
-    myPrivateKey=kp.privateKey;
-    document.getElementById('restoreOverlay').classList.remove('open');
-    document.getElementById('restoreBanner').classList.remove('show');
-    sharedKey = peerPublicKeyB64 ? await E2E.getSharedKey(myPrivateKey,peerId,peerPublicKeyB64) : null;
-    updateInputAvailability();
-    await loadMessages();
-    await markIncomingAsRead();
-    // Device ini baru saja aktif kuncinya di sesi ini -> cek juga status backup
-    // PIN-nya (relevan buat kasus "Lupa PIN, mulai baru": kunci baru = belum ada backup).
-    checkPinBanner(currentUserId);
-  }
-  // ---- Kotak PIN (6 digit terpisah), dipakai di halaman "Pulihkan Pesan" &
-  // "Buat PIN": auto-lanjut ke kotak berikutnya, auto-submit begitu 6 digit
-  // lengkap, backspace mundur ke kotak sebelumnya, dukung paste. ----
-  function pinBoxesValue(boxes){ return boxes.map(b=>b.value).join(''); }
-  function clearPinBoxes(boxes, focusFirst){
-    boxes.forEach(b=>{ b.value=''; b.disabled=false; });
-    if(focusFirst) boxes[0].focus();
-  }
-  function wirePinBoxes(boxes, onComplete){
-    boxes.forEach((box,i)=>{
-      box.addEventListener('input', () => {
-        box.value=box.value.replace(/\D/g,'').slice(0,1);
-        if(box.value && i<boxes.length-1) boxes[i+1].focus();
-        const pin=pinBoxesValue(boxes);
-        if(pin.length===6) onComplete(pin);
-      });
-      box.addEventListener('keydown', (e) => {
-        if(e.key==='Backspace' && !box.value && i>0){ boxes[i-1].focus(); boxes[i-1].value=''; }
-      });
-      box.addEventListener('paste', (e) => {
-        const text=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
-        if(!text) return;
-        e.preventDefault();
-        boxes.forEach((b,idx)=>{ b.value=text[idx]||''; });
-        const lastIdx=Math.min(text.length,boxes.length)-1;
-        if(lastIdx>=0) boxes[lastIdx].focus();
-        if(text.length===6) onComplete(text);
-      });
-    });
-  }
-
-  // ---- Halaman "Pulihkan Pesan": kotak PIN restore ----
-  const restoreBoxes = Array.from(document.querySelectorAll('#pinBoxes .pin-box'));
-  let restoring=false;
-  async function attemptRestore(pin){
-    if(restoring) return;
-    restoring=true;
-    const uid=document.getElementById('restoreForm').dataset.uid, hint=document.getElementById('restoreHint');
-    hint.textContent='';
-    restoreBoxes.forEach(b=>b.disabled=true);
-    try{
-      const kp=await E2E.restorePrivateKey(uid,pin);
-      clearPinBoxes(restoreBoxes,false);
-      await onKeyReady({status:'ready', ...kp});
-    }catch(err){
-      if(err.message==='WRONG_PASSWORD'){ hint.textContent='PIN salah, coba lagi.'; }
-      else{ hint.textContent='Gagal membuka kunci, coba lagi.'; console.error(err); }
-      clearPinBoxes(restoreBoxes,true);
-    }finally{
-      restoring=false;
-    }
-  }
-  wirePinBoxes(restoreBoxes, attemptRestore);
-  document.getElementById('restoreForm').addEventListener('submit', e => e.preventDefault());
-  function closeRestorePage(){
-    document.getElementById('restoreOverlay').classList.remove('open');
-  }
-  document.getElementById('restoreBackBtn').addEventListener('click', closeRestorePage);
-  document.getElementById('restoreSkipBtn').addEventListener('click', closeRestorePage);
-  document.getElementById('restoreForgetLink').addEventListener('click', () => {
-    document.getElementById('forgetPinOverlay').classList.add('open');
-  });
-
-  // ---- Halaman konfirmasi "Lupa PIN": aksi permanen, ditumpuk di atas halaman
-  // Pulihkan Pesan. Batal/panah kembali cuma nutup, tidak ubah apa-apa. ----
-  function closeForgetPinPage(){
-    document.getElementById('forgetPinOverlay').classList.remove('open');
-  }
-  document.getElementById('forgetPinBackBtn').addEventListener('click', closeForgetPinPage);
-  document.getElementById('forgetPinCancelBtn').addEventListener('click', closeForgetPinPage);
-  document.getElementById('forgetPinConfirmBtn').addEventListener('click', async () => {
-    const uid=document.getElementById('restoreForm').dataset.uid, b=document.getElementById('forgetPinConfirmBtn');
-    b.disabled=true; b.classList.add('loading');
-    try{
-      const kp=await E2E.forceNewKeypair(uid);
-      closeForgetPinPage();
-      await onKeyReady({status:'ready', ...kp});
-    }catch(err){
-      console.error(err); alert('Gagal membuat kunci baru, coba lagi.');
-    }finally{
-      b.disabled=false; b.classList.remove('loading');
-    }
-  });
-
-  // ---- Banner "Buat PIN Anda": muncul tiap kali chat dibuka selama device ini
-  // punya kunci aktif tapi belum ada backup PIN Enkripsi di server. ----
-  async function checkPinBanner(userId){
-    if(!myPrivateKey) return;
-    let hasBackup=false;
-    try{ hasBackup=await E2E.hasBackup(userId); }catch(e){ return; }
-    if(hasBackup) return; // sudah aman, tidak perlu ditawarkan
-    document.getElementById('offerSetupForm').dataset.uid=userId;
-    document.getElementById('pinBanner').classList.add('show');
-  }
-  document.getElementById('pinBannerDismiss').addEventListener('click', () => {
-    document.getElementById('pinBanner').classList.remove('show');
-  });
-
-  // ---- Halaman "Buat PIN": 2 langkah pakai grup kotak PIN yang sama —
-  // langkah 1 isi PIN baru, langkah 2 konfirmasi ulang PIN yang sama. ----
-  const offerBoxes = Array.from(document.querySelectorAll('#offerBoxes .pin-box'));
-  let offerFirstPin = null;
-  function resetOfferFlow(){
-    offerFirstPin=null;
-    document.getElementById('offerTitle').textContent='Buat PIN Enkripsi Anda';
-    document.getElementById('offerSubtitle').style.display='';
-    document.getElementById('offerSetupHint').textContent='';
-    clearPinBoxes(offerBoxes,false);
-  }
-  document.getElementById('pinBannerBtn').addEventListener('click', () => {
-    resetOfferFlow();
-    document.getElementById('offerSetupOverlay').classList.add('open');
-    offerBoxes[0].focus();
-  });
-  function closeOfferPage(){
-    document.getElementById('offerSetupOverlay').classList.remove('open');
-  }
-  document.getElementById('offerBackBtn').addEventListener('click', closeOfferPage);
-  document.getElementById('offerSkipBtn').addEventListener('click', closeOfferPage);
-  async function handleOfferPinComplete(pin){
-    const hint=document.getElementById('offerSetupHint');
-    hint.textContent='';
-    if(offerFirstPin===null){
-      // Langkah 1 selesai -> lanjut ke langkah konfirmasi.
-      offerFirstPin=pin;
-      clearPinBoxes(offerBoxes,true);
-      document.getElementById('offerTitle').textContent='Konfirmasi PIN Anda';
-      document.getElementById('offerSubtitle').style.display='none';
-      return;
-    }
-    if(pin!==offerFirstPin){
-      hint.textContent='PIN tidak cocok, coba lagi dari awal.';
-      offerFirstPin=null;
-      clearPinBoxes(offerBoxes,true);
-      document.getElementById('offerTitle').textContent='Buat PIN Enkripsi Anda';
-      document.getElementById('offerSubtitle').style.display='';
-      return;
-    }
-    const uid=document.getElementById('offerSetupForm').dataset.uid;
-    if(!myPrivateKey) return;
-    offerBoxes.forEach(b=>b.disabled=true);
-    try{
-      await E2E.backupPrivateKey(uid,myPrivateKey,pin);
-      document.getElementById('offerSetupOverlay').classList.remove('open');
-      document.getElementById('pinBanner').classList.remove('show');
-      resetOfferFlow();
-    }catch(err){
-      hint.textContent='Gagal menyimpan, coba lagi.'; console.error(err);
-      offerFirstPin=null;
-      clearPinBoxes(offerBoxes,true);
-      document.getElementById('offerTitle').textContent='Buat PIN Enkripsi Anda';
-      document.getElementById('offerSubtitle').style.display='';
-    }
-  }
-  wirePinBoxes(offerBoxes, handleOfferPinComplete);
-  document.getElementById('offerSetupForm').addEventListener('submit', e => e.preventDefault());
   const peerSubEl=document.getElementById('peerSub'),statusDotEl=document.getElementById('statusDot');let presenceChannel=null;
   function subscribePresence(){
     presenceChannel=supabaseClient.channel('online-users',{config:{presence:{key:currentUserId}}});
