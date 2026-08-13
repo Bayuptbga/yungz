@@ -53,6 +53,12 @@
   .appbar h1{ margin:0; font-size:22px; font-weight:500; }
   .appbar .right{ display:flex; align-items:center; gap:20px; }
   .appbar .icon-btn{ cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .search-bar{ display:none; align-items:center; gap:10px; background:var(--bbm-blue-light); padding:10px 14px; flex-shrink:0; }
+  .search-bar.show{ display:flex; }
+  .search-bar input{ flex:1; background:var(--bg); border:1.5px solid var(--border); color:var(--ink); border-radius:20px; padding:9px 14px; font-size:14px; outline:none; font-family:inherit; }
+  .search-bar input::placeholder{ color:var(--muted); }
+  .search-bar .search-close{ cursor:pointer; color:var(--muted); display:flex; align-items:center; justify-content:center; }
+  .no-results{ padding:40px 24px; text-align:center; color:var(--muted); font-size:13.5px; }
   .drawer-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:40; }
   .drawer-overlay.open{ opacity:1; pointer-events:auto; }
   .drawer{ position:fixed; top:0; bottom:0; left:0; width:78%; max-width:300px; background:var(--bg); display:flex; flex-direction:column; transform:translateX(-100%); transition:transform .25s ease; z-index:41; box-shadow:2px 0 20px rgba(0,0,0,0.5); }
@@ -228,6 +234,11 @@
   <div id="authGate"><div class="spinner"></div></div>
   <div class="appbar">
     <div class="left"><div class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></div><div><h1>Private Chat</h1></div></div>
+    <div class="right"><div class="icon-btn" id="searchOpenBtn" title="Cari"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div></div>
+  </div>
+  <div class="search-bar" id="searchBar">
+    <input type="text" id="searchInput" placeholder="Cari...">
+    <div class="search-close" id="searchCloseBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
   </div>
   <div class="drawer-overlay" id="drawerOverlay"></div>
   <div class="drawer" id="drawer">
@@ -551,10 +562,57 @@
       if(svg){if(ia){svg.setAttribute('fill',k==='chats'?'var(--ink)':'none');svg.setAttribute('stroke','var(--ink)');}else{svg.setAttribute('fill','none');svg.setAttribute('stroke','var(--muted)');}}
     });
     document.querySelector('.appbar h1').textContent=tabDefs[name].title;document.getElementById('fabNewChat').style.display=name==='chats'?'flex':'none';
+    document.getElementById('searchOpenBtn').style.display=(name==='notif')?'none':'flex';
+    closeSearch();
     if(name==='kontak')loadContacts();if(name==='notif'){loadNotifications();}if(name==='status')loadStatusTab();if(name==='chats')supabaseClient.auth.getSession().then(({data:{session}})=>{if(session)loadChats(session.user.id);});
   }
   document.getElementById('tabChats').addEventListener('click',()=>switchTab('chats'));document.getElementById('tabStatus').addEventListener('click',()=>switchTab('status'));document.getElementById('tabKontak').addEventListener('click',()=>switchTab('kontak'));document.getElementById('tabNotif').addEventListener('click',()=>switchTab('notif'));
   window.addEventListener('popstate',()=>{if(onNonChatTab){onNonChatTab=false;switchTab('chats',true);}});
+
+  // ---- Pencarian di appbar: cari kontak/chat/status sesuai tab yang lagi aktif ----
+  const searchPlaceholders={chats:'Cari chat...',kontak:'Cari kontak...',status:'Cari status...'};
+  function openSearch(){
+    if(!searchPlaceholders[activeTab])return;
+    document.getElementById('searchInput').placeholder=searchPlaceholders[activeTab];
+    document.getElementById('searchBar').classList.add('show');
+    document.getElementById('searchInput').value='';
+    document.getElementById('searchInput').focus();
+    applySearchFilter('');
+  }
+  function closeSearch(){
+    document.getElementById('searchBar').classList.remove('show');
+    document.getElementById('searchInput').value='';
+    applySearchFilter('');
+  }
+  function applySearchFilter(qRaw){
+    const q=qRaw.trim().toLowerCase();
+    let listSel,matchFn;
+    if(activeTab==='chats'){
+      listSel='#chatlist .chat-item';
+      matchFn=(el)=>(el.dataset.uname||'').toLowerCase().includes(q);
+    }else if(activeTab==='kontak'){
+      listSel='#contactList .contact-item';
+      matchFn=(el)=>(el.dataset.uname||'').toLowerCase().includes(q);
+    }else if(activeTab==='status'){
+      listSel='#statusList .status-card';
+      matchFn=(el)=>{
+        const uname=(el.querySelector('.sc-uname')?.textContent||'').toLowerCase();
+        const content=(el.querySelector('.sc-content')?.textContent||'').toLowerCase();
+        return uname.includes(q)||content.includes(q);
+      };
+    }else return;
+    const items=document.querySelectorAll(listSel);
+    let visibleCount=0;
+    items.forEach(el=>{ const match=!q||matchFn(el); el.style.display=match?'':'none'; if(match)visibleCount++; });
+    const listContainer=document.querySelector(activeTab==='chats'?'#chatlist':activeTab==='kontak'?'#contactList':'#statusList');
+    let noRes=listContainer?.parentElement.querySelector('.no-results-search');
+    if(q && visibleCount===0 && items.length>0){
+      if(!noRes){ noRes=document.createElement('div'); noRes.className='no-results no-results-search'; noRes.textContent='Tidak ada hasil untuk "'+qRaw.trim()+'"'; listContainer.after(noRes); }
+    }else if(noRes){ noRes.remove(); }
+  }
+  document.getElementById('searchOpenBtn').addEventListener('click',openSearch);
+  document.getElementById('searchCloseBtn').addEventListener('click',closeSearch);
+  document.getElementById('searchInput').addEventListener('input',(e)=>applySearchFilter(e.target.value));
 
   // ---- Geser (swipe) kiri/kanan untuk pindah tab ----
   (function(){
