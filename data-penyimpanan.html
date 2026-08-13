@@ -263,8 +263,13 @@
     const {data:{session}} = await supabaseClient.auth.getSession();
     if(!session){ window.location.replace('index.html'); return; }
     currentUserId=session.user.id;
-    // Pastikan device ini punya keypair (biasanya sudah ada dari dashboard/chat,
-    // tapi jaga-jaga kalau halaman ini dibuka duluan).
+    // PENTING: kalau device ini BELUM punya kunci lokal, jangan langsung
+    // rotasi -- lempar ke dashboard.html dulu supaya user ditawari restore
+    // dari cadangan (kalau ada) sebelum kunci baru beneran dibuat.
+    if(!E2E.hasLocalKey(currentUserId)){
+      window.location.replace('dashboard.html?keySetupNext=data-penyimpanan.html');
+      return;
+    }
     try{ await E2E.ensureKeypair(currentUserId); }catch(e){ console.error('Gagal cek kunci enkripsi:',e); }
     document.getElementById('authGate').style.display = 'none';
     refreshBackupCard();
