@@ -83,16 +83,7 @@ const E2E = (() => {
         .eq('id', userId)
         .maybeSingle();
 
-      // PENTING: patokan "user ini sudah pernah punya kunci" HARUS dari
-      // public_key (bukti nyata pernah generate), BUKAN dari key_version.
-      // Kolom key_version di tabel profiles punya DEFAULT 1 (lihat migration),
-      // jadi baris profil yang BARU DIBUAT dan BELUM PERNAH generate kunci pun
-      // sudah kebaca key_version=1 walau public_key masih null. Kalau dipakai
-      // sebagai patokan, kunci PERTAMA user malah kecatat sebagai versi 2
-      // (bukan versi 1) -> pesan yang keburu dikirim orang lain ke dia sebelum
-      // proses ini selesai akan ter-stample versi 1, sedangkan kunci asli yang
-      // akhirnya aktif adalah versi 2 -> selamanya tidak nyambung (mismatch).
-      const oldVersion = (prof && prof.public_key) ? (prof.key_version || 1) : 0;
+      const oldVersion = prof && prof.key_version ? prof.key_version : (prof && prof.public_key ? 1 : 0);
       const history = (prof && Array.isArray(prof.public_key_history)) ? prof.public_key_history.slice() : [];
       if (prof && prof.public_key) {
         // simpan kunci lama ke riwayat sebelum ditimpa, supaya lawan bicara yang
@@ -190,99 +181,17 @@ const E2E = (() => {
     }
   }
 
-  // ---- CADANGAN & PEMULIHAN KUNCI (opsional, dimatikan secara default) ----
-  // Kalau user AKTIF mengaktifkan ini (isi kode sandi cadangan sendiri di halaman
-  // Data & Penyimpanan), private key (versi yang sedang aktif) dienkripsi pakai
-  // kunci yang diturunkan dari kode sandi itu (PBKDF2 -> AES-GCM), lalu ciphertext-nya
-  // (BUKAN kode sandinya, BUKAN private key mentahnya) disimpan di profiles.key_backup.
-  // Kode sandi TIDAK PERNAH dikirim ke server. Kalau kode sandi lupa, cadangan itu
-  // tidak bisa dipulihkan siapapun termasuk admin/Anthropic -- sama seperti WA.
-  // Kalau fitur ini aktif dan dipulihkan dengan benar di device baru, PRIVATE KEY
-  // YANG SAMA didapat lagi (bukan rotasi/versi baru) -> histori chat TIDAK hilang
-  // sama sekali, baik buat diri sendiri maupun lawan bicara.
-  const PBKDF2_ITER = 250000;
-
-  async function deriveKeyFromPassphrase(passphrase, saltB64) {
-    const salt = saltB64 ? new Uint8Array(bufFromB64(saltB64)) : crypto.getRandomValues(new Uint8Array(16));
-    const baseKey = await crypto.subtle.importKey(
-      'raw', new TextEncoder().encode(passphrase), { name: 'PBKDF2' }, false, ['deriveKey']
-    );
-    const key = await crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt, iterations: PBKDF2_ITER, hash: 'SHA-256' },
-      baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
-    );
-    return { key, saltB64: b64FromBuf(salt) };
-  }
-
-  // Cadangkan private key device ini (yang sedang aktif dipakai) ke server,
-  // dienkripsi pakai kode sandi cadangan yang dipilih user.
-  async function backupPrivateKeyWithPassphrase(userId, passphrase) {
-    if (!passphrase || passphrase.length < 4) throw new Error('Kode sandi minimal 4 karakter');
-    if (!hasLocalKey(userId)) throw new Error('Belum ada kunci lokal di perangkat ini');
-    const saved = localStorage.getItem(LS_PREFIX + userId);
-    const parsed = JSON.parse(saved);
-    const payload = (parsed && parsed.jwk && typeof parsed.version === 'number')
-      ? parsed
-      : { version: 1, jwk: parsed };
-    const { key, saltB64 } = await deriveKeyFromPassphrase(passphrase);
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const ctBuf = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(payload))
-    );
-    const backup = { salt: saltB64, iv: b64FromBuf(iv), ct: b64FromBuf(ctBuf), v: payload.version };
-    const { error } = await supabaseClient.from('profiles').update({
-      key_backup: backup,
-      key_backup_updated_at: new Date().toISOString()
-    }).eq('id', userId);
-    if (error) throw error;
-    return true;
-  }
-
-  async function hasServerBackup(userId) {
-    const { data, error } = await supabaseClient.from('profiles').select('key_backup').eq('id', userId).maybeSingle();
-    if (error || !data) return false;
-    return !!data.key_backup;
-  }
-
-  // Coba pulihkan private key dari cadangan server pakai kode sandi. Kalau
-  // salah kode sandi, dekripsi gagal -> lempar error (bukan bikin kunci baru).
-  // Kalau berhasil, private key yang SAMA disimpan ke localStorage device ini
-  // (tidak menaikkan key_version, tidak mengarsipkan apapun -> tidak ada histori
-  // yang hilang untuk siapapun).
-  async function restorePrivateKeyWithPassphrase(userId, passphrase) {
-    const { data, error } = await supabaseClient.from('profiles').select('key_backup').eq('id', userId).maybeSingle();
-    if (error) throw error;
-    if (!data || !data.key_backup) throw new Error('Tidak ada cadangan di server');
-    const backup = data.key_backup;
-    const { key } = await deriveKeyFromPassphrase(passphrase, backup.salt);
-    let payload;
-    try {
-      const iv = new Uint8Array(bufFromB64(backup.iv));
-      const ctBuf = bufFromB64(backup.ct);
-      const ptBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ctBuf);
-      payload = JSON.parse(new TextDecoder().decode(ptBuf));
-    } catch (e) {
-      throw new Error('Kode sandi salah atau cadangan rusak');
-    }
-    const privateKey = await crypto.subtle.importKey(
-      'jwk', payload.jwk, { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey', 'deriveBits']
-    );
-    const pubJwk = { kty: payload.jwk.kty, crv: payload.jwk.crv, x: payload.jwk.x, y: payload.jwk.y, ext: true };
-    const pubKey = await crypto.subtle.importKey('jwk', pubJwk, { name: 'ECDH', namedCurve: 'P-256' }, true, []);
-    const raw = await crypto.subtle.exportKey('raw', pubKey);
-    localStorage.setItem(LS_PREFIX + userId, JSON.stringify({ version: payload.version, jwk: payload.jwk }));
-    return { privateKey, publicKeyB64: b64FromBuf(raw), version: payload.version };
-  }
-
-  async function removeServerBackup(userId) {
-    const { error } = await supabaseClient.from('profiles').update({ key_backup: null, key_backup_updated_at: null }).eq('id', userId);
-    if (error) throw error;
-    return true;
-  }
+  // Catatan: fitur cadangkan/pulihkan kunci lewat kode sandi sudah dihapus.
+  // Private key HANYA pernah ada di localStorage device tempat ia dibuat, tidak
+  // pernah dalam bentuk apapun (terenkripsi ataupun tidak) di server. Ini
+  // memperketat model ancaman end-to-end: server (Supabase) tidak pernah punya
+  // cara untuk merekonstruksi private key siapapun, bahkan lewat kompromi kode
+  // sandi cadangan. Konsekuensinya: ganti device/kehilangan localStorage berarti
+  // histori chat lama di device itu hilang permanen (private key baru dibuat,
+  // key_version naik) -- ini yang diharapkan, bukan bug.
 
   return {
     ensureKeypair, getSharedKey, getSharedKeyForVersions, getPeerPublicKeyAtVersion,
-    encryptMessage, decryptMessage, clearSharedKeyCache, hasLocalKey,
-    backupPrivateKeyWithPassphrase, restorePrivateKeyWithPassphrase, hasServerBackup, removeServerBackup
+    encryptMessage, decryptMessage, clearSharedKeyCache, hasLocalKey
   };
 })();
