@@ -165,7 +165,7 @@
   </div>
   <div class="drawer-overlay" id="drawerOverlay"></div>
   <div class="drawer" id="drawer">
-    <div class="drawer-header"><div class="d-avatar" id="drawerAvatar">?</div><div><div class="d-uname" id="drawerUname">@—</div><div class="d-pin" id="drawerPin">PIN: —</div></div></div>
+    <div class="drawer-header"><div class="d-avatar" id="drawerAvatar">?</div><div><div class="d-uname" id="drawerUname">—</div><div class="d-pin" id="drawerPin">PIN: —</div></div></div>
     <div class="drawer-body">
       <div class="drawer-item" id="drawerSetelan"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>Setelan</span></div>
       <div class="drawer-item" id="drawerInstallApp" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Instal Aplikasi</span></div>
@@ -176,7 +176,7 @@
   <div class="tab-panel" id="panelStatus"><div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada status.<br>Fitur segera hadir.</div></div>
   <div class="tab-panel" id="panelKontak">
     <div class="add-section"><div class="label">Tambah kontak via PIN</div><div class="add-row"><input type="text" id="pinInput" placeholder="Masukkan 8 karakter PIN" maxlength="8" autocapitalize="characters"><button id="searchBtn">Cari</button></div><div class="search-msg" id="searchMsg"></div>
-      <div class="found-card" id="foundCard"><div class="avatar" id="foundAvatar">?</div><div class="info"><div class="uname" id="foundUname">@—</div><div class="pin-label">Ditemukan</div></div><button id="sendRequestBtn">Kirim</button></div>
+      <div class="found-card" id="foundCard"><div class="avatar" id="foundAvatar">?</div><div class="info"><div class="uname" id="foundUname">—</div><div class="pin-label">Ditemukan</div></div><button id="sendRequestBtn">Kirim</button></div>
     </div><div class="section-title">Kontak Saya</div><div id="contactList"></div>
   </div>
   <div class="tab-panel" id="panelNotif"><div class="section-title">Permintaan</div><div id="reqList"></div><div class="section-title">Pembaruan</div><div id="updateList"></div></div>
@@ -222,7 +222,7 @@
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session){window.location.replace('index.html');return;}
     const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, pin').eq('id',session.user.id).maybeSingle();
     if(profErr){console.error('Gagal memuat profil:',profErr);}
-    if(prof){currentUserPin=prof.pin;document.getElementById('drawerUname').textContent='@'+prof.username;document.getElementById('drawerPin').textContent='PIN: '+prof.pin;document.getElementById('drawerAvatar').textContent=initials(prof.username);document.getElementById('drawerAvatar').style.background=colorFor(session.user.id);}
+    if(prof){currentUserPin=prof.pin;document.getElementById('drawerUname').textContent=prof.username;document.getElementById('drawerPin').textContent='PIN: '+prof.pin;document.getElementById('drawerAvatar').textContent=initials(prof.username);document.getElementById('drawerAvatar').style.background=colorFor(session.user.id);}
     initPushNotifications(session.user.id);trackOnlinePresence(session.user.id);
     const {count:pCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('addressee_id',session.user.id).eq('status','pending');
     const {count:uCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('requester_id',session.user.id).in('status',['accepted','declined']).eq('seen_by_requester',false);
@@ -242,7 +242,7 @@
     const data=(rows&&rows.length>0)?rows[0]:null;
     if(!data){searchMsg.textContent='Tidak ditemukan.';searchMsg.className='search-msg err';return;}
     if(data.id===session.user.id){searchMsg.textContent='Ini PIN kamu.';searchMsg.className='search-msg err';return;}
-    foundProfile=data;document.getElementById('foundAvatar').textContent=initials(data.username);document.getElementById('foundAvatar').style.background=colorFor(data.id);document.getElementById('foundUname').textContent='@'+data.username;
+    foundProfile=data;document.getElementById('foundAvatar').textContent=initials(data.username);document.getElementById('foundAvatar').style.background=colorFor(data.id);document.getElementById('foundUname').textContent=data.username;
     foundCard.classList.add('show');searchMsg.textContent='Ditemukan!';searchMsg.className='search-msg ok';
   });
   document.getElementById('sendRequestBtn').addEventListener('click',async()=>{
@@ -259,7 +259,7 @@
     if(!rows||rows.length===0){cList.innerHTML='<div class="panel-empty">Belum ada kontak.</div>';return;}
     const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
     const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
-    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${id}" data-uname="${pMap[id]}"><div class="avatar" style="background:${colorFor(id)}">${initials(pMap[id])}</div><div class="uname">@${pMap[id]}</div></div>`).join('');
+    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${id}" data-uname="${pMap[id]}"><div class="avatar" style="background:${colorFor(id)}">${initials(pMap[id])}</div><div class="uname">${pMap[id]}</div></div>`).join('');
     document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
   }
   async function loadRequests(){
