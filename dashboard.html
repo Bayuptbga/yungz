@@ -123,8 +123,6 @@
   @keyframes panelFadeIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
   .status-empty, .panel-empty{ padding:48px 24px; text-align:center; color:var(--muted); font-size:13.5px; line-height:1.6; }
   .status-empty .icon, .panel-empty .icon{ margin-bottom:12px; display:flex; justify-content:center; }
-  .add-section{ padding:18px 16px; border-bottom:8px solid var(--card-bg); flex-shrink:0; }
-  .add-section .label{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px; }
   .add-row{display:flex;gap:8px;}
   .add-row input{ flex:1; background:var(--bg); border:1.5px solid var(--border); color:var(--ink); border-radius:10px; padding:11px 12px; font-size:15px; font-family:'Courier New',monospace; outline:none; }
   .add-row input:focus{border-color:var(--muted);}
@@ -150,8 +148,14 @@
   .contact-action .ca-icon svg{ width:21px;height:21px; stroke:#53bdeb; }
   .contact-action .ca-title{ font-size:15.5px; font-weight:700; color:var(--ink); }
   .contact-action .ca-sub{ font-size:12px; color:var(--muted); margin-top:1px; }
-  .add-section{ display:none; }
-  .add-section.show{ display:block; }
+  .add-modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:60; padding:24px; }
+  .add-modal-overlay.open{ opacity:1; pointer-events:auto; }
+  .add-modal{ background:var(--card-bg); border-radius:16px; padding:22px 20px; width:100%; max-width:320px; border:1px solid var(--border); }
+  .add-modal .am-title{ font-size:16px; font-weight:700; color:var(--ink); margin-bottom:4px; }
+  .add-modal .am-sub{ font-size:12.5px; color:var(--muted); margin-bottom:18px; line-height:1.5; }
+  .add-modal .add-row{ margin-bottom:4px; }
+  .add-modal .found-card{ margin-top:14px; }
+  .add-modal-close-x{ float:right; cursor:pointer; color:var(--muted); font-size:20px; line-height:1; margin:-4px -2px 0 0; }
   .req-item, .notif-item{ display:flex; align-items:center; gap:13px; padding:13px 16px; border-bottom:1px solid var(--border); transition:background-color .3s ease, opacity .3s ease; }
   .req-item .avatar, .notif-item .avatar{ width:46px;height:46px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:15.5px; flex-shrink:0; box-shadow:0 0 0 2px var(--card-bg); }
   .req-item .info, .notif-item .info{flex:1;min-width:0;}
@@ -261,9 +265,19 @@
       <div class="ca-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/><path d="M19 8h4M21 6v4"/></svg></div>
       <div><div class="ca-title">Kontak baru</div><div class="ca-sub">Tambah teman lewat PIN</div></div>
     </div>
-    <div class="add-section" id="addSection"><div class="label">Tambah kontak via PIN</div><div class="add-row"><input type="text" id="pinInput" placeholder="Masukkan 8 karakter PIN" maxlength="8" autocapitalize="characters"><button id="searchBtn">Cari</button></div><div class="search-msg" id="searchMsg"></div>
-      <div class="found-card" id="foundCard"><div class="avatar" id="foundAvatar">?</div><div class="info"><div class="uname" id="foundUname">—</div><div class="pin-label">Ditemukan</div></div><button id="sendRequestBtn">Kirim</button></div>
-    </div><div class="section-title">Kontak Saya</div><div id="contactList"></div>
+    <div class="section-title">Kontak Saya</div><div id="contactList"></div>
+  </div>
+
+  <!-- Modal Tambah Kontak: masukkan PIN, cari, tampilkan info pengguna, kirim permintaan -->
+  <div class="add-modal-overlay" id="addModalOverlay">
+    <div class="add-modal">
+      <span class="add-modal-close-x" id="addModalCloseX">&times;</span>
+      <div class="am-title">Tambah Kontak</div>
+      <div class="am-sub">Masukkan PIN 8 karakter milik teman kamu untuk mencarinya.</div>
+      <div class="add-row"><input type="text" id="pinInput" placeholder="Masukkan 8 karakter PIN" maxlength="8" autocapitalize="characters"><button id="searchBtn">Cari</button></div>
+      <div class="search-msg" id="searchMsg"></div>
+      <div class="found-card" id="foundCard"><div class="avatar" id="foundAvatar">?</div><div class="info"><div class="uname" id="foundUname">—</div><div class="pin-label">Ditemukan</div></div><button id="sendRequestBtn">Kirim Permintaan</button></div>
+    </div>
   </div>
   <div class="tab-panel" id="panelNotif"><div id="notifList"></div></div>
   <div class="tabbar">
@@ -355,6 +369,7 @@
     const {error}=await supabaseClient.from('contacts').insert({requester_id:session.user.id,addressee_id:foundProfile.id,status:'pending'});
     if(error){searchMsg.textContent='Gagal/Sudah ada.';searchMsg.className='search-msg err';document.getElementById('sendRequestBtn').disabled=false;return;}
     document.getElementById('sendRequestBtn').textContent='Terkirim ✓';searchMsg.className='search-msg ok';
+    setTimeout(closeAddModal,1200);
   });
   async function loadContacts(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
@@ -570,11 +585,19 @@
   document.getElementById('drawerProfil').addEventListener('click',()=>window.location.href='profil.html');
   document.getElementById('drawerSetelan').addEventListener('click',()=>window.location.href='setelan.html');
   document.getElementById('fabNewChat').addEventListener('click',()=>switchTab('kontak'));
-  document.getElementById('contactActionBtn').addEventListener('click',()=>{
-    const sec=document.getElementById('addSection');
-    sec.classList.toggle('show');
-    if(sec.classList.contains('show'))document.getElementById('pinInput').focus();
-  });
+  function openAddModal(){
+    document.getElementById('searchMsg').textContent='';
+    document.getElementById('foundCard').classList.remove('show');
+    document.getElementById('pinInput').value='';
+    document.getElementById('addModalOverlay').classList.add('open');
+    document.getElementById('pinInput').focus();
+  }
+  function closeAddModal(){
+    document.getElementById('addModalOverlay').classList.remove('open');
+  }
+  document.getElementById('contactActionBtn').addEventListener('click',openAddModal);
+  document.getElementById('addModalCloseX').addEventListener('click',closeAddModal);
+  document.getElementById('addModalOverlay').addEventListener('click',(e)=>{ if(e.target.id==='addModalOverlay')closeAddModal(); });
 </script>
 </body>
 </html>
