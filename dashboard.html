@@ -639,6 +639,14 @@
       }
     }catch(e){ console.error('Gagal cek kunci enkripsi:',e); }
     document.getElementById('authGate').style.display='none';
+    // Kalau kita nyasar ke sini gara-gara dilempar dari halaman lain (chat.html /
+    // data-penyimpanan.html) yang belum sempat setup kunci, balik lagi ke sana
+    // sekarang setelah kunci beres (baru dibuat ATAU dipulihkan dari cadangan).
+    const nextPage=new URLSearchParams(location.search).get('keySetupNext');
+    if(nextPage && /^[a-zA-Z0-9_-]+\.html(\?.*)?$/.test(nextPage)){
+      window.location.replace(nextPage);
+      return;
+    }
     refreshNotifBadge();
   }
   boot();
