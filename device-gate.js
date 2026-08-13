@@ -19,6 +19,6 @@
   }
 
   if (!isMobileUA() || !isInstalledApp()) {
-    location.replace('akses-ditolak.html');
+    location.replace('akses-ditolak');
   }
 })();
