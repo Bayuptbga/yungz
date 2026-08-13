@@ -62,6 +62,7 @@
   .appbar .sub.online{opacity:1;color:#2ecc71;font-weight:600;}
   .status-dot{ display:inline-block; width:8px;height:8px; border-radius:50%; margin-left:6px; background:#8696a0; vertical-align:middle; box-shadow:0 0 0 2px rgba(255,255,255,0.25); }
   .status-dot.online{ background:#2ecc71; }
+  .e2e-lock{ width:26px;height:26px; border-radius:50%; background:rgba(83,189,235,0.16); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .appbar .menu-btn{ cursor:pointer; width:34px;height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s ease; position:relative; }
   .appbar .menu-btn:active{ background:rgba(255,255,255,0.16); }
   .chat-menu{ position:absolute; top:calc(100% + 6px); right:10px; background:var(--card-bg); border-radius:12px; box-shadow:0 6px 24px rgba(0,0,0,0.5); min-width:180px; overflow:hidden; z-index:50; display:none; }
@@ -77,6 +78,12 @@
   }
   .msg-area::-webkit-scrollbar{ width:6px; }
   .msg-area::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.1); border-radius:3px; }
+  .e2e-banner{
+    align-self:center; max-width:88%; text-align:center; background:rgba(83,189,235,0.1); border:1px solid rgba(83,189,235,0.22);
+    color:#bcdff2; font-size:11.5px; line-height:16px; padding:9px 14px; border-radius:10px; margin:6px 0 12px; flex-shrink:0;
+    display:flex; align-items:center; gap:7px;
+  }
+  .e2e-banner svg{width:14px;height:14px;flex-shrink:0;stroke:#53bdeb;}
   .day-sep{
     align-self:center; position:sticky; top:6px; background:rgba(27,42,50,0.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
     color:var(--ink-soft); font-size:11px; font-weight:600; padding:5px 13px; border-radius:20px; margin:12px 0 10px; flex-shrink:0; box-shadow:0 1px 5px rgba(0,0,0,0.2); z-index:3;
@@ -124,6 +131,7 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
+<script src="e2e.js?v=1"></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js');});}</script>
 </head>
 <body>
@@ -133,6 +141,7 @@
     <div class="back" onclick="window.location.href='dashboard.html'"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
     <div class="avatar" id="peerAvatar">?</div>
     <div class="who"><div class="uname"><span id="peerUname">@—</span><span class="status-dot" id="statusDot"></span></div><div class="sub" id="peerSub">-</div></div>
+    <div class="e2e-lock" id="e2eLock" title="Pesan di chat ini dienkripsi end-to-end"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
     <div class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
       <div class="chat-menu" id="chatMenu">
         <div class="item danger" id="menuHapusPermanen">Hapus Semua Orang</div><div class="item danger" id="menuHapusKontak">Hapus Kontak</div><div class="item ping" id="menuPing">🔔 PING!!!</div>
@@ -161,6 +170,7 @@
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const peerId = (rawUid && UUID_RE.test(rawUid)) ? rawUid : null;
   let currentUserId = null; let peerUsername = params.get('uname') || '';
+  let myPrivateKey = null, sharedKey = null;
   const msgArea = document.getElementById('msgArea'), msgInput = document.getElementById('msgInput'), sendBtn = document.getElementById('sendBtn'), peerAvatar = document.getElementById('peerAvatar'), peerUnameEl = document.getElementById('peerUname');
   const colorPalette = ['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
@@ -181,12 +191,19 @@
       if(!session){window.location.replace('index.html');return;}
       currentUserId=session.user.id;
       document.getElementById('authGate').style.display='none';
+      const kp=await E2E.ensureKeypair(currentUserId);myPrivateKey=kp.privateKey;
       const {data:rel,error:relErr}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
       if(relErr) throw relErr;
       if(!rel){msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.6 3-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/><path d="M18 8v5M15.5 10.5h5"/></svg></div><div class="es-title">Belum berteman</div><span>Tambahkan lewat tab Kontak dulu ya.</span></div>`;return;}
-      if(!peerUsername){const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username').eq('id',peerId).maybeSingle();if(profErr) throw profErr;peerUsername=prof?prof.username:'Pengguna';}
+      const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, public_key').eq('id',peerId).maybeSingle();
+      if(profErr) throw profErr;
+      if(!peerUsername) peerUsername=prof?prof.username:'Pengguna';
+      if(prof&&prof.public_key) sharedKey=await E2E.getSharedKey(myPrivateKey,peerId,prof.public_key);
       peerAvatar.textContent=initials(peerUsername);peerAvatar.style.background=colorFor(peerId);peerUnameEl.textContent='@'+peerUsername;
-      await loadMessages();await markIncomingAsRead();subscribeRealtime();subscribePresence();msgInput.disabled=false;
+      if(!sharedKey){
+        msgInput.placeholder='Menunggu '+peerUsername+' membuka aplikasi buat aktifkan enkripsi...';
+      }
+      await loadMessages();await markIncomingAsRead();subscribeRealtime();subscribePresence();msgInput.disabled=!sharedKey;
     }catch(err){
       console.error('init error:',err);
       document.getElementById('authGate').style.display='none';
@@ -209,8 +226,10 @@
     let query=supabaseClient.from('messages').select('id, sender_id, content, created_at, delivered_at, read_at').or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`).order('created_at',{ascending:true});
     if(clearedBefore)query=query.gt('created_at',clearedBefore);
     const {data:rows,error}=await query;
-    if(error||!rows||rows.length===0){msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`;return;}
-    msgArea.innerHTML='';let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});scrollToBottom();
+    const banner=`<div class="e2e-banner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Pesan di chat ini dienkripsi end-to-end. Hanya kamu dan ${peerUsername||'lawan bicaramu'} yang bisa membacanya.</span></div>`;
+    if(error||!rows||rows.length===0){msgArea.innerHTML=banner+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`;return;}
+    for(const m of rows){m.content=await E2E.decryptMessage(sharedKey,m.content);}
+    msgArea.innerHTML=banner;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});scrollToBottom();
   }
   function appendBubble(m,sending){
     const mine=m.sender_id===currentUserId;const row=document.createElement('div');row.className='bubble-row '+(mine?'mine':'theirs')+(sending?' sending':'');row.dataset.id=m.id;
@@ -221,7 +240,8 @@
   async function markIncomingAsRead(){const n=new Date().toISOString();await supabaseClient.from('messages').update({delivered_at:n,read_at:n}).eq('sender_id',peerId).eq('receiver_id',currentUserId).is('read_at',null);}
   function subscribeRealtime(){
     supabaseClient.channel('chat-'+[currentUserId,peerId].sort().join('-')).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`receiver_id=eq.${currentUserId}`},async(p)=>{
-      const m=p.new;if(m.sender_id!==peerId)return;if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(m);scrollToBottom();
+      const m=p.new;if(m.sender_id!==peerId)return;m.content=await E2E.decryptMessage(sharedKey,m.content);
+      if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(m);scrollToBottom();
       if(m.content==='🔔 PING!!!'&&navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
       const n=new Date().toISOString();if(document.visibilityState==='visible')await supabaseClient.from('messages').update({delivered_at:n,read_at:n}).eq('id',m.id);else await supabaseClient.from('messages').update({delivered_at:n}).eq('id',m.id).is('delivered_at',null);
     }).on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:`sender_id=eq.${currentUserId}`},(p)=>{
@@ -230,13 +250,14 @@
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')markIncomingAsRead();});
   }
   async function sendMessage(){
-    const text=normalizeText(msgInput.value);if(!text)return;msgInput.value='';autoResize();
+    const text=normalizeText(msgInput.value);if(!text||!sharedKey)return;msgInput.value='';autoResize();
     if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';const tempId='temp-'+Date.now();
     appendBubble({id:tempId,sender_id:currentUserId,content:text,created_at:new Date().toISOString()},true);scrollToBottom();
-    const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:text}).select().single();
+    const encrypted=await E2E.encryptMessage(sharedKey,text);
+    const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted}).select().single();
     msgInput.focus();const tempRow=msgArea.querySelector(`[data-id="${tempId}"]`);
     if(error){if(tempRow){tempRow.classList.add('send-failed');tempRow.classList.remove('sending');}msgInput.value=text;return;}
-    if(tempRow)tempRow.remove();appendBubble(data);
+    if(tempRow)tempRow.remove();data.content=text;appendBubble(data);
   }
   function autoResize(){msgInput.style.height='auto';msgInput.style.height=Math.min(msgInput.scrollHeight,100)+'px';}
   function showConfirm(title,msg,okLabel){
@@ -271,9 +292,10 @@
     if(!error)window.location.href='dashboard.html';
   });
   document.getElementById('menuPing').addEventListener('click',async(e)=>{
-    e.stopPropagation();chatMenu.classList.remove('open');if(navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
-    const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:'🔔 PING!!!'}).select().single();
-    if(!error){if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(data);scrollToBottom();}
+    e.stopPropagation();chatMenu.classList.remove('open');if(!sharedKey)return;if(navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
+    const encrypted=await E2E.encryptMessage(sharedKey,'🔔 PING!!!');
+    const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted}).select().single();
+    if(!error){data.content='🔔 PING!!!';if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(data);scrollToBottom();}
   });
   history.pushState({page:'chat'},'',location.href);window.addEventListener('popstate',()=>{window.location.href='dashboard.html';});
   if(typeof supabaseClient==='undefined'){
