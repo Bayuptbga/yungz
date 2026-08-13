@@ -1,5 +1,13 @@
 // Service Worker - Private Chat
-const CACHE_NAME = 'private-chat-v3';
+const CACHE_NAME = 'private-chat-v4';
+
+// Aset yang nyaris tidak pernah berubah (ikon, font) -> lebih cocok cache-first
+// biar loading-nya cepat, tidak perlu nunggu network tiap kali.
+function isStaticAsset(url) {
+  return url.includes('/icons/') ||
+    url.includes('fonts.googleapis.com') ||
+    url.includes('fonts.gstatic.com');
+}
 
 // File "app shell" yang dicache saat instalasi, biar bisa dibuka offline
 const APP_SHELL = [
@@ -50,8 +58,10 @@ self.addEventListener('activate', (event) => {
 // Fetch strategy:
 // - Request ke Supabase (data live: pesan, auth, dll) -> selalu network, JANGAN dicache,
 //   biar data chat selalu fresh dan tidak basi.
-// - Request file statis (html, css, js, gambar, ikon) -> network-first, fallback ke cache
-//   kalau offline. Jadi saat online selalu dapat versi terbaru, saat offline tetap bisa dibuka.
+// - Ikon & font (jarang berubah) -> cache-first, biar tampil instan tanpa nunggu
+//   network; kalau belum ada di cache baru ambil dari network sekali lalu disimpan.
+// - Sisanya (html, css, js aplikasi) -> network-first, fallback ke cache kalau
+//   offline. Jadi saat online selalu dapat versi terbaru, saat offline tetap bisa dibuka.
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
 
@@ -63,14 +73,35 @@ self.addEventListener('fetch', (event) => {
   // Hanya tangani GET request untuk aset statis
   if (event.request.method !== 'GET') return;
 
+  if (isStaticAsset(url)) {
+    // Cache-first: pakai cache kalau ada, network cuma dipanggil sekali di awal
+    // (atau kalau ada versi baru di install, karena CACHE_NAME akan berubah).
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        }).catch(() => cached);
+      })
+    );
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Simpan salinan terbaru ke cache
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, clone);
-        });
+        // Simpan salinan terbaru ke cache, tapi cuma kalau response-nya sukses
+        // (biar cache tidak ketiban file 404/500).
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, clone);
+          });
+        }
         return response;
       })
       .catch(() => {
