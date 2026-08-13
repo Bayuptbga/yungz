@@ -212,7 +212,7 @@
     <div class="tabs"><div class="tab" id="tabDaftar" onclick="switchPanel('daftar')">Daftar</div><div class="tab active" id="tabLogin" onclick="switchPanel('login')">Masuk</div></div>
     <div class="banner-err" id="loginError"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span id="loginErrorText"></span></div>
     <form id="loginForm">
-      <div class="field"><label>Username</label><div class="input-wrap"><input type="text" id="loginUsername" required autocomplete="username"></div></div>
+      <div class="field"><label>Username</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg><input type="text" id="loginUsername" required autocomplete="username"></div></div>
       <div class="field"><label>Kata Sandi</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="loginPassword" required autocomplete="current-password"><span class="toggle-pw" onclick="const p=document.getElementById('loginPassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div></div>
       <button type="submit" class="btn" id="loginSubmitBtn"><span class="spinner"></span><span class="btn-label">Masuk</span></button>
     </form>
@@ -225,7 +225,7 @@
   <div class="body panel" id="panelDaftar">
     <div class="tabs"><div class="tab active" id="tabDaftar2" onclick="switchPanel('daftar')">Daftar</div><div class="tab" id="tabLogin2" onclick="switchPanel('login')">Masuk</div></div>
     <form id="daftarForm">
-      <div class="field"><label>Username</label><div class="input-wrap"><input type="text" id="daftarUsername" required autocomplete="username"></div><div class="hint" id="uHint"></div></div>
+      <div class="field"><label>Username</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg><input type="text" id="daftarUsername" required autocomplete="username"></div><div class="hint" id="uHint"></div></div>
       <div class="field"><label>Kata Sandi</label><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="daftarPassword" required minlength="6" autocomplete="new-password"><span class="toggle-pw" onclick="const p=document.getElementById('daftarPassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div><div class="hint" id="pHint">Minimal 6 karakter</div></div>
       <button type="submit" class="btn" id="daftarSubmitBtn"><span class="spinner"></span><span class="btn-label">Daftar</span></button>
     </form>
