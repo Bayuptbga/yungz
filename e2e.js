@@ -83,7 +83,16 @@ const E2E = (() => {
         .eq('id', userId)
         .maybeSingle();
 
-      const oldVersion = prof && prof.key_version ? prof.key_version : (prof && prof.public_key ? 1 : 0);
+      // PENTING: patokan "user ini sudah pernah punya kunci" HARUS dari
+      // public_key (bukti nyata pernah generate), BUKAN dari key_version.
+      // Kolom key_version di tabel profiles punya DEFAULT 1 (lihat migration),
+      // jadi baris profil yang BARU DIBUAT dan BELUM PERNAH generate kunci pun
+      // sudah kebaca key_version=1 walau public_key masih null. Kalau dipakai
+      // sebagai patokan, kunci PERTAMA user malah kecatat sebagai versi 2
+      // (bukan versi 1) -> pesan yang keburu dikirim orang lain ke dia sebelum
+      // proses ini selesai akan ter-stample versi 1, sedangkan kunci asli yang
+      // akhirnya aktif adalah versi 2 -> selamanya tidak nyambung (mismatch).
+      const oldVersion = (prof && prof.public_key) ? (prof.key_version || 1) : 0;
       const history = (prof && Array.isArray(prof.public_key_history)) ? prof.public_key_history.slice() : [];
       if (prof && prof.public_key) {
         // simpan kunci lama ke riwayat sebelum ditimpa, supaya lawan bicara yang
