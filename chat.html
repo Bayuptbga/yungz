@@ -128,6 +128,28 @@
   .confirm-cancel:active{ background:var(--bbm-blue-light); }
   .confirm-ok{ background:#f15c6d; color:#1b0a0c; }
   .confirm-ok:active{ background:#e14758; }
+
+  /* ---- Modal PIN Enkripsi (restore key / tawarkan setel key) ---- */
+  .kmodal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center; z-index:300; opacity:0; pointer-events:none; transition:opacity .2s ease; padding:24px; }
+  .kmodal-overlay.open{ opacity:1; pointer-events:auto; }
+  .kmodal{ background:var(--card-bg); border:1px solid var(--border); border-radius:16px; width:100%; max-width:340px; padding:24px 20px 20px; box-shadow:0 20px 50px rgba(0,0,0,0.5); }
+  .kmodal .km-icon{width:46px;height:46px;border-radius:50%;background:rgba(83,189,235,0.14);display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+  .kmodal .km-icon svg{width:22px;height:22px;stroke:#53bdeb;}
+  .kmodal h3{font-size:16px;margin:0 0 6px;color:var(--ink);}
+  .kmodal p{font-size:12.5px;color:var(--muted);line-height:1.5;margin:0 0 16px;}
+  .kmodal .field{margin-bottom:12px;}
+  .kmodal .input-wrap{display:flex;align-items:center;gap:2px;border:1.5px solid var(--border);border-radius:11px;background:var(--bg);padding:0 12px;}
+  .kmodal .input-wrap:focus-within{border-color:#53bdeb;}
+  .kmodal .input-wrap svg{width:16px;height:16px;color:var(--muted);flex-shrink:0;stroke:var(--muted);}
+  .kmodal .input-wrap input{border:none;outline:none;background:transparent;padding:12px 8px;font-size:14.5px;width:100%;color:var(--ink);font-family:inherit;}
+  .kmodal .toggle-pw{font-size:10.5px;color:#53bdeb;font-weight:700;cursor:pointer;letter-spacing:0.5px;flex-shrink:0;}
+  .kmodal .hint{font-size:11.5px;min-height:14px;margin-top:2px;color:var(--muted);}
+  .kmodal .hint.err{color:#f15c6d;}
+  .kmodal .btn{width:100%;padding:13px 0;background:linear-gradient(135deg,#53bdeb,#1f8fc7);color:#062733;border:none;border-radius:11px;font-size:14.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;}
+  .kmodal .btn .spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(6,39,51,0.3);border-top-color:#062733;animation:spin .7s linear infinite;display:none;}
+  .kmodal .btn.loading .spinner{display:inline-block;}
+  .kmodal .btn:disabled{cursor:default;opacity:0.85;}
+  .kmodal .skip-link{display:block;text-align:center;font-size:12px;color:var(--muted);margin-top:14px;cursor:pointer;text-decoration:underline;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
@@ -159,6 +181,38 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal: minta PIN Enkripsi buat buka kunci chat (login dari device/browser baru) -->
+  <div class="kmodal-overlay" id="restoreOverlay">
+    <div class="kmodal">
+      <div class="km-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
+      <h3>Buka Kunci Chat</h3>
+      <p>Kamu login dari perangkat/browser baru. Masukkan <b>PIN Enkripsi</b> 6 digit supaya percakapan lamamu bisa dibaca lagi di sini.</p>
+      <form id="restoreForm">
+        <div class="field"><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="restorePw" placeholder="PIN enkripsi (6 digit)" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);"><span class="toggle-pw" onclick="const p=document.getElementById('restorePw');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div></div>
+        <div class="hint err" id="restoreHint"></div>
+        <button type="submit" class="btn" id="restoreBtn"><span class="spinner"></span><span class="btn-label">Buka Kunci</span></button>
+      </form>
+      <span class="skip-link" id="restoreForgetLink">Lupa PIN? Mulai percakapan baru</span>
+    </div>
+  </div>
+
+  <!-- Modal: tawarkan setel PIN Enkripsi (device baru, belum pernah ada backup) -->
+  <div class="kmodal-overlay" id="offerSetupOverlay">
+    <div class="kmodal">
+      <div class="km-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
+      <h3>Amankan Chat Kamu</h3>
+      <p>Kamu belum punya PIN Enkripsi. Setel sekarang biar nanti kalau login dari HP/browser lain, percakapanmu masih bisa dibuka lagi. <b>Beda dari kata sandi login</b>, dan tidak bisa dipulihkan kalau lupa.</p>
+      <form id="offerSetupForm">
+        <div class="field"><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="offerPw1" placeholder="PIN enkripsi (6 digit)" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);"></div></div>
+        <div class="field"><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="offerPw2" placeholder="Ulangi PIN enkripsi" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);"></div></div>
+        <div class="hint err" id="offerSetupHint"></div>
+        <button type="submit" class="btn" id="offerSetupBtn"><span class="spinner"></span><span class="btn-label">Simpan</span></button>
+      </form>
+      <span class="skip-link" id="offerSetupSkip">Lewati untuk sekarang</span>
+    </div>
+  </div>
+
   <div class="input-bar">
     <textarea id="msgInput" rows="1" placeholder="Ketik pesan..." disabled></textarea>
     <button class="send-btn" id="sendBtn" disabled><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
@@ -190,8 +244,13 @@
       if(sessErr) throw sessErr;
       if(!session){window.location.replace('index.html');return;}
       currentUserId=session.user.id;
-      const kp=await E2E.ensureKeypair(currentUserId);
-      if(kp.status!=='ready'){ window.location.replace('index.html'); return; }
+      let kp=await E2E.ensureKeypair(currentUserId);
+      if(kp.status==='needs_restore'){
+        // Login dari perangkat/browser baru & sudah pernah ada PIN Enkripsi ->
+        // wajib buka kunci dulu sebelum bisa mulai chat ini.
+        document.getElementById('authGate').style.display='none';
+        kp=await new Promise(resolve=>openRestoreModal(currentUserId,resolve));
+      }
       myPrivateKey=kp.privateKey;
       document.getElementById('authGate').style.display='none';
       const {data:rel,error:relErr}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
@@ -206,12 +265,87 @@
         msgInput.placeholder='Menunggu '+peerUsername+' membuka aplikasi buat aktifkan enkripsi...';
       }
       await loadMessages();await markIncomingAsRead();subscribeRealtime();subscribePresence();msgInput.disabled=!sharedKey;
+      // Tawarkan setel PIN Enkripsi (kalau device ini belum pernah punya backup).
+      // Non-blocking: chat di atas sudah tetap bisa dipakai sambil modal ini tampil.
+      maybeOfferBackupSetup(currentUserId);
     }catch(err){
       console.error('init error:',err);
       document.getElementById('authGate').style.display='none';
       msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#f15c6d" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div><div class="es-title">Gagal memuat percakapan</div><span>Cek koneksi internet lalu tarik-turun atau buka ulang chat ini.</span></div>`;
     }
   }
+
+  // ---- Modal: restore kunci pakai PIN Enkripsi (device/browser baru, backup ada) ----
+  // Blocking: chat baru lanjut dimuat setelah promise ini resolve.
+  let restoreResolve=null;
+  function openRestoreModal(userId,resolve){
+    restoreResolve=resolve;
+    document.getElementById('restoreForm').dataset.uid=userId;
+    document.getElementById('restoreOverlay').classList.add('open');
+    document.getElementById('restorePw').focus();
+  }
+  document.getElementById('restoreForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const uid=e.target.dataset.uid, pw=document.getElementById('restorePw').value,
+          b=document.getElementById('restoreBtn'), hint=document.getElementById('restoreHint');
+    hint.textContent='';
+    if(!/^\d{6}$/.test(pw)){ hint.textContent='Masukkan PIN enkripsi 6 digit kamu.'; return; }
+    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Membuka...';
+    try{
+      const kp=await E2E.restorePrivateKey(uid,pw);
+      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Buka Kunci';
+      document.getElementById('restoreOverlay').classList.remove('open');
+      if(restoreResolve) restoreResolve({status:'ready', ...kp});
+    }catch(err){
+      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Buka Kunci';
+      if(err.message==='WRONG_PASSWORD'){ hint.textContent='PIN salah, coba lagi.'; }
+      else{ hint.textContent='Gagal membuka kunci, coba lagi.'; console.error(err); }
+    }
+  });
+  document.getElementById('restoreForgetLink').addEventListener('click', async () => {
+    const uid=document.getElementById('restoreForm').dataset.uid;
+    const ok=confirm('Semua percakapan lama tidak akan bisa dibaca lagi di perangkat manapun setelah ini. Yakin mau lanjut tanpa PIN?');
+    if(!ok) return;
+    try{
+      const kp=await E2E.forceNewKeypair(uid);
+      document.getElementById('restoreOverlay').classList.remove('open');
+      if(restoreResolve) restoreResolve({status:'ready', ...kp});
+    }catch(err){ console.error(err); alert('Gagal membuat kunci baru, coba lagi.'); }
+  });
+
+  // ---- Modal: tawarkan setel PIN Enkripsi, muncul cukup SEKALI per akun per device ----
+  async function maybeOfferBackupSetup(userId){
+    const seenKey='e2e_offer_seen_'+userId;
+    if(localStorage.getItem(seenKey)) return; // sudah pernah ditampilkan sebelumnya, jangan lagi
+    if(!myPrivateKey) return;
+    let hasBackup=false;
+    try{ hasBackup=await E2E.hasBackup(userId); }catch(e){ return; }
+    localStorage.setItem(seenKey,'1'); // tandai sudah pernah muncul, apapun hasilnya nanti
+    if(hasBackup) return; // sudah aman, tidak perlu ditawarkan
+    document.getElementById('offerSetupForm').dataset.uid=userId;
+    document.getElementById('offerSetupOverlay').classList.add('open');
+  }
+  document.getElementById('offerSetupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const uid=e.target.dataset.uid, p1=document.getElementById('offerPw1').value, p2=document.getElementById('offerPw2').value,
+          b=document.getElementById('offerSetupBtn'), hint=document.getElementById('offerSetupHint');
+    hint.textContent='';
+    if(!/^\d{6}$/.test(p1)){ hint.textContent='PIN harus 6 digit angka.'; return; }
+    if(p1!==p2){ hint.textContent='PIN tidak cocok.'; return; }
+    if(!myPrivateKey) return;
+    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Menyimpan...';
+    try{
+      await E2E.backupPrivateKey(uid,myPrivateKey,p1);
+      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan';
+      document.getElementById('offerSetupOverlay').classList.remove('open');
+    }catch(err){
+      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan';
+      hint.textContent='Gagal menyimpan, coba lagi.'; console.error(err);
+    }
+  });
+  document.getElementById('offerSetupSkip').addEventListener('click', () => {
+    document.getElementById('offerSetupOverlay').classList.remove('open');
+  });
   const peerSubEl=document.getElementById('peerSub'),statusDotEl=document.getElementById('statusDot');let presenceChannel=null;
   function subscribePresence(){
     presenceChannel=supabaseClient.channel('online-users',{config:{presence:{key:currentUserId}}});
