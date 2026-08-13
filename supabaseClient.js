@@ -2,6 +2,24 @@
 const SUPABASE_URL = 'https://pxwrbwfpkuuwioythqpt.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_LcTHxYsZJsvZWkdsdQWfoQ_JsV7ahbT';
 
+// ==================================================================
+// SAKELAR AKSES: dipasang di sini (bukan di akses-ditolak.html) karena
+// file ini di-include di SEMUA halaman (index, dashboard, chat, setelan)
+// -- jadi cukup ubah SATU baris ini buat nyala/matiin di semua halaman
+// sekaligus.
+//   true  -> aplikasi cuma bisa dibuka dari HP. Browser desktop otomatis
+//            dialihkan ke akses-ditolak.html.
+//   false -> restriksi dimatikan, semua perangkat bisa buka seperti biasa.
+// ==================================================================
+const MOBILE_ONLY_ACCESS = true;
+
+if (MOBILE_ONLY_ACCESS && !location.pathname.endsWith('akses-ditolak.html')) {
+  const isMobileUA = /Android|iPhone|iPad|iPod|IEMobile|BlackBerry|Opera Mini|Mobile/i.test(navigator.userAgent);
+  if (!isMobileUA) {
+    window.location.replace('akses-ditolak.html');
+  }
+}
+
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Karena Supabase Auth butuh format email, username diubah jadi
