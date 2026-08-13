@@ -252,7 +252,14 @@
     const data=(rows&&rows.length>0)?rows[0]:null;
     if(!data){searchMsg.textContent='Tidak ditemukan.';searchMsg.className='search-msg err';return;}
     if(data.id===session.user.id){searchMsg.textContent='Ini PIN kamu.';searchMsg.className='search-msg err';return;}
+    const {data:existing}=await supabaseClient.from('contacts').select('status').or(`and(requester_id.eq.${session.user.id},addressee_id.eq.${data.id}),and(requester_id.eq.${data.id},addressee_id.eq.${session.user.id})`).maybeSingle();
     foundProfile=data;document.getElementById('foundAvatar').textContent=initials(data.username);document.getElementById('foundAvatar').style.background=colorFor(data.id);document.getElementById('foundUname').textContent=data.username;
+    const sendBtnEl=document.getElementById('sendRequestBtn');
+    if(existing){
+      const label=existing.status==='accepted'?'Sudah berteman':existing.status==='pending'?'Permintaan masih menunggu':'Permintaan pernah ditolak';
+      sendBtnEl.style.display='none';foundCard.classList.add('show');searchMsg.textContent=label;searchMsg.className=existing.status==='accepted'?'search-msg ok':'search-msg err';return;
+    }
+    sendBtnEl.style.display='';sendBtnEl.disabled=false;sendBtnEl.textContent='Kirim';
     foundCard.classList.add('show');searchMsg.textContent='Ditemukan!';searchMsg.className='search-msg ok';
   });
   document.getElementById('sendRequestBtn').addEventListener('click',async()=>{
