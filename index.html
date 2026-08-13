@@ -191,6 +191,7 @@
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
+<script src="e2e.js?v=1"></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js');});}</script>
 </head>
 <body>
@@ -277,12 +278,13 @@
     const u=document.getElementById('loginUsername').value.trim(), p=document.getElementById('loginPassword').value,
           b=document.getElementById('loginSubmitBtn'), err=document.getElementById('loginError'), errText=document.getElementById('loginErrorText');
     err.classList.remove('show'); b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Memeriksa...';
-    const {error} = await supabaseClient.auth.signInWithPassword({email: usernameToEmail(u), password: p});
+    const {data:liData, error} = await supabaseClient.auth.signInWithPassword({email: usernameToEmail(u), password: p});
     if(error){
       errText.textContent='Username atau kata sandi salah.'; err.classList.add('show');
       b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Masuk';
       return;
     }
+    try{ await E2E.ensureKeypair(liData.user.id); }catch(e){ console.error('Gagal setup kunci enkripsi:', e); }
     window.location.replace('dashboard.html');
   });
 
@@ -305,6 +307,7 @@
     }
     const pin = generatePin();
     await supabaseClient.from('profiles').insert({id: sData.user.id, username: u, pin: pin});
+    try{ await E2E.ensureKeypair(sData.user.id); }catch(e){ console.error('Gagal setup kunci enkripsi:', e); }
     document.getElementById('panelDaftar').style.display='none';
     document.getElementById('topBadge').style.display='none';
     document.getElementById('pinValue').textContent=pin;
