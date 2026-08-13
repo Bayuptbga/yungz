@@ -93,6 +93,13 @@ const E2E = (() => {
     sharedKeyCache.clear();
   }
 
+  // Buang shared key yang ke-cache untuk SATU peer saja (dipakai saat public key
+  // peer itu berubah di tengah sesi, misal dia baru login/reinstall di device lain).
+  // Panggilan getSharedKey() berikutnya akan hitung ulang pakai public key terbaru.
+  function invalidatePeer(peerId) {
+    sharedKeyCache.delete(peerId);
+  }
+
   async function encryptMessage(sharedKey, plaintext) {
     if (!sharedKey) return plaintext; // fallback, tidak seharusnya kejadian di alur normal
     const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -124,6 +131,6 @@ const E2E = (() => {
 
   return {
     ensureKeypair, getSharedKey, encryptMessage, decryptMessage, clearSharedKeyCache,
-    hasLocalKey
+    invalidatePeer, hasLocalKey
   };
 })();
