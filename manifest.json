@@ -1,6 +1,6 @@
 {
   "id": "/?id=privatechat",
-  "name": "BBM Private Chat",
+  "name": "Private Chat",
   "short_name": "Private Chat",
   "description": "Aplikasi pesan instan dengan privasi penuh.",
   "start_url": "./index.html",
