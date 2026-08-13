@@ -6,7 +6,7 @@
 <meta http-equiv="Expires" content="0">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>BBM Private Chat - Chats</title>
+<title>Private Chat - Chats</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1b2a32">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -64,13 +64,13 @@
   .drawer-item svg{ width:20px;height:20px; flex-shrink:0; }
   .drawer-footer{ flex-shrink:0; border-top:1px solid var(--border); padding:6px 0; }
   .drawer-footer .drawer-item{ color:var(--error); }
-  .tabbar{ position:absolute; left:14px; right:14px; bottom:calc(14px + env(safe-area-inset-bottom)); display:flex; align-items:center; gap:2px; background:var(--card-bg); border-radius:22px; padding:8px 4px; box-shadow:0 6px 22px rgba(0,0,0,0.5); z-index:25; border:1px solid var(--border);}
-  .tabbar .tabitem{ flex:1; padding:8px 4px 9px; border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; position:relative; cursor:pointer; transition:background-color .2s ease; }
+  .tabbar{ position:absolute; left:20px; right:20px; bottom:calc(14px + env(safe-area-inset-bottom)); display:flex; align-items:center; gap:2px; background:var(--card-bg); border-radius:20px; padding:6px; box-shadow:0 6px 22px rgba(0,0,0,0.5); z-index:25; border:1px solid var(--border);}
+  .tabbar .tabitem{ flex:1; padding:6px 4px 7px; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; position:relative; cursor:pointer; transition:background-color .2s ease; }
   .tabbar .tabitem.active{ background:var(--border); }
-  .tabbar .tabitem svg{ width:23px; height:23px; }
-  .tabbar .tabitem .tlabel{ font-size:11px; font-weight:600; color:var(--muted); line-height:1; }
+  .tabbar .tabitem svg{ width:19px; height:19px; }
+  .tabbar .tabitem .tlabel{ font-size:10px; font-weight:600; color:var(--muted); line-height:1; }
   .tabbar .tabitem.active .tlabel{ color:var(--ink); }
-  .tabbar .tabitem .badge{ position:absolute; top:4px; right:16px; width:9px; height:9px; border-radius:50%; background:var(--error); border:1.5px solid var(--card-bg); }
+  .tabbar .tabitem .badge{ position:absolute; top:4px; right:14px; width:8px; height:8px; border-radius:50%; background:var(--error); border:1.5px solid var(--card-bg); }
   .chatlist{ flex:1; overflow-y:auto; }
   .skel-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; }
   .skel-avatar{ width:52px; height:52px; border-radius:50%; flex-shrink:0; background:var(--border); }
