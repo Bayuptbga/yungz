@@ -181,6 +181,8 @@
   .status-card .sc-uname{font-size:14.5px;font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .status-card .sc-tag{font-size:12px; color:var(--muted); margin-top:1px;}
   .status-card .sc-time{font-size:11.5px; color:var(--muted); white-space:nowrap; flex-shrink:0; margin-left:8px;}
+  .status-card .sc-delete{ display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; margin-left:4px; cursor:pointer; flex-shrink:0; }
+  .status-card .sc-delete:active{ background:var(--border); }
   .status-card .sc-divider{border-top:1px solid var(--border);}
   .status-card .sc-content{padding:13px 14px; font-size:13.5px; color:var(--ink); line-height:1.5; word-break:break-word; white-space:pre-wrap;}
   .status-card .sc-like{ display:flex; align-items:center; justify-content:center; gap:7px; padding:11px; cursor:pointer; color:var(--muted); font-size:13px; font-weight:600; user-select:none; }
@@ -384,8 +386,8 @@
     const likeCountMap={},myLikedSet=new Set();
     (likeRows||[]).forEach(l=>{likeCountMap[l.status_id]=(likeCountMap[l.status_id]||0)+1;if(l.user_id===session.user.id)myLikedSet.add(l.status_id);});
     sList.innerHTML=sRows.map(s=>{
-      const count=likeCountMap[s.id]||0,liked=myLikedSet.has(s.id);
-      return `<div class="status-card">
+      const count=likeCountMap[s.id]||0,liked=myLikedSet.has(s.id),isMine=s.user_id===session.user.id;
+      return `<div class="status-card" data-sid="${escapeHtml(s.id)}">
       <div class="sc-head">
         <div class="sc-avatar" style="background:${colorFor(s.user_id)}">${escapeHtml(initials(pMap[s.user_id]))}</div>
         <div class="sc-head-info">
@@ -393,6 +395,7 @@
           <div class="sc-tag">Status Baru</div>
         </div>
         <div class="sc-time">${escapeHtml(timeAgo(s.created_at))}</div>
+        ${isMine?`<div class="sc-delete" data-id="${escapeHtml(s.id)}" onclick="deleteStatus(this)" title="Hapus status"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></div>`:''}
       </div>
       <div class="sc-divider"></div>
       <div class="sc-content">&quot;${escapeHtml(s.content)}&quot;</div>
@@ -424,6 +427,16 @@
     }).join('');
     const uIds=items.filter(i=>i.kind==='update'&&!i.seen).map(i=>i.id);if(uIds.length>0){await supabaseClient.from('contacts').update({seen_by_requester:true}).in('id',uIds);refreshNotifBadge();}
   }
+  window.deleteStatus=async(el)=>{
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
+    const statusId=el.dataset.id;if(!statusId)return;
+    if(!confirm('Hapus status ini?'))return;
+    const card=el.closest('.status-card');
+    el.style.pointerEvents='none';
+    const {error}=await supabaseClient.from('statuses').delete().eq('id',statusId).eq('user_id',session.user.id);
+    if(error){el.style.pointerEvents='';alert('Gagal menghapus status.');return;}
+    if(card){card.style.transition='opacity .25s ease';card.style.opacity='0';setTimeout(()=>card.remove(),250);}
+  };
   window.toggleLike=async(el)=>{
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
     const statusId=el.dataset.id;if(!statusId||el.dataset.busy==='1')return;
