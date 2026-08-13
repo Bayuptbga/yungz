@@ -91,26 +91,6 @@
     <h1>Setelan</h1>
   </div>
   <div class="content">
-    <div class="section-title">Ganti Kata Sandi</div>
-    <div class="card">
-      <form id="pwForm">
-        <div class="field">
-          <label>Kata Sandi Lama</label>
-          <div class="input-wrap"><input type="password" id="oldPassword" required autocomplete="current-password"><span class="toggle-pw" onclick="const p=document.getElementById('oldPassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
-        </div>
-        <div class="field">
-          <label>Kata Sandi Baru</label>
-          <div class="input-wrap"><input type="password" id="newPassword" required minlength="6" autocomplete="new-password"><span class="toggle-pw" onclick="const p=document.getElementById('newPassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
-        </div>
-        <div class="field">
-          <label>Ulangi Kata Sandi Baru</label>
-          <div class="input-wrap"><input type="password" id="confirmPassword" required minlength="6" autocomplete="new-password"></div>
-        </div>
-        <div class="hint" id="pwHint">Minimal 6 karakter</div>
-        <button type="submit" class="btn" id="pwSubmitBtn"><span class="spinner"></span><span class="btn-label">Simpan Kata Sandi</span></button>
-      </form>
-    </div>
-
     <div class="section-title">About</div>
     <div class="card">
       <div class="setting-row" id="installRow" style="display:none;">
@@ -131,18 +111,6 @@
   const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return(u||'?').slice(0,2).toUpperCase();}
-  function translatePwError(msg){
-    const m=(msg||'').toLowerCase();
-    if(m.includes('at least 6')) return 'Kata sandi minimal 6 karakter.';
-    if(m.includes('same') && m.includes('password')) return 'Kata sandi baru harus beda dari yang lama.';
-    if(m.includes('rate limit')) return 'Terlalu banyak percobaan, coba lagi sebentar lagi.';
-    return 'Gagal menyimpan kata sandi, coba lagi.';
-  }
-  function translateOldPwError(msg){
-    const m=(msg||'').toLowerCase();
-    if(m.includes('rate limit')) return 'Terlalu banyak percobaan, coba lagi sebentar lagi.';
-    return 'Kata sandi lama salah.';
-  }
 
   let currentUsername=null;
   let currentUserId=null;
@@ -156,28 +124,6 @@
     document.getElementById('authGate').style.display = 'none';
   }
   boot();
-
-  document.getElementById('pwForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const p0=document.getElementById('oldPassword').value, p1=document.getElementById('newPassword').value, p2=document.getElementById('confirmPassword').value,
-          b=document.getElementById('pwSubmitBtn'), hint=document.getElementById('pwHint');
-    if(!p0){ hint.textContent='Masukkan kata sandi lama.'; hint.className='hint err'; return; }
-    if(p1.length<6){ hint.textContent='Kata sandi minimal 6 karakter.'; hint.className='hint err'; return; }
-    if(p1!==p2){ hint.textContent='Kata sandi tidak cocok.'; hint.className='hint err'; return; }
-    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Memeriksa...';
-    const {error:reauthErr} = await supabaseClient.auth.signInWithPassword({email: usernameToEmail(currentUsername), password: p0});
-    if(reauthErr){
-      hint.textContent=translateOldPwError(reauthErr.message); hint.className='hint err';
-      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan Kata Sandi';
-      return;
-    }
-    b.querySelector('.btn-label').textContent='Menyimpan...';
-    const {error} = await supabaseClient.auth.updateUser({password:p1});
-    b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan Kata Sandi';
-    if(error){ hint.textContent=translatePwError(error.message); hint.className='hint err'; return; }
-    hint.textContent='Kata sandi berhasil diperbarui.'; hint.className='hint ok';
-    document.getElementById('pwForm').reset();
-  });
 
   // ---- Instal Aplikasi (PWA) ----
   let deferredPrompt = null;
