@@ -50,15 +50,6 @@
   .section-title{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; margin:22px 4px 8px; }
   .section-title:first-child{ margin-top:0; }
 
-  .profile-card{ display:flex; align-items:center; gap:14px; background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:16px; }
-  .p-avatar{ width:56px; height:56px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:19px; color:#fff; background:var(--border); }
-  .p-info{ min-width:0; flex:1; }
-  .p-uname{ font-size:16px; font-weight:700; word-break:break-word; }
-  .p-pin-row{ display:flex; align-items:center; gap:8px; margin-top:5px; font-size:12.5px; color:var(--muted); font-family:'Courier New',monospace; }
-  .p-pin-row .pin-val{ color:var(--ink); font-weight:700; letter-spacing:1.5px; }
-  .pin-copy-btn{ background:rgba(83,189,235,0.14); color:var(--accent); border:1px solid rgba(83,189,235,0.3); border-radius:7px; padding:3px 9px; font-size:11px; font-weight:700; cursor:pointer; font-family:'Segoe UI',sans-serif; }
-  .pin-copy-btn:active{ transform:scale(0.96); }
-
   .card{ background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:16px; }
   .field{ margin-bottom:14px; }
   .field:last-of-type{ margin-bottom:0; }
@@ -100,15 +91,6 @@
     <h1>Setelan</h1>
   </div>
   <div class="content">
-    <div class="section-title">Profil</div>
-    <div class="profile-card" onclick="location.href='profil.html'" style="cursor:pointer;">
-      <div class="p-avatar" id="pAvatar">?</div>
-      <div class="p-info">
-        <div class="p-uname" id="pUsername">@—</div>
-        <div class="p-pin-row">PIN: <span class="pin-val" id="pPin">—</span><button class="pin-copy-btn" id="pinCopyBtn" type="button">Salin</button></div>
-      </div>
-    </div>
-
     <div class="section-title">Ganti Kata Sandi</div>
     <div class="card">
       <form id="pwForm">
@@ -129,7 +111,7 @@
       </form>
     </div>
 
-    <div class="section-title">Aplikasi</div>
+    <div class="section-title">About</div>
     <div class="card">
       <div class="setting-row" id="installRow" style="display:none;">
         <div><div class="s-label">Instal Aplikasi</div><div class="s-sub">Buka lebih cepat langsung dari layar utama</div></div>
@@ -162,7 +144,6 @@
     return 'Kata sandi lama salah.';
   }
 
-  let currentPin=null;
   let currentUsername=null;
   let currentUserId=null;
 
@@ -170,26 +151,11 @@
     const {data:{session}} = await supabaseClient.auth.getSession();
     if(!session){ window.location.replace('index.html'); return; }
     currentUserId = session.user.id;
-    const {data:prof} = await supabaseClient.from('profiles').select('username, pin').eq('id', session.user.id).maybeSingle();
-    if(prof){
-      currentPin = prof.pin;
-      currentUsername = prof.username;
-      document.getElementById('pUsername').textContent = prof.username;
-      document.getElementById('pPin').textContent = prof.pin;
-      document.getElementById('pAvatar').textContent = initials(prof.username);
-      document.getElementById('pAvatar').style.background = colorFor(session.user.id);
-    }
+    const {data:prof} = await supabaseClient.from('profiles').select('username').eq('id', session.user.id).maybeSingle();
+    if(prof){ currentUsername = prof.username; }
     document.getElementById('authGate').style.display = 'none';
   }
   boot();
-
-  document.getElementById('pinCopyBtn').addEventListener('click', async () => {
-    if(!currentPin) return;
-    const btn = document.getElementById('pinCopyBtn');
-    try{ await navigator.clipboard.writeText(currentPin); btn.textContent='Tersalin ✓'; }
-    catch(e){ btn.textContent='Gagal'; }
-    setTimeout(()=>{ btn.textContent='Salin'; }, 1600);
-  });
 
   document.getElementById('pwForm').addEventListener('submit', async (e) => {
     e.preventDefault();
