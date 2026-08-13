@@ -12,9 +12,12 @@ function usernameToEmail(username){
 }
 
 function generatePin(){
+  const chars = '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'; // angka 1-9 + huruf A-Z (tanpa 0, biar tidak rancu sama huruf O)
   let pin = '';
+  const rand = new Uint32Array(8);
+  crypto.getRandomValues(rand);
   for(let i = 0; i < 8; i++){
-    pin += Math.floor(Math.random() * 10);
+    pin += chars[rand[i] % chars.length];
   }
   return pin;
 }
