@@ -282,7 +282,7 @@
       if(profErr) throw profErr;
       if(!peerUsername) peerUsername=prof?prof.username:'Pengguna';
       if(prof&&prof.public_key) sharedKey=await E2E.getSharedKey(myPrivateKey,peerId,prof.public_key);
-      peerAvatar.textContent=initials(peerUsername);peerAvatar.style.background=colorFor(peerId);peerUnameEl.textContent='@'+peerUsername;
+      peerAvatar.textContent=initials(peerUsername);peerAvatar.style.background=colorFor(peerId);peerUnameEl.textContent=peerUsername;
       if(!sharedKey){
         msgInput.placeholder='Menunggu '+peerUsername+' membuka aplikasi buat aktifkan enkripsi...';
       }
