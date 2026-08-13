@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>BBM Private Chat - Chats</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1b2a32">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Private Chat">
+<style>
+  @view-transition { navigation: auto; }
+  :root{
+    --bbm-blue-dark:#0b141a;
+    --bbm-blue:#1b2a32;
+    --bbm-blue-light:#233138;
+    --bg:#121b22;
+    --card-bg:#1b2a32;
+    --ink:#e9edf0;
+    --muted:#8696a0;
+    --border:#2a3942;
+    --tab-active:#e9edf0;
+    --ok:#2ecc71;
+    --error:#f15c6d;
+  }
+  *{box-sizing:border-box;}
+  html{ overscroll-behavior:none; -webkit-tap-highlight-color:transparent; }
+  body{
+    overscroll-behavior:none; touch-action:pan-y; user-select:none; -webkit-touch-callout:none;
+    margin:0; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink);
+    position:fixed; inset:0; width:100%; height:100%; overflow:hidden; display:flex; align-items:flex-start; justify-content:center;
+  }
+  input, textarea{ user-select:text; }
+  .phone{ width:100%; max-width:420px; height:100%; background:var(--bg); box-shadow:0 0 40px rgba(0,0,0,0.5); display:flex; flex-direction:column; position:relative; overflow:hidden; }
+  #authGate{ position:absolute; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center; }
+  #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:#53bdeb; animation:authSpin .75s linear infinite; }
+  @keyframes authSpin{ to{ transform:rotate(360deg); } }
+  .appbar,.tabbar{flex-shrink:0;}
+  .appbar{ background:var(--bbm-blue); color:#fff; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; }
+  .appbar .left{ display:flex; align-items:center; gap:18px; }
+  .appbar .hamburger{ display:flex; flex-direction:column; gap:4px; cursor:pointer; }
+  .appbar .hamburger span{ width:22px; height:2.5px; background:#fff; border-radius:2px; }
+  .appbar h1{ margin:0; font-size:22px; font-weight:500; }
+  .appbar .right{ display:flex; align-items:center; gap:20px; }
+  .appbar .icon-btn{ cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .drawer-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:40; }
+  .drawer-overlay.open{ opacity:1; pointer-events:auto; }
+  .drawer{ position:fixed; top:0; bottom:0; left:0; width:78%; max-width:300px; background:var(--bg); display:flex; flex-direction:column; transform:translateX(-100%); transition:transform .25s ease; z-index:41; box-shadow:2px 0 20px rgba(0,0,0,0.5); }
+  .drawer.open{ transform:translateX(0); }
+  .drawer-header{ background:var(--bbm-blue); color:#fff; padding:28px 18px 20px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+  .drawer-header .d-avatar{ width:46px;height:46px;border-radius:50%; background:rgba(255,255,255,0.2); display:flex;align-items:center;justify-content:center; font-weight:700;font-size:16px; flex-shrink:0; }
+  .drawer-header .d-uname{ font-size:15px; font-weight:600; word-break:break-word; }
+  .drawer-header .d-pin{ font-size:11.5px; opacity:0.85; margin-top:3px; font-family:'Courier New',monospace; }
+  .drawer-body{ flex:1; overflow-y:auto; padding:6px 0; }
+  .drawer-item{ display:flex; align-items:center; gap:16px; padding:13px 18px; cursor:pointer; color:var(--ink); font-size:14.5px; }
+  .drawer-item:active{ background:var(--border); }
+  .drawer-item svg{ width:20px;height:20px; flex-shrink:0; }
+  .drawer-footer{ flex-shrink:0; border-top:1px solid var(--border); padding:6px 0; }
+  .drawer-footer .drawer-item{ color:var(--error); }
+  .tabbar{ position:absolute; left:50%; bottom:calc(14px + env(safe-area-inset-bottom)); transform:translateX(-50%); display:flex; align-items:center; gap:2px; background:var(--card-bg); border-radius:999px; padding:6px; box-shadow:0 6px 22px rgba(0,0,0,0.5); z-index:25; border:1px solid var(--border);}
+  .tabbar .tabitem{ flex:none; width:52px; height:44px; border-radius:999px; display:flex; align-items:center; justify-content:center; position:relative; cursor:pointer; transition:background-color .2s ease; }
+  .tabbar .tabitem.active{ background:var(--border); }
+  .tabbar .tabitem svg{ width:22px; height:22px; }
+  .tabbar .tabitem .badge{ position:absolute; top:4px; right:8px; width:9px; height:9px; border-radius:50%; background:var(--error); border:1.5px solid var(--card-bg); }
+  .chatlist{ flex:1; overflow-y:auto; }
+  .chat-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
+  .chat-item:active{ background:var(--border); }
+  .avatar{ width:52px; height:52px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px; color:#fff; }
+  .chat-main{ flex:1; min-width:0; }
+  .chat-top{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .chat-name{ font-size:16.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .chat-bottom{ display:flex; align-items:center; gap:6px; margin-top:3px; }
+  .status-icon{ width:16px; height:16px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; }
+  .status-icon.broadcast{background:none;}
+  .chat-msg{ font-size:13.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .fab{ position:absolute; right:18px; bottom:calc(78px + env(safe-area-inset-bottom)); width:56px; height:56px; border-radius:50%; background:var(--bbm-blue); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.5); cursor:pointer; }
+  .fab svg{width:24px;height:24px;}
+  .icon-btn{position:relative;}
+  .dropdown-menu{ position:absolute; top:38px; right:0; background:var(--card-bg); color:var(--ink); border-radius:8px; box-shadow:0 4px 18px rgba(0,0,0,0.5); min-width:170px; padding:6px 0; opacity:0; transform:translateY(-6px); pointer-events:none; transition:opacity .15s ease, transform .15s ease; z-index:50; border:1px solid var(--border); }
+  .dropdown-menu.open{ opacity:1; transform:translateY(0); pointer-events:auto; }
+  .dropdown-menu .dd-item{ padding:11px 16px; font-size:14px; cursor:pointer; display:flex; align-items:center; gap:10px; }
+  .dropdown-menu .dd-item:active{ background:var(--border); }
+  .dropdown-menu .dd-item svg{ width:18px;height:18px; flex-shrink:0; stroke:var(--ink); }
+  .pin-modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:60; padding:24px; }
+  .pin-modal-overlay.open{ opacity:1; pointer-events:auto; }
+  .pin-modal{ background:var(--card-bg); border-radius:14px; padding:26px 22px; width:100%; max-width:300px; text-align:center; border:1px solid var(--border); }
+  .pin-modal .pm-title{ font-size:15.5px; font-weight:700; margin-bottom:4px; color:var(--ink); }
+  .pin-modal .pm-sub{ font-size:12px; color:var(--muted); margin-bottom:18px; }
+  .pin-modal .pm-box{ background:var(--bg); border:1.5px dashed var(--muted); border-radius:12px; padding:16px; margin-bottom:16px; }
+  .pin-modal .pm-pin{ font-size:26px; font-weight:800; letter-spacing:4px; color:var(--ink); font-family:'Courier New',monospace; }
+  .pin-modal .pm-copy{ font-size:12.5px; color:#53bdeb; font-weight:600; background:none; border:none; cursor:pointer; margin-bottom:14px; padding:6px 10px; }
+  .pin-modal .pm-close{ width:100%; padding:11px 0; background:var(--bbm-blue); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
+  .tab-panel{ display:none; flex:1; min-height:0; flex-direction:column; overflow-y:auto; padding-bottom:calc(70px + env(safe-area-inset-bottom)); }
+  .tab-panel.active{display:flex; animation:panelFadeIn .18s ease both;}
+  #panelChats.active{display:flex;flex-direction:column;flex:1;min-height:0;position:relative;}
+  @keyframes panelFadeIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
+  .status-empty, .panel-empty{ padding:60px 24px; text-align:center; color:var(--muted); font-size:13.5px; line-height:1.6; }
+  .add-section{ padding:18px 16px; border-bottom:8px solid var(--card-bg); flex-shrink:0; }
+  .add-section .label{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px; }
+  .add-row{display:flex;gap:8px;}
+  .add-row input{ flex:1; background:var(--bg); border:1.5px solid var(--border); color:var(--ink); border-radius:10px; padding:11px 12px; font-size:15px; font-family:'Courier New',monospace; outline:none; }
+  .add-row input:focus{border-color:var(--muted);}
+  .add-row button{ padding:0 18px; background:var(--bbm-blue); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
+  .add-row button:disabled{background:var(--border); color:var(--muted);}
+  .search-msg{margin-top:10px;font-size:13px;} .search-msg.err{color:var(--error);} .search-msg.ok{color:var(--ok);}
+  .found-card{ display:none; margin-top:12px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:12px 14px; align-items:center; gap:12px; }
+  .found-card.show{display:flex;}
+  .found-card .avatar{ width:44px;height:44px;border-radius:50%; background:var(--bbm-blue); color:#fff; display:flex;align-items:center;justify-content:center; font-weight:700;font-size:15px; }
+  .found-card .info{flex:1;min-width:0;}
+  .found-card .info .uname{font-weight:600;font-size:15px; color:var(--ink);}
+  .found-card .info .pin-label{font-size:11.5px;color:var(--muted);}
+  .found-card button{ background:var(--bbm-blue); color:#fff;border:none;border-radius:8px; padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer; }
+  .section-title{ padding:14px 16px 6px; font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; flex-shrink:0; }
+  .contact-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
+  .contact-item:active{background:var(--border);}
+  .contact-item .avatar{ width:48px;height:48px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:16px; }
+  .contact-item .uname{font-size:15.5px;font-weight:600; color:var(--ink);}
+  .req-item, .notif-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--border); }
+  .req-item .avatar, .notif-item .avatar{ width:48px;height:48px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:16px; }
+  .req-item .info, .notif-item .info{flex:1;min-width:0;}
+  .req-item .uname, .notif-item .uname{font-size:15px;font-weight:600; color:var(--ink);}
+  .req-item .sub, .notif-item .sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .req-actions{display:flex;gap:8px;flex-shrink:0;}
+  .btn-accept, .btn-decline{ border:none; border-radius:8px; padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer; }
+  .btn-accept{background:var(--ok);color:#fff;}
+  .btn-decline{background:var(--border);color:var(--ink);}
+  .btn-accept:disabled, .btn-decline:disabled{opacity:0.5;}
+  .notif-item.unseen{background:rgba(255,255,255,0.05);}
+  .status-dot{ width:8px;height:8px;border-radius:50%; margin-left:4px; }
+  .status-dot.new{background:#53bdeb;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js?v=2"></script>
+<script src="push-notif.js"></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js');});}</script>
+</head>
+<body>
+<div class="phone">
+  <div id="authGate"><div class="spinner"></div></div>
+  <div class="appbar">
+    <div class="left"><div class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></div><div><h1>Private Chat</h1></div></div>
+    <div class="right"><div class="icon-btn" id="menuBtn"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+        <div class="dropdown-menu" id="dropdownMenu">
+          <div class="dd-item" id="ddChatBaru"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg><span>Chat Baru</span></div>
+          <div class="dd-item" id="ddPinSaya"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg><span>PIN Saya</span></div>
+        </div>
+    </div></div>
+  </div>
+  <div class="dropdown-overlay-catch" id="dropdownOverlayCatch" style="position:fixed;inset:0;z-index:45;display:none;"></div>
+  <div class="pin-modal-overlay" id="pinModalOverlay">
+    <div class="pin-modal"><div class="pm-title">PIN Kamu</div><div class="pm-sub">Bagikan PIN ini ke teman supaya mereka bisa menambahkanmu sebagai kontak.</div><div class="pm-box"><div class="pm-pin" id="pmPinValue">00000000</div></div><button class="pm-copy" id="pmCopyBtn">Salin PIN</button><button class="pm-close" id="pmCloseBtn">Tutup</button></div>
+  </div>
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header"><div class="d-avatar" id="drawerAvatar">?</div><div><div class="d-uname" id="drawerUname">@—</div><div class="d-pin" id="drawerPin">PIN: —</div></div></div>
+    <div class="drawer-body">
+      <div class="drawer-item" id="drawerSetelan"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>Setelan</span></div>
+      <div class="drawer-item" id="drawerInstallApp" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Instal Aplikasi</span></div>
+    </div>
+    <div class="drawer-footer"><div class="drawer-item" id="logoutBtn"><svg viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/></svg><span>Keluar</span></div></div>
+  </div>
+  <div class="tab-panel active" id="panelChats"><div class="chatlist" id="chatlist"></div><div class="fab" title="Chat baru" id="fabNewChat"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg></div></div>
+  <div class="tab-panel" id="panelStatus"><div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada status.<br>Fitur segera hadir.</div></div>
+  <div class="tab-panel" id="panelKontak">
+    <div class="add-section"><div class="label">Tambah kontak via PIN</div><div class="add-row"><input type="text" id="pinInput" placeholder="Masukkan 8 digit PIN" maxlength="8" inputmode="numeric"><button id="searchBtn">Cari</button></div><div class="search-msg" id="searchMsg"></div>
+      <div class="found-card" id="foundCard"><div class="avatar" id="foundAvatar">?</div><div class="info"><div class="uname" id="foundUname">@—</div><div class="pin-label">Ditemukan</div></div><button id="sendRequestBtn">Kirim</button></div>
+    </div><div class="section-title">Kontak Saya</div><div id="contactList"></div>
+  </div>
+  <div class="tab-panel" id="panelNotif"><div class="section-title">Permintaan</div><div id="reqList"></div><div class="section-title">Pembaruan</div><div id="updateList"></div></div>
+  <div class="tabbar">
+    <div class="tabitem active" id="tabChats"><svg viewBox="0 0 24 24" fill="var(--ink)" stroke="none"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg></div>
+    <div class="tabitem" id="tabStatus"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4.5 9a8 8 0 0114-4.5M19.5 15a8 8 0 01-14 4.5"/></svg></div>
+    <div class="tabitem" id="tabKontak"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg></div>
+    <div class="tabitem" id="tabNotif"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><span class="badge" id="notifBadge" style="display:none;"></span></div>
+  </div>
+</div>
+<script>
+  let currentUserPin=null;const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
+  function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
+  function initials(u){return(u||'?').slice(0,2).toUpperCase();}
+  function escapeHtml(s){const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
+  function timeLabel(iso){const d=new Date(iso),t=new Date();if(d.toDateString()===t.toDateString())return d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});}
+  function tickSvg(del,read){if(read)return `<svg viewBox="0 0 20 15" width="15" height="11" fill="none" stroke="#53bdeb" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;if(del)return `<svg viewBox="0 0 20 15" width="15" height="11" fill="none" stroke="#8696a0" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;return `<svg viewBox="0 0 16 15" width="12" height="11" fill="none" stroke="#8696a0" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L14 3"/></svg>`;}
+  function statusIconHTML(chat){if(!chat.mine)return'';return `<span class="status-icon" style="background:none;">${tickSvg(chat.deliveredAt,chat.readAt)}</span>`;}
+  function render(chats){
+    const list=document.getElementById('chatlist');if(!chats||chats.length===0){list.innerHTML=`<div class="panel-empty">Belum ada percakapan.</div>`;return;}
+    list.innerHTML=chats.map(chat=>`<div class="chat-item" data-uid="${escapeHtml(chat.uid)}" data-uname="${escapeHtml(chat.uname)}"><div class="avatar" style="background:${colorFor(chat.uid)}">${escapeHtml(initials(chat.uname))}</div><div class="chat-main"><div class="chat-top"><div class="chat-name" style="${chat.unread?'font-weight:700;':''}">${escapeHtml(chat.uname)}</div><div style="font-size:11.5px;color:var(--muted);">${escapeHtml(timeLabel(chat.time))}</div></div><div class="chat-bottom">${statusIconHTML(chat)}<div class="chat-msg" style="${chat.unread?'color:var(--ink);font-weight:600;':''}">${escapeHtml(chat.preview)}</div></div></div></div>`).join('');
+    document.querySelectorAll('.chat-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
+  }
+  async function loadChats(userId){
+    const list=document.getElementById('chatlist');list.innerHTML='<div class="panel-empty">Memuat...</div>';
+    const {data:contactRows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+    const acceptedIds=new Set((contactRows||[]).map(r=>r.requester_id===userId?r.addressee_id:r.requester_id));
+    if(acceptedIds.size===0){render([]);return;}
+    const {data:msgRows}=await supabaseClient.from('messages').select('sender_id, receiver_id, content, created_at, delivered_at, read_at').or(`sender_id.eq.${userId},receiver_id.eq.${userId}`).order('created_at',{ascending:false}).limit(300);
+    const {data:clearRows}=await supabaseClient.from('chat_clears').select('peer_id, cleared_before').eq('user_id',userId);
+    const clearedMap=new Map((clearRows||[]).map(c=>[c.peer_id,c.cleared_before]));
+    const lastByPartner=new Map();
+    (msgRows||[]).forEach(m=>{const p=m.sender_id===userId?m.receiver_id:m.sender_id;if(!acceptedIds.has(p))return;const cutoff=clearedMap.get(p);if(cutoff&&m.created_at<=cutoff)return;if(!lastByPartner.has(p))lastByPartner.set(p,m);});
+    if(lastByPartner.size===0){render([]);return;}
+    const pIds=[...lastByPartner.keys()];const {data:profilesData}=await supabaseClient.from('profiles').select('id, username').in('id',pIds);
+    const pMap={};(profilesData||[]).forEach(p=>pMap[p.id]=p.username);
+    render(pIds.map(pid=>{const m=lastByPartner.get(pid);const mine=m.sender_id===userId;return {uid:pid,uname:pMap[pid]||'Pengguna',preview:(mine?'Kamu: ':'')+m.content,time:m.created_at,mine,deliveredAt:m.delivered_at,readAt:m.read_at,unread:!mine&&!m.read_at};}));
+  }
+  async function markInboxDelivered(userId){await supabaseClient.from('messages').update({delivered_at:new Date().toISOString()}).eq('receiver_id',userId).is('delivered_at',null);}
+  let presenceTracked=false;function trackOnlinePresence(userId){if(presenceTracked)return;presenceTracked=true;supabaseClient.channel('online-users',{config:{presence:{key:userId}}}).subscribe(async(s)=>{if(s==='SUBSCRIBED')await supabaseClient.channel('online-users').track({online_at:new Date().toISOString()});});}
+  async function refreshNotifBadge(){
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session){window.location.replace('index.html');return;}
+    const {data:prof}=await supabaseClient.from('profiles').select('username, pin').eq('id',session.user.id).maybeSingle();
+    if(prof){currentUserPin=prof.pin;document.getElementById('drawerUname').textContent='@'+prof.username;document.getElementById('drawerPin').textContent='PIN: '+prof.pin;document.getElementById('drawerAvatar').textContent=initials(prof.username);document.getElementById('drawerAvatar').style.background=colorFor(session.user.id);}
+    initPushNotifications(session.user.id);trackOnlinePresence(session.user.id);
+    const {count:pCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('addressee_id',session.user.id).eq('status','pending');
+    const {count:uCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('requester_id',session.user.id).in('status',['accepted','declined']).eq('seen_by_requester',false);
+    const badge=document.getElementById('notifBadge');const t=(pCount||0)+(uCount||0);
+    if(t>0){badge.textContent=t;badge.style.display='flex';}else badge.style.display='none';
+    loadChats(session.user.id);markInboxDelivered(session.user.id);
+  }
+  let foundProfile=null;const searchBtn=document.getElementById('searchBtn'),searchMsg=document.getElementById('searchMsg'),foundCard=document.getElementById('foundCard');
+  searchBtn.addEventListener('click',async()=>{
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const pin=document.getElementById('pinInput').value.trim();
+    searchMsg.textContent='';searchMsg.className='search-msg';foundCard.classList.remove('show');foundProfile=null;
+    if(!/^\d{8}$/.test(pin)){searchMsg.textContent='PIN 8 digit.';searchMsg.className='search-msg err';return;}
+    searchBtn.disabled=true;searchBtn.textContent='...';
+    const {data:rows,error}=await supabaseClient.rpc('search_profile_by_pin',{p_pin:pin});
+    searchBtn.disabled=false;searchBtn.textContent='Cari';
+    if(error){searchMsg.textContent=error.message.includes('Terlalu banyak')?'Terlalu banyak percobaan, coba lagi nanti.':'Gagal mencari.';searchMsg.className='search-msg err';return;}
+    const data=(rows&&rows.length>0)?rows[0]:null;
+    if(!data){searchMsg.textContent='Tidak ditemukan.';searchMsg.className='search-msg err';return;}
+    if(data.id===session.user.id){searchMsg.textContent='Ini PIN kamu.';searchMsg.className='search-msg err';return;}
+    foundProfile=data;document.getElementById('foundAvatar').textContent=initials(data.username);document.getElementById('foundAvatar').style.background=colorFor(data.id);document.getElementById('foundUname').textContent='@'+data.username;
+    foundCard.classList.add('show');searchMsg.textContent='Ditemukan!';searchMsg.className='search-msg ok';
+  });
+  document.getElementById('sendRequestBtn').addEventListener('click',async()=>{
+    if(!foundProfile)return;const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
+    document.getElementById('sendRequestBtn').disabled=true;
+    const {error}=await supabaseClient.from('contacts').insert({requester_id:session.user.id,addressee_id:foundProfile.id,status:'pending'});
+    if(error){searchMsg.textContent='Gagal/Sudah ada.';searchMsg.className='search-msg err';document.getElementById('sendRequestBtn').disabled=false;return;}
+    document.getElementById('sendRequestBtn').textContent='Terkirim ✓';searchMsg.className='search-msg ok';
+  });
+  async function loadContacts(){
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
+    const cList=document.getElementById('contactList');cList.innerHTML='<div class="panel-empty">Memuat...</div>';
+    const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
+    if(!rows||rows.length===0){cList.innerHTML='<div class="panel-empty">Belum ada kontak.</div>';return;}
+    const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
+    const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
+    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${id}" data-uname="${pMap[id]}"><div class="avatar" style="background:${colorFor(id)}">${initials(pMap[id])}</div><div class="uname">@${pMap[id]}</div></div>`).join('');
+    document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
+  }
+  async function loadRequests(){
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const rl=document.getElementById('reqList');rl.innerHTML='<div class="panel-empty">Memuat...</div>';
+    const {data:rows}=await supabaseClient.from('contacts').select('id, requester_id').eq('addressee_id',session.user.id).eq('status','pending');
+    if(!rows||rows.length===0){rl.innerHTML='<div class="panel-empty">Tidak ada.</div>';return;}
+    const rIds=rows.map(r=>r.requester_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',rIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
+    rl.innerHTML=rows.map(r=>`<div class="req-item"><div class="avatar" style="background:${colorFor(r.requester_id)}">${initials(pMap[r.requester_id])}</div><div class="info"><div class="uname">@${pMap[r.requester_id]}</div><div class="sub">Permintaan</div></div><div class="req-actions"><button class="btn-accept" onclick="respondReq('${r.id}','accepted',this)">Terima</button><button class="btn-decline" onclick="respondReq('${r.id}','declined',this)">Tolak</button></div></div>`).join('');
+  }
+  window.respondReq=async(id,st,btn)=>{
+    const item=btn.closest('.req-item');item.querySelectorAll('button').forEach(b=>b.disabled=true);
+    await supabaseClient.from('contacts').update({status:st,seen_by_requester:false}).eq('id',id);
+    item.style.opacity='0.4';setTimeout(()=>{item.remove();refreshNotifBadge();},300);
+  };
+  async function loadUpdates(){
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const ul=document.getElementById('updateList');
+    const {data:rows}=await supabaseClient.from('contacts').select('id, addressee_id, status, seen_by_requester').eq('requester_id',session.user.id).in('status',['accepted','declined']).order('id',{ascending:false});
+    if(!rows||rows.length===0){ul.innerHTML='<div class="panel-empty">Tidak ada.</div>';return;}
+    const oIds=rows.map(r=>r.addressee_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
+    ul.innerHTML=rows.map(r=>`<div class="notif-item ${r.seen_by_requester?'':'unseen'}"><div class="avatar" style="background:${colorFor(r.addressee_id)}">${initials(pMap[r.addressee_id])}</div><div class="info"><div class="uname">@${pMap[r.addressee_id]}</div><div class="sub">${r.status==='accepted'?'✅ Diterima':'❌ Ditolak'}</div></div>${r.seen_by_requester?'':'<span class="status-dot new"></span>'}</div>`).join('');
+    const uIds=rows.filter(r=>!r.seen_by_requester).map(r=>r.id);if(uIds.length>0){await supabaseClient.from('contacts').update({seen_by_requester:true}).in('id',uIds);refreshNotifBadge();}
+  }
+  async function boot(){
+    const {data:{session}}=await supabaseClient.auth.getSession();
+    if(!session){window.location.replace('index.html');return;}
+    document.getElementById('authGate').style.display='none';
+    refreshNotifBadge();
+  }
+  boot();
+  window.addEventListener('pageshow',(e)=>{if(e.persisted)refreshNotifBadge();});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshNotifBadge();});
+  const tabDefs={chats:{tabEl:'tabChats',panelEl:'panelChats',title:'Private Chat'},status:{tabEl:'tabStatus',panelEl:'panelStatus',title:'Status'},kontak:{tabEl:'tabKontak',panelEl:'panelKontak',title:'Kontak'},notif:{tabEl:'tabNotif',panelEl:'panelNotif',title:'Notifikasi'}};
+  let activeTab='chats',onNonChatTab=false;
+  function switchTab(name,fromPopstate){
+    if(!tabDefs[name])return;activeTab=name;
+    if(!fromPopstate){if(name!=='chats'){if(!onNonChatTab)history.pushState({tab:name},'',location.href);else history.replaceState({tab:name},'',location.href);onNonChatTab=true;}else if(onNonChatTab){history.back();return;}}
+    Object.entries(tabDefs).forEach(([k,d])=>{
+      const t=document.getElementById(d.tabEl),p=document.getElementById(d.panelEl),ia=k===name;t.classList.toggle('active',ia);p.classList.toggle('active',ia);
+      const svg=t.querySelector('svg');
+      if(svg){if(ia){svg.setAttribute('fill',k==='chats'?'var(--ink)':'none');svg.setAttribute('stroke','var(--ink)');}else{svg.setAttribute('fill','none');svg.setAttribute('stroke','var(--muted)');}}
+    });
+    document.querySelector('.appbar h1').textContent=tabDefs[name].title;document.getElementById('fabNewChat').style.display=name==='chats'?'flex':'none';
+    if(name==='kontak')loadContacts();if(name==='notif'){loadRequests();loadUpdates();}if(name==='chats')supabaseClient.auth.getSession().then(({data:{session}})=>{if(session)loadChats(session.user.id);});
+  }
+  document.getElementById('tabChats').addEventListener('click',()=>switchTab('chats'));document.getElementById('tabStatus').addEventListener('click',()=>switchTab('status'));document.getElementById('tabKontak').addEventListener('click',()=>switchTab('kontak'));document.getElementById('tabNotif').addEventListener('click',()=>switchTab('notif'));
+  window.addEventListener('popstate',()=>{if(onNonChatTab){onNonChatTab=false;switchTab('chats',true);}});
+  document.getElementById('logoutBtn').addEventListener('click',async()=>{await supabaseClient.auth.signOut();window.location.replace('index.html');});
+  const drawer=document.getElementById('drawer'),drwOverlay=document.getElementById('drawerOverlay');
+  document.getElementById('hamburgerBtn').addEventListener('click',()=>{drawer.classList.add('open');drwOverlay.classList.add('open');});
+  drwOverlay.addEventListener('click',()=>{drawer.classList.remove('open');drwOverlay.classList.remove('open');});
+  document.getElementById('drawerSetelan').addEventListener('click',()=>window.location.href='setelan.html');
+  const dMenu=document.getElementById('dropdownMenu'),dc=document.getElementById('dropdownOverlayCatch');
+  document.getElementById('menuBtn').addEventListener('click',()=>{dMenu.classList.toggle('open');dc.style.display=dMenu.classList.contains('open')?'block':'none';});
+  dc.addEventListener('click',()=>{dMenu.classList.remove('open');dc.style.display='none';});
+  document.getElementById('ddChatBaru').addEventListener('click',()=>{dMenu.classList.remove('open');dc.style.display='none';switchTab('kontak');});
+  document.getElementById('ddPinSaya').addEventListener('click',()=>{dMenu.classList.remove('open');dc.style.display='none';document.getElementById('pmPinValue').textContent=currentUserPin||'—';document.getElementById('pinModalOverlay').classList.add('open');});
+  document.getElementById('pmCloseBtn').addEventListener('click',()=>document.getElementById('pinModalOverlay').classList.remove('open'));
+</script>
+</body>
+</html>
