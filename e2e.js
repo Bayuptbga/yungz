@@ -160,7 +160,16 @@ const E2E = (() => {
   // Kalau user pilih "abaikan, mulai percakapan baru" saat restore gagal/lupa password:
   // generate keypair baru seperti device benar-benar baru (chat lama di device lama jadi
   // tidak terbaca lagi, tapi ini pilihan sadar user, bukan default otomatis).
+  // PENTING: backup PIN lama di server dihapus di sini juga, karena backup itu
+  // dienkripsi untuk private key yang LAMA -- kalau dibiarkan, hasBackup() akan
+  // terus mengira device ini "sudah aman" padahal PIN lama sudah tidak match
+  // dengan kunci baru ini, jadi banner "Buat PIN" tidak akan pernah muncul lagi.
   async function forceNewKeypair(userId) {
+    try {
+      await supabaseClient.from('profiles').update({ key_backup: null }).eq('id', userId);
+    } catch (e) {
+      console.error('Gagal hapus backup PIN lama:', e);
+    }
     return generateAndPublishKeypair(userId);
   }
 
