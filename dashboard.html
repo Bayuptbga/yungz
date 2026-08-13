@@ -153,7 +153,6 @@
   .status-dot{ width:8px;height:8px;border-radius:50%; margin-left:4px; }
   .status-dot.new{background:#53bdeb;}
 </style>
-<script src="device-gate.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
 <script src="e2e.js?v=2"></script>
@@ -201,7 +200,7 @@
   function render(chats){
     const list=document.getElementById('chatlist');if(!chats||chats.length===0){list.innerHTML=`<div class="panel-empty">Belum ada percakapan.</div>`;return;}
     list.innerHTML=chats.map(chat=>`<div class="chat-item" data-uid="${escapeHtml(chat.uid)}" data-uname="${escapeHtml(chat.uname)}"><div class="avatar" style="background:${colorFor(chat.uid)}">${escapeHtml(initials(chat.uname))}</div><div class="chat-main"><div class="chat-top"><div class="chat-name" style="${chat.unread?'font-weight:700;':''}">${escapeHtml(chat.uname)}</div><div style="font-size:11.5px;color:var(--muted);">${escapeHtml(timeLabel(chat.time))}</div></div><div class="chat-bottom">${statusIconHTML(chat)}<div class="chat-msg" style="${chat.unread?'color:var(--ink);font-weight:600;':''}">${escapeHtml(chat.preview)}</div></div></div></div>`).join('');
-    document.querySelectorAll('.chat-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
+    document.querySelectorAll('.chat-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
   }
   function skeletonRow(){return `<div class="skel-item"><div class="skel-avatar"></div><div class="skel-lines"><div class="skel-line w60"></div><div class="skel-line w40"></div></div></div>`;}
   function looksEncrypted(content){try{const o=JSON.parse(content);return !!(o&&o.e2e===1);}catch(e){return false;}}
@@ -233,7 +232,7 @@
   async function markInboxDelivered(userId){await supabaseClient.from('messages').update({delivered_at:new Date().toISOString()}).eq('receiver_id',userId).is('delivered_at',null);}
   let presenceTracked=false;function trackOnlinePresence(userId){if(presenceTracked)return;presenceTracked=true;supabaseClient.channel('online-users',{config:{presence:{key:userId}}}).subscribe(async(s)=>{if(s==='SUBSCRIBED')await supabaseClient.channel('online-users').track({online_at:new Date().toISOString()});});}
   async function refreshNotifBadge(){
-    const {data:{session}}=await supabaseClient.auth.getSession();if(!session){window.location.replace('./');return;}
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session){window.location.replace('index.html');return;}
     const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, pin').eq('id',session.user.id).maybeSingle();
     if(profErr){console.error('Gagal memuat profil:',profErr);}
     if(prof){currentUserPin=prof.pin;document.getElementById('drawerUname').textContent=prof.username;document.getElementById('drawerPin').textContent='PIN: '+prof.pin;document.getElementById('drawerAvatar').textContent=initials(prof.username);document.getElementById('drawerAvatar').style.background=colorFor(session.user.id);}
@@ -280,15 +279,15 @@
     if(!rows||rows.length===0){cList.innerHTML='<div class="panel-empty">Belum ada kontak.</div>';return;}
     const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
     const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
-    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml(pMap[id])}"><div class="avatar" style="background:${colorFor(id)}">${escapeHtml(initials(pMap[id]))}</div><div class="uname">${escapeHtml(pMap[id])}</div></div>`).join('');
-    document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
+    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${id}" data-uname="${pMap[id]}"><div class="avatar" style="background:${colorFor(id)}">${initials(pMap[id])}</div><div class="uname">${pMap[id]}</div></div>`).join('');
+    document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
   }
   async function loadRequests(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const rl=document.getElementById('reqList');rl.innerHTML=skeletonRow().repeat(3);
     const {data:rows}=await supabaseClient.from('contacts').select('id, requester_id').eq('addressee_id',session.user.id).eq('status','pending');
     if(!rows||rows.length===0){rl.innerHTML='<div class="panel-empty">Tidak ada.</div>';return;}
     const rIds=rows.map(r=>r.requester_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',rIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
-    rl.innerHTML=rows.map(r=>`<div class="req-item"><div class="avatar" style="background:${colorFor(r.requester_id)}">${escapeHtml(initials(pMap[r.requester_id]))}</div><div class="info"><div class="uname">@${escapeHtml(pMap[r.requester_id])}</div><div class="sub">Permintaan</div></div><div class="req-actions"><button class="btn-accept" onclick="respondReq('${r.id}','accepted',this)">Terima</button><button class="btn-decline" onclick="respondReq('${r.id}','declined',this)">Tolak</button></div></div>`).join('');
+    rl.innerHTML=rows.map(r=>`<div class="req-item"><div class="avatar" style="background:${colorFor(r.requester_id)}">${initials(pMap[r.requester_id])}</div><div class="info"><div class="uname">@${pMap[r.requester_id]}</div><div class="sub">Permintaan</div></div><div class="req-actions"><button class="btn-accept" onclick="respondReq('${r.id}','accepted',this)">Terima</button><button class="btn-decline" onclick="respondReq('${r.id}','declined',this)">Tolak</button></div></div>`).join('');
   }
   window.respondReq=async(id,st,btn)=>{
     const item=btn.closest('.req-item');item.querySelectorAll('button').forEach(b=>b.disabled=true);
@@ -300,12 +299,12 @@
     const {data:rows}=await supabaseClient.from('contacts').select('id, addressee_id, status, seen_by_requester').eq('requester_id',session.user.id).in('status',['accepted','declined']).order('id',{ascending:false});
     if(!rows||rows.length===0){ul.innerHTML='<div class="panel-empty">Tidak ada.</div>';return;}
     const oIds=rows.map(r=>r.addressee_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
-    ul.innerHTML=rows.map(r=>`<div class="notif-item ${r.seen_by_requester?'':'unseen'}"><div class="avatar" style="background:${colorFor(r.addressee_id)}">${escapeHtml(initials(pMap[r.addressee_id]))}</div><div class="info"><div class="uname">@${escapeHtml(pMap[r.addressee_id])}</div><div class="sub">${r.status==='accepted'?'✅ Diterima':'❌ Ditolak'}</div></div>${r.seen_by_requester?'':'<span class="status-dot new"></span>'}</div>`).join('');
+    ul.innerHTML=rows.map(r=>`<div class="notif-item ${r.seen_by_requester?'':'unseen'}"><div class="avatar" style="background:${colorFor(r.addressee_id)}">${initials(pMap[r.addressee_id])}</div><div class="info"><div class="uname">@${pMap[r.addressee_id]}</div><div class="sub">${r.status==='accepted'?'✅ Diterima':'❌ Ditolak'}</div></div>${r.seen_by_requester?'':'<span class="status-dot new"></span>'}</div>`).join('');
     const uIds=rows.filter(r=>!r.seen_by_requester).map(r=>r.id);if(uIds.length>0){await supabaseClient.from('contacts').update({seen_by_requester:true}).in('id',uIds);refreshNotifBadge();}
   }
   async function boot(){
     const {data:{session}}=await supabaseClient.auth.getSession();
-    if(!session){window.location.replace('./');return;}
+    if(!session){window.location.replace('index.html');return;}
     // Cek/siapkan kunci enkripsi diam-diam di background, TANPA nge-block atau minta
     // PIN Enkripsi di sini. Kalau device ini baru & belum pernah setel PIN
     // Enkripsi (needs_setup), kunci baru sudah otomatis dibuat & langsung bisa dipakai.
@@ -359,11 +358,11 @@
       switchTab(order[nextIdx]);
     }, {passive:true});
   })();
-  document.getElementById('logoutBtn').addEventListener('click',async()=>{await supabaseClient.auth.signOut();window.location.replace('./');});
+  document.getElementById('logoutBtn').addEventListener('click',async()=>{await supabaseClient.auth.signOut();window.location.replace('index.html');});
   const drawer=document.getElementById('drawer'),drwOverlay=document.getElementById('drawerOverlay');
   document.getElementById('hamburgerBtn').addEventListener('click',()=>{drawer.classList.add('open');drwOverlay.classList.add('open');});
   drwOverlay.addEventListener('click',()=>{drawer.classList.remove('open');drwOverlay.classList.remove('open');});
-  document.getElementById('drawerSetelan').addEventListener('click',()=>window.location.href='setelan');
+  document.getElementById('drawerSetelan').addEventListener('click',()=>window.location.href='setelan.html');
   document.getElementById('fabNewChat').addEventListener('click',()=>switchTab('kontak'));
 </script>
 </body>
