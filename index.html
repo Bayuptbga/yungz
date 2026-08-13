@@ -224,8 +224,10 @@
     searchMsg.textContent='';searchMsg.className='search-msg';foundCard.classList.remove('show');foundProfile=null;
     if(!/^\d{8}$/.test(pin)){searchMsg.textContent='PIN 8 digit.';searchMsg.className='search-msg err';return;}
     searchBtn.disabled=true;searchBtn.textContent='...';
-    const {data,error}=await supabaseClient.from('profiles').select('id, username, pin').eq('pin',pin).maybeSingle();
+    const {data:rows,error}=await supabaseClient.rpc('search_profile_by_pin',{p_pin:pin});
     searchBtn.disabled=false;searchBtn.textContent='Cari';
+    if(error){searchMsg.textContent=error.message.includes('Terlalu banyak')?'Terlalu banyak percobaan, coba lagi nanti.':'Gagal mencari.';searchMsg.className='search-msg err';return;}
+    const data=(rows&&rows.length>0)?rows[0]:null;
     if(!data){searchMsg.textContent='Tidak ditemukan.';searchMsg.className='search-msg err';return;}
     if(data.id===session.user.id){searchMsg.textContent='Ini PIN kamu.';searchMsg.className='search-msg err';return;}
     foundProfile=data;document.getElementById('foundAvatar').textContent=initials(data.username);document.getElementById('foundAvatar').style.background=colorFor(data.id);document.getElementById('foundUname').textContent='@'+data.username;
