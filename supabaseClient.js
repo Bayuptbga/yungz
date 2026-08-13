@@ -11,7 +11,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_LcTHxYsZJsvZWkdsdQWfoQ_JsV7ahbT';
 //            dialihkan ke akses-ditolak.html.
 //   false -> restriksi dimatikan, semua perangkat bisa buka seperti biasa.
 // ==================================================================
-const MOBILE_ONLY_ACCESS = true;
+const MOBILE_ONLY_ACCESS = false;
 
 if (MOBILE_ONLY_ACCESS && !location.pathname.endsWith('akses-ditolak.html')) {
   const isMobileUA = /Android|iPhone|iPad|iPod|IEMobile|BlackBerry|Opera Mini|Mobile/i.test(navigator.userAgent);
