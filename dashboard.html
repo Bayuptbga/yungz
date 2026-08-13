@@ -209,6 +209,16 @@
     document.querySelectorAll('.chat-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
   }
   function skeletonRow(){return `<div class="skel-item"><div class="skel-avatar"></div><div class="skel-lines"><div class="skel-line w60"></div><div class="skel-line w40"></div></div></div>`;}
+  function showDebugBox(msg){
+    let box=document.getElementById('debugBox');
+    if(!box){
+      box=document.createElement('div');
+      box.id='debugBox';
+      box.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:9999;background:#331419;border:1px solid #ff7080;color:#ffb3bc;font-size:11px;padding:10px;border-radius:8px;max-height:40vh;overflow:auto;white-space:pre-wrap;font-family:monospace;';
+      document.body.appendChild(box);
+    }
+    box.textContent += (box.textContent?'\n---\n':'') + msg;
+  }
   async function loadChats(userId){
     const list=document.getElementById('chatlist');list.innerHTML=skeletonRow().repeat(6);
     const {data:contactRows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
@@ -228,8 +238,10 @@
   let presenceTracked=false;function trackOnlinePresence(userId){if(presenceTracked)return;presenceTracked=true;supabaseClient.channel('online-users',{config:{presence:{key:userId}}}).subscribe(async(s)=>{if(s==='SUBSCRIBED')await supabaseClient.channel('online-users').track({online_at:new Date().toISOString()});});}
   async function refreshNotifBadge(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session){window.location.replace('index.html');return;}
-    const {data:prof}=await supabaseClient.from('profiles').select('username, pin').eq('id',session.user.id).maybeSingle();
+    const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, pin').eq('id',session.user.id).maybeSingle();
+    if(profErr){console.error('Gagal memuat profil:',profErr);showDebugBox('ERROR profiles: '+JSON.stringify(profErr)+' | userId: '+session.user.id);}
     if(prof){currentUserPin=prof.pin;document.getElementById('drawerUname').textContent='@'+prof.username;document.getElementById('drawerPin').textContent='PIN: '+prof.pin;document.getElementById('drawerAvatar').textContent=initials(prof.username);document.getElementById('drawerAvatar').style.background=colorFor(session.user.id);}
+    else if(!profErr){console.warn('Baris profiles kosong untuk user:',session.user.id);showDebugBox('Profil KOSONG (null) untuk userId: '+session.user.id);}
     initPushNotifications(session.user.id);trackOnlinePresence(session.user.id);
     const {count:pCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('addressee_id',session.user.id).eq('status','pending');
     const {count:uCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('requester_id',session.user.id).in('status',['accepted','declined']).eq('seen_by_requester',false);
