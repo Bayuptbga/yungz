@@ -188,6 +188,15 @@
   .status-card .sc-like.liked{color:#53bdeb;}
   .status-card .sc-like.liked svg{fill:#53bdeb;}
   .status-card .sc-like:active{background:var(--border);}
+  .composer-box{ display:flex; align-items:center; gap:6px; margin:14px 16px 0; background:var(--card-bg); border:1px solid var(--border); border-radius:26px; padding:6px 6px 6px 18px; flex-shrink:0; }
+  .composer-input{ flex:1; min-width:0; background:transparent; border:none; outline:none; color:var(--ink); font-size:14.5px; font-family:inherit; padding:9px 0; }
+  .composer-input::placeholder{ color:var(--muted); }
+  .composer-icons{ display:flex; align-items:center; gap:3px; flex-shrink:0; }
+  .composer-icon{ width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background-color .15s ease, opacity .15s ease; }
+  .composer-icon:active{ background:var(--border); }
+  .composer-icon.send{ background:var(--bbm-blue); }
+  .composer-icon.send.disabled{ opacity:.5; pointer-events:none; }
+  #myStatusMsg{ margin:6px 18px 0; }
 </style>
 <script src="device-gate.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -213,14 +222,21 @@
   </div>
   <div class="tab-panel active" id="panelChats"><div class="e2e-strip" id="e2eStrip"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Chat kamu dienkripsi end-to-end</span></div><div class="chatlist" id="chatlist"></div><div class="fab" title="Chat baru" id="fabNewChat"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg></div></div>
   <div class="tab-panel" id="panelStatus">
-    <div class="status-item my-status" id="myStatusRow">
-      <div class="avatar-wrap"><div class="avatar" id="myStatusAvatar">?</div><div class="my-status-plus">+</div></div>
-      <div class="info"><div class="uname">Status Saya</div><div class="content" id="myStatusPreview">Ketuk untuk menulis status</div><div class="time" id="myStatusTime"></div></div>
+    <div class="composer-box">
+      <input type="text" id="myStatusInput" class="composer-input" placeholder="Apa yang Anda pikirkan?" maxlength="200">
+      <div class="composer-icons">
+        <div class="composer-icon" id="emojiBtn" title="Emoji">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        </div>
+        <div class="composer-icon" id="photoBtn" title="Foto">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 15l-5-5-4 4-3-3-6 6"/></svg>
+        </div>
+        <div class="composer-icon send" id="postStatusBtn" title="Kirim">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </div>
+      </div>
     </div>
-    <div class="my-status-editor" id="myStatusEditor" style="display:none;">
-      <div class="add-row"><input type="text" id="myStatusInput" placeholder="Tulis status (hilang otomatis 24 jam)..." maxlength="200"><button id="postStatusBtn">Kirim</button></div>
-      <div class="search-msg" id="myStatusMsg"></div>
-    </div>
+    <div class="search-msg" id="myStatusMsg"></div>
     <div class="section-title">Pembaruan Terkini</div>
     <div id="statusList"></div>
   </div>
@@ -338,46 +354,30 @@
     if(diffH<24)return diffH+' jam lalu';
     return timeLabel(iso);
   }
-  const myStatusInput=document.getElementById('myStatusInput'),postStatusBtn=document.getElementById('postStatusBtn'),myStatusMsg=document.getElementById('myStatusMsg');
-  const myStatusRow=document.getElementById('myStatusRow'),myStatusEditor=document.getElementById('myStatusEditor'),myStatusPreview=document.getElementById('myStatusPreview'),myStatusTime=document.getElementById('myStatusTime'),myStatusAvatar=document.getElementById('myStatusAvatar');
-  myStatusRow.addEventListener('click',()=>{
-    const show=myStatusEditor.style.display==='none';
-    myStatusEditor.style.display=show?'block':'none';
-    if(show)myStatusInput.focus();
-  });
-  async function loadMyStatus(userId){
-    const {data:prof}=await supabaseClient.from('profiles').select('username').eq('id',userId).maybeSingle();
-    const uname=prof?prof.username:'Saya';
-    myStatusAvatar.textContent=initials(uname);myStatusAvatar.style.background=colorFor(userId);
-    const {data}=await supabaseClient.from('statuses').select('content, created_at, expires_at').eq('user_id',userId).gt('expires_at',new Date().toISOString()).maybeSingle();
-    if(data){
-      myStatusInput.value=data.content;myStatusPreview.textContent=data.content;myStatusPreview.classList.add('has-status');
-      myStatusTime.textContent=timeAgo(data.created_at)+' · aktif sampai '+timeLabel(data.expires_at);
-    }else{
-      myStatusInput.value='';myStatusPreview.textContent='Ketuk untuk menulis status';myStatusPreview.classList.remove('has-status');myStatusTime.textContent='';
-    }
-  }
+  const myStatusInput=document.getElementById('myStatusInput'),postStatusBtn=document.getElementById('postStatusBtn'),myStatusMsg=document.getElementById('myStatusMsg'),emojiBtn=document.getElementById('emojiBtn'),photoBtn=document.getElementById('photoBtn');
+  emojiBtn.addEventListener('click',()=>{myStatusInput.value+='😊';myStatusInput.focus();});
+  photoBtn.addEventListener('click',()=>{myStatusMsg.textContent='Fitur unggah foto belum tersedia.';myStatusMsg.className='search-msg err';});
   postStatusBtn.addEventListener('click',async()=>{
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
     const content=myStatusInput.value.trim();
     if(!content){myStatusMsg.textContent='Status tidak boleh kosong.';myStatusMsg.className='search-msg err';return;}
-    postStatusBtn.disabled=true;postStatusBtn.textContent='...';
+    postStatusBtn.classList.add('disabled');
     const expiresAt=new Date(Date.now()+24*60*60*1000).toISOString();
     const {error}=await supabaseClient.from('statuses').upsert({user_id:session.user.id,content,created_at:new Date().toISOString(),expires_at:expiresAt},{onConflict:'user_id'});
-    postStatusBtn.disabled=false;postStatusBtn.textContent='Kirim';
+    postStatusBtn.classList.remove('disabled');
     if(error){myStatusMsg.textContent='Gagal mengirim status.';myStatusMsg.className='search-msg err';return;}
     myStatusMsg.textContent='Status diperbarui, aktif 24 jam.';myStatusMsg.className='search-msg ok';
-    await loadMyStatus(session.user.id);myStatusEditor.style.display='none';
+    myStatusInput.value='';
+    await loadStatusTab();
   });
   async function loadStatusTab(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
-    loadMyStatus(session.user.id);
     const sList=document.getElementById('statusList');sList.innerHTML=skeletonRow().repeat(3);
     const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
-    if(!rows||rows.length===0){sList.innerHTML='<div class="panel-empty">Belum ada kontak.</div>';return;}
-    const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
-    const {data:sRows}=await supabaseClient.from('statuses').select('user_id, content, created_at, expires_at').in('user_id',oIds).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
-    if(!sRows||sRows.length===0){sList.innerHTML='<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada status dari kontak.</div>';return;}
+    const oIds=(rows||[]).map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
+    const allIds=[session.user.id,...oIds];
+    const {data:sRows}=await supabaseClient.from('statuses').select('user_id, content, created_at, expires_at').in('user_id',allIds).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
+    if(!sRows||sRows.length===0){sList.innerHTML='<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada pembaruan status.</div>';return;}
     const uIds=sRows.map(s=>s.user_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',uIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
     sList.innerHTML=sRows.map(s=>`<div class="status-card">
       <div class="sc-head">
