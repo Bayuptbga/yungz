@@ -1,16 +1,18 @@
 // Service Worker - BBM Private Chat
-const CACHE_NAME = 'private-chat-v1';
+const CACHE_NAME = 'private-chat-v2';
 
 // File "app shell" yang dicache saat instalasi, biar bisa dibuka offline
 const APP_SHELL = [
   './',
   './index.html',
+  './dashboard.html',
   './chat.html',
   './login.html',
   './daftar.html',
   './setelan.html',
   './manifest.json',
   './supabaseClient.js',
+  './push-notif.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png'
