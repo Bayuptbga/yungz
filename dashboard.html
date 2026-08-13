@@ -279,7 +279,7 @@
     if(!rows||rows.length===0){cList.innerHTML='<div class="panel-empty">Belum ada kontak.</div>';return;}
     const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
     const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
-    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${id}" data-uname="${pMap[id]}"><div class="avatar" style="background:${colorFor(id)}">${initials(pMap[id])}</div><div class="uname">${pMap[id]}</div></div>`).join('');
+    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml(pMap[id])}"><div class="avatar" style="background:${colorFor(id)}">${escapeHtml(initials(pMap[id]))}</div><div class="uname">${escapeHtml(pMap[id])}</div></div>`).join('');
     document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
   }
   async function loadRequests(){
@@ -287,7 +287,7 @@
     const {data:rows}=await supabaseClient.from('contacts').select('id, requester_id').eq('addressee_id',session.user.id).eq('status','pending');
     if(!rows||rows.length===0){rl.innerHTML='<div class="panel-empty">Tidak ada.</div>';return;}
     const rIds=rows.map(r=>r.requester_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',rIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
-    rl.innerHTML=rows.map(r=>`<div class="req-item"><div class="avatar" style="background:${colorFor(r.requester_id)}">${initials(pMap[r.requester_id])}</div><div class="info"><div class="uname">@${pMap[r.requester_id]}</div><div class="sub">Permintaan</div></div><div class="req-actions"><button class="btn-accept" onclick="respondReq('${r.id}','accepted',this)">Terima</button><button class="btn-decline" onclick="respondReq('${r.id}','declined',this)">Tolak</button></div></div>`).join('');
+    rl.innerHTML=rows.map(r=>`<div class="req-item"><div class="avatar" style="background:${colorFor(r.requester_id)}">${escapeHtml(initials(pMap[r.requester_id]))}</div><div class="info"><div class="uname">@${escapeHtml(pMap[r.requester_id])}</div><div class="sub">Permintaan</div></div><div class="req-actions"><button class="btn-accept" onclick="respondReq('${r.id}','accepted',this)">Terima</button><button class="btn-decline" onclick="respondReq('${r.id}','declined',this)">Tolak</button></div></div>`).join('');
   }
   window.respondReq=async(id,st,btn)=>{
     const item=btn.closest('.req-item');item.querySelectorAll('button').forEach(b=>b.disabled=true);
@@ -299,7 +299,7 @@
     const {data:rows}=await supabaseClient.from('contacts').select('id, addressee_id, status, seen_by_requester').eq('requester_id',session.user.id).in('status',['accepted','declined']).order('id',{ascending:false});
     if(!rows||rows.length===0){ul.innerHTML='<div class="panel-empty">Tidak ada.</div>';return;}
     const oIds=rows.map(r=>r.addressee_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
-    ul.innerHTML=rows.map(r=>`<div class="notif-item ${r.seen_by_requester?'':'unseen'}"><div class="avatar" style="background:${colorFor(r.addressee_id)}">${initials(pMap[r.addressee_id])}</div><div class="info"><div class="uname">@${pMap[r.addressee_id]}</div><div class="sub">${r.status==='accepted'?'✅ Diterima':'❌ Ditolak'}</div></div>${r.seen_by_requester?'':'<span class="status-dot new"></span>'}</div>`).join('');
+    ul.innerHTML=rows.map(r=>`<div class="notif-item ${r.seen_by_requester?'':'unseen'}"><div class="avatar" style="background:${colorFor(r.addressee_id)}">${escapeHtml(initials(pMap[r.addressee_id]))}</div><div class="info"><div class="uname">@${escapeHtml(pMap[r.addressee_id])}</div><div class="sub">${r.status==='accepted'?'✅ Diterima':'❌ Ditolak'}</div></div>${r.seen_by_requester?'':'<span class="status-dot new"></span>'}</div>`).join('');
     const uIds=rows.filter(r=>!r.seen_by_requester).map(r=>r.id);if(uIds.length>0){await supabaseClient.from('contacts').update({seen_by_requester:true}).in('id',uIds);refreshNotifBadge();}
   }
   async function boot(){
