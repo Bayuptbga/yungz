@@ -123,7 +123,6 @@
   .pin-modal .pm-pin{ font-size:26px; font-weight:800; letter-spacing:4px; color:var(--ink); font-family:'Courier New',monospace; }
   .pin-modal .pm-copy{ font-size:12.5px; color:#53bdeb; font-weight:600; background:none; border:none; cursor:pointer; margin-bottom:14px; padding:6px 10px; }
   .pin-modal .pm-close{ width:100%; padding:11px 0; background:var(--bbm-blue); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
-
   .tab-panel{ display:none; flex:1; min-height:0; flex-direction:column; overflow-y:auto; padding-bottom:calc(70px + env(safe-area-inset-bottom)); }
   .tab-panel.active{display:flex; animation:panelFadeIn .18s ease both;}
   #panelChats.active{display:flex;flex-direction:column;flex:1;min-height:0;position:relative;}
@@ -234,7 +233,6 @@
 <body>
 <div class="phone">
   <div id="authGate"><div class="spinner"></div></div>
-
   <div class="appbar">
     <div class="left"><div class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></div><div><h1>Private Chat</h1></div></div>
     <div class="right"><div class="icon-btn" id="searchOpenBtn" title="Cari"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div></div>
@@ -249,6 +247,7 @@
     <div class="drawer-body">
       <div class="drawer-item" id="drawerProfil"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></div>
       <div class="drawer-item" id="drawerSetelan"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>Setelan</span></div>
+      <div class="drawer-item" id="drawerDataPenyimpanan"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></svg><span>Data &amp; Penyimpanan</span></div>
       <div class="drawer-item" id="drawerPrivasiKeamanan"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Privasi &amp; Keamanan</span></div>
       <div class="drawer-item" id="drawerInstallApp" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Instal Aplikasi</span></div>
     </div>
@@ -330,10 +329,7 @@
       const m=lastByPartner.get(pid);const mine=m.sender_id===userId;const prof=pMap[pid]||{};
       let previewText=m.content;
       if(myPrivateKey&&prof.public_key){
-        try{
-          const sk=await E2E.getSharedKey(myPrivateKey,pid,prof.public_key);
-          previewText=await E2E.decryptMessage(sk,m.content);
-        }catch(e){}
+        try{const sk=await E2E.getSharedKey(myPrivateKey,pid,prof.public_key);previewText=await E2E.decryptMessage(sk,m.content);}catch(e){}
       }else if(looksEncrypted(m.content)){
         previewText='🔒 Pesan terenkripsi';
       }
@@ -539,11 +535,10 @@
   async function boot(){
     const {data:{session}}=await supabaseClient.auth.getSession();
     if(!session){window.location.replace('index.html');return;}
+    // Cek/siapkan kunci enkripsi diam-diam di background. Device baru otomatis
+    // dapat keypair baru sendiri (tidak ada backup/restore PIN, mirip default
+    // WhatsApp) -- jadi hasil ensureKeypair selalu langsung siap dipakai.
     try{
-      // Tidak ada lagi pemulihan lewat cadangan server, dan tidak ada lagi
-      // versioning kunci: device baru selalu dapat keypair baru yang langsung
-      // menimpa public key lama di server. Ini yang memperketat & menyederhanakan
-      // model end-to-end -- private key tidak pernah punya jalan balik ke server.
       const kp=await E2E.ensureKeypair(session.user.id);
       myPrivateKey=kp.privateKey;
     }catch(e){ console.error('Gagal cek kunci enkripsi:',e); }
@@ -644,6 +639,7 @@
   drwOverlay.addEventListener('click',()=>{drawer.classList.remove('open');drwOverlay.classList.remove('open');});
   document.getElementById('drawerProfil').addEventListener('click',()=>window.location.href='profil.html');
   document.getElementById('drawerSetelan').addEventListener('click',()=>window.location.href='setelan.html');
+  document.getElementById('drawerDataPenyimpanan').addEventListener('click',()=>window.location.href='data-penyimpanan.html');
   document.getElementById('drawerPrivasiKeamanan').addEventListener('click',()=>window.location.href='privasi-keamanan.html');
   document.getElementById('fabNewChat').addEventListener('click',()=>switchTab('kontak'));
   function openAddModal(){

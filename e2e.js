@@ -3,18 +3,12 @@
 // lalu AES-GCM 256-bit buat enkripsi/dekripsi isi pesan.
 // Private key TIDAK PERNAH dikirim ke server dalam bentuk terbuka — hanya disimpan
 // di perangkat (localStorage). Server (Supabase) hanya pernah melihat ciphertext.
-//
-// SATU KUNCI PER USER (tidak versioned):
-// - Tiap user cuma punya SATU public key aktif di profiles.public_key, ditimpa
-//   langsung kalau bikin keypair baru (device baru / localStorage kehapus).
-// - Tidak ada histori kunci lama, tidak ada penomoran versi per pesan. Lebih
-//   sederhana dan lebih sedikit celah bug dibanding skema versioned sebelumnya.
-// - Konsekuensi: begitu SIAPAPUN (saya atau lawan bicara) ganti device / bikin
-//   kunci baru, SEMUA histori chat dengan orang itu jadi tidak terbaca lagi buat
-//   KEDUA belah pihak (bukan cuma yang gantinya) -- disengaja, bukan bug.
+// CATATAN: versi ini TIDAK punya fitur backup/restore kunci (mirip default WhatsApp).
+// Kalau device baru/localStorage kehapus, keypair baru dibuat otomatis dan riwayat
+// chat lama TIDAK BISA dibuka lagi di device itu. Ini trade-off yang disengaja.
 const E2E = (() => {
   const LS_PREFIX = 'e2e_priv_';
-  const sharedKeyCache = new Map(); // peerId -> { key, peerPublicKeyB64 }
+  const sharedKeyCache = new Map(); // peerId -> CryptoKey (AES-GCM), cache per sesi halaman
 
   function b64FromBuf(buf) {
     const bytes = new Uint8Array(buf);
@@ -34,12 +28,9 @@ const E2E = (() => {
   }
 
   // Import private key JWK yang sudah tersimpan di localStorage device ini.
-  // Mendukung juga format lama peninggalan skema versioned ({version, jwk}),
-  // supaya user yang sudah pernah pakai app ini tidak kehilangan kunci lokalnya.
   async function loadLocalKeypair(userId) {
     const saved = localStorage.getItem(LS_PREFIX + userId);
-    const parsed = JSON.parse(saved);
-    const jwk = (parsed && parsed.jwk && typeof parsed.version === 'number') ? parsed.jwk : parsed;
+    const jwk = JSON.parse(saved);
     const privateKey = await crypto.subtle.importKey(
       'jwk', jwk, { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey', 'deriveBits']
     );
@@ -50,27 +41,30 @@ const E2E = (() => {
   }
 
   // Generate keypair ECDH baru, simpan private key ke localStorage device ini,
-  // lalu timpa langsung public key di server dengan yang baru (tidak diarsipkan).
+  // dan publikasikan public key ke profiles.public_key (server).
   async function generateAndPublishKeypair(userId) {
     const pair = await crypto.subtle.generateKey(
       { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey', 'deriveBits']
     );
     const jwk = await crypto.subtle.exportKey('jwk', pair.privateKey);
+    localStorage.setItem(LS_PREFIX + userId, JSON.stringify(jwk));
     const raw = await crypto.subtle.exportKey('raw', pair.publicKey);
     const publicKeyB64 = b64FromBuf(raw);
-
     try {
       await supabaseClient.from('profiles').update({ public_key: publicKeyB64 }).eq('id', userId);
     } catch (e) {
       console.error('Gagal upload public key:', e);
     }
-
-    localStorage.setItem(LS_PREFIX + userId, JSON.stringify(jwk));
     return { privateKey: pair.privateKey, publicKeyB64 };
   }
 
   // Pastikan user punya keypair ECDH siap dipakai di device ini.
   // Return: { status:'ready'|'new', privateKey, publicKeyB64 }
+  //  'ready' -> sudah ada kunci lokal, langsung dipakai.
+  //  'new'   -> device baru (atau localStorage kosong); keypair BARU otomatis
+  //             dibuat & dipublikasikan. Riwayat chat lama TIDAK bisa dibuka lagi
+  //             di device ini (tidak ada mekanisme restore), sama seperti WhatsApp
+  //             kalau install ulang tanpa chat backup.
   async function ensureKeypair(userId) {
     if (hasLocalKey(userId)) {
       const kp = await loadLocalKeypair(userId);
@@ -80,23 +74,19 @@ const E2E = (() => {
     return { status: 'new', ...kp };
   }
 
-  // Turunkan AES-GCM key bersama dari private key kita + public key lawan
-  // bicara SEKARANG (selalu kunci yang lagi aktif, tidak ada pilihan versi).
+  // Turunkan AES-GCM key bersama dari private key kita + public key lawan bicara.
   async function getSharedKey(privateKey, peerId, peerPublicKeyB64) {
     if (!privateKey || !peerPublicKeyB64) return null;
-    if (sharedKeyCache.has(peerId)) {
-      const cached = sharedKeyCache.get(peerId);
-      if (cached.peerPublicKeyB64 === peerPublicKeyB64) return cached.key;
-    }
+    if (sharedKeyCache.has(peerId)) return sharedKeyCache.get(peerId);
     const peerPubKey = await crypto.subtle.importKey(
       'raw', bufFromB64(peerPublicKeyB64), { name: 'ECDH', namedCurve: 'P-256' }, false, []
     );
-    const key = await crypto.subtle.deriveKey(
+    const sharedKey = await crypto.subtle.deriveKey(
       { name: 'ECDH', public: peerPubKey }, privateKey,
       { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
     );
-    sharedKeyCache.set(peerId, { key, peerPublicKeyB64 });
-    return key;
+    sharedKeyCache.set(peerId, sharedKey);
+    return sharedKey;
   }
 
   function clearSharedKeyCache() {
@@ -126,16 +116,14 @@ const E2E = (() => {
       const ptBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, sharedKey, ctBuf);
       return new TextDecoder().decode(ptBuf);
     } catch (e) {
+      // Format e2e valid tapi gagal didekripsi -> kunci di device ini tidak cocok
+      // (mis. pesan dikirim/diterima dari pairing kunci yang berbeda).
       return '🔒 Pesan tidak bisa dibuka di perangkat ini';
     }
   }
 
-  // Catatan: fitur cadangkan/pulihkan kunci lewat kode sandi sudah dihapus
-  // sebelumnya. Private key HANYA pernah ada di localStorage device tempat ia
-  // dibuat -- server tidak pernah punya cara merekonstruksinya.
-
   return {
-    ensureKeypair, getSharedKey,
-    encryptMessage, decryptMessage, clearSharedKeyCache, hasLocalKey
+    ensureKeypair, getSharedKey, encryptMessage, decryptMessage, clearSharedKeyCache,
+    hasLocalKey
   };
 })();

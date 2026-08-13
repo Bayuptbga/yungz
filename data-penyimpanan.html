@@ -52,50 +52,10 @@
   .empty-note svg{ width:36px; height:36px; stroke:var(--muted); margin-bottom:12px; }
   .empty-note .en-title{ font-size:14.5px; font-weight:600; color:var(--ink); margin-bottom:6px; }
   .empty-note .en-sub{ font-size:12.5px; line-height:1.6; }
-
-  /* ---- Kartu status cadangan ---- */
-  .bk-row{ display:flex; align-items:center; gap:14px; }
-  .bk-icon{ width:44px; height:44px; border-radius:12px; background:rgba(83,189,235,0.14); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .bk-icon svg{ width:22px; height:22px; stroke:var(--accent); }
-  .bk-icon.on{ background:rgba(0,168,132,0.16); }
-  .bk-icon.on svg{ stroke:#00a884; }
-  .bk-main{ flex:1; min-width:0; }
-  .bk-title{ font-size:14.5px; font-weight:700; color:var(--ink); margin-bottom:3px; }
-  .bk-sub{ font-size:12px; color:var(--muted); line-height:1.5; }
-  .bk-btn{ width:100%; margin-top:16px; padding:12px 0; background:linear-gradient(135deg,#53bdeb,#1f8fc7); color:#062733; border:none; border-radius:11px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; }
-  .bk-btn:active{ opacity:0.9; }
-  .bk-btn-outline{ width:100%; margin-top:10px; padding:12px 0; background:transparent; color:var(--muted); border:1.5px solid var(--border); border-radius:11px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; }
-  .bk-btn-outline.danger{ color:#f15c6d; border-color:rgba(241,92,109,0.4); }
-  .bk-note{ font-size:11.5px; color:var(--muted); line-height:1.6; margin-top:12px; }
-
-  /* ---- Modal generik (set / pulihkan / hapus kode sandi cadangan) ---- */
-  .bkmodal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center; z-index:300; opacity:0; pointer-events:none; transition:opacity .2s ease; padding:24px; }
-  .bkmodal-overlay.open{ opacity:1; pointer-events:auto; }
-  .bkmodal{ background:var(--card-bg); border:1px solid var(--border); border-radius:16px; width:100%; max-width:340px; padding:24px 20px 20px; box-shadow:0 20px 50px rgba(0,0,0,0.5); }
-  .bkmodal .bm-icon{ width:46px; height:46px; border-radius:50%; background:rgba(83,189,235,0.14); display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
-  .bkmodal .bm-icon svg{ width:22px; height:22px; stroke:var(--accent); }
-  .bkmodal h3{ font-size:16px; margin:0 0 6px; color:var(--ink); }
-  .bkmodal p{ font-size:12.5px; color:var(--muted); line-height:1.5; margin:0 0 16px; }
-  .bkmodal .field{ margin-bottom:12px; }
-  .bkmodal .input-wrap{ display:flex; align-items:center; gap:2px; border:1.5px solid var(--border); border-radius:11px; background:var(--bg); padding:0 12px; }
-  .bkmodal .input-wrap:focus-within{ border-color:var(--accent); }
-  .bkmodal .input-wrap input{ border:none; outline:none; background:transparent; padding:12px 8px; font-size:14.5px; width:100%; color:var(--ink); font-family:inherit; }
-  .bkmodal .toggle-pw{ font-size:10.5px; color:var(--accent); font-weight:700; cursor:pointer; letter-spacing:0.5px; flex-shrink:0; }
-  .bkmodal .hint{ font-size:11.5px; min-height:14px; margin-top:2px; color:var(--muted); }
-  .bkmodal .hint.err{ color:#f15c6d; }
-  .bkmodal .btn{ width:100%; padding:13px 0; background:linear-gradient(135deg,#53bdeb,#1f8fc7); color:#062733; border:none; border-radius:11px; font-size:14.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; font-family:inherit; margin-top:6px; }
-  .bkmodal .btn.danger{ background:linear-gradient(135deg,#f15c6d,#c8394a); color:#fff; }
-  .bkmodal .btn .spinner{ width:14px; height:14px; border-radius:50%; border:2px solid rgba(6,39,51,0.3); border-top-color:#062733; animation:bkspin .7s linear infinite; display:none; }
-  .bkmodal .btn.danger .spinner{ border-color:rgba(255,255,255,0.35); border-top-color:#fff; }
-  .bkmodal .btn.loading .spinner{ display:inline-block; }
-  .bkmodal .btn:disabled{ cursor:default; opacity:0.85; }
-  .bkmodal .cancel-link{ display:block; text-align:center; font-size:12px; color:var(--muted); margin-top:14px; cursor:pointer; text-decoration:underline; }
-  @keyframes bkspin{ to{ transform:rotate(360deg); } }
 </style>
 <script src="device-gate.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
-<script src="e2e.js"></script>
 </head>
 <body>
 <div class="phone">
@@ -106,173 +66,20 @@
   </div>
   <div class="content">
     <div class="section-title">Cadangan Chat</div>
-    <div class="card" id="bkCard">
-      <div class="empty-note" id="bkLoading">
+    <div class="card">
+      <div class="empty-note">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        <div class="en-title">Memuat status cadangan…</div>
+        <div class="en-title">Belum ada cadangan</div>
+        <div class="en-sub">Fitur pencadangan &amp; pemulihan kunci enkripsi akan segera hadir di sini.</div>
       </div>
-
-      <div id="bkStateOff" style="display:none">
-        <div class="bk-row">
-          <div class="bk-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
-          <div class="bk-main">
-            <div class="bk-title">Cadangan belum aktif</div>
-            <div class="bk-sub">Kalau kamu ganti HP tanpa cadangan, chat lama di HP baru tidak akan terbaca lagi (tapi lawan bicara tetap aman).</div>
-          </div>
-        </div>
-        <button class="bk-btn" id="bkSetupBtn">Cadangkan Sekarang</button>
-        <div class="bk-note">Cadangan dilindungi kode sandi yang cuma kamu tahu. Kode sandi ini <b>tidak pernah</b> dikirim ke server — kalau lupa, cadangan tidak bisa dipulihkan siapa pun.</div>
-      </div>
-
-      <div id="bkStateOn" style="display:none">
-        <div class="bk-row">
-          <div class="bk-icon on"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
-          <div class="bk-main">
-            <div class="bk-title">Cadangan aktif</div>
-            <div class="bk-sub" id="bkUpdatedAt">Kunci enkripsi kamu sudah dicadangkan.</div>
-          </div>
-        </div>
-        <button class="bk-btn-outline" id="bkChangeBtn">Cadangkan Ulang / Ubah Kode Sandi</button>
-        <button class="bk-btn-outline danger" id="bkRemoveBtn">Nonaktifkan Cadangan</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: aktifkan / ubah kode sandi cadangan -->
-  <div class="bkmodal-overlay" id="bkSetupOverlay">
-    <div class="bkmodal">
-      <div class="bm-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
-      <h3 id="bkSetupTitle">Buat Kode Sandi Cadangan</h3>
-      <p>Kode sandi ini dipakai buat mengunci cadangan kunci enkripsi kamu. Pakai kode sandi yang <b>sama</b> kalau cuma mau menyegarkan cadangan, atau kode <b>baru</b> kalau mau ganti kode sandi. Ingat baik-baik — tidak bisa direset.</p>
-      <div class="field">
-        <div class="input-wrap"><input type="password" id="bkPass1" placeholder="Kode sandi (min. 4 karakter)" autocomplete="new-password"><span class="toggle-pw" id="bkToggle1">LIHAT</span></div>
-      </div>
-      <div class="field">
-        <div class="input-wrap"><input type="password" id="bkPass2" placeholder="Ulangi kode sandi" autocomplete="new-password"><span class="toggle-pw" id="bkToggle2">LIHAT</span></div>
-        <div class="hint" id="bkSetupHint"></div>
-      </div>
-      <button class="btn" id="bkSetupSubmit"><span class="spinner"></span><span class="lbl">Simpan Cadangan</span></button>
-      <span class="cancel-link" id="bkSetupCancel">Batal</span>
-    </div>
-  </div>
-
-  <!-- Modal: nonaktifkan cadangan -->
-  <div class="bkmodal-overlay" id="bkRemoveOverlay">
-    <div class="bkmodal">
-      <div class="bm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#f15c6d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div>
-      <h3>Nonaktifkan Cadangan?</h3>
-      <p>Cadangan kunci di server akan dihapus. Kalau nanti ganti HP lagi tanpa cadangan, chat lama tidak akan terbaca di HP baru.</p>
-      <button class="btn danger" id="bkRemoveSubmit"><span class="spinner"></span><span class="lbl">Ya, Nonaktifkan</span></button>
-      <span class="cancel-link" id="bkRemoveCancel">Batal</span>
     </div>
   </div>
 </div>
 <script>
-  let currentUserId=null;
-
-  function fmtDate(iso){
-    if(!iso) return '';
-    const d=new Date(iso);
-    return 'Terakhir dicadangkan '+d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})+' pukul '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
-  }
-
-  async function refreshBackupCard(){
-    document.getElementById('bkLoading').style.display='flex';
-    document.getElementById('bkStateOff').style.display='none';
-    document.getElementById('bkStateOn').style.display='none';
-    const {data:prof}=await supabaseClient.from('profiles').select('key_backup, key_backup_updated_at').eq('id',currentUserId).maybeSingle();
-    document.getElementById('bkLoading').style.display='none';
-    if(prof&&prof.key_backup){
-      document.getElementById('bkUpdatedAt').textContent=fmtDate(prof.key_backup_updated_at)||'Kunci enkripsi kamu sudah dicadangkan.';
-      document.getElementById('bkStateOn').style.display='block';
-    }else{
-      document.getElementById('bkStateOff').style.display='block';
-    }
-  }
-
-  function togglePw(inputId,toggleId){
-    const inp=document.getElementById(inputId),tg=document.getElementById(toggleId);
-    tg.addEventListener('click',()=>{
-      const show=inp.type==='password';
-      inp.type=show?'text':'password';
-      tg.textContent=show?'SEMBUNYI':'LIHAT';
-    });
-  }
-  togglePw('bkPass1','bkToggle1');
-  togglePw('bkPass2','bkToggle2');
-
-  function openModal(id){document.getElementById(id).classList.add('open');}
-  function closeModal(id){document.getElementById(id).classList.remove('open');}
-  function setLoading(btnId,loading){
-    const btn=document.getElementById(btnId);
-    btn.disabled=loading;btn.classList.toggle('loading',loading);
-  }
-
-  document.getElementById('bkSetupBtn').addEventListener('click',()=>{
-    document.getElementById('bkSetupTitle').textContent='Buat Kode Sandi Cadangan';
-    document.getElementById('bkPass1').value='';document.getElementById('bkPass2').value='';
-    document.getElementById('bkSetupHint').textContent='';document.getElementById('bkSetupHint').className='hint';
-    openModal('bkSetupOverlay');
-  });
-  document.getElementById('bkChangeBtn').addEventListener('click',()=>{
-    document.getElementById('bkSetupTitle').textContent='Cadangkan Ulang / Ubah Kode Sandi';
-    document.getElementById('bkPass1').value='';document.getElementById('bkPass2').value='';
-    document.getElementById('bkSetupHint').textContent='';document.getElementById('bkSetupHint').className='hint';
-    openModal('bkSetupOverlay');
-  });
-  document.getElementById('bkSetupCancel').addEventListener('click',()=>closeModal('bkSetupOverlay'));
-  document.getElementById('bkSetupOverlay').addEventListener('click',(e)=>{if(e.target.id==='bkSetupOverlay')closeModal('bkSetupOverlay');});
-
-  document.getElementById('bkSetupSubmit').addEventListener('click',async()=>{
-    const p1=document.getElementById('bkPass1').value,p2=document.getElementById('bkPass2').value;
-    const hint=document.getElementById('bkSetupHint');
-    if(p1.length<4){hint.textContent='Kode sandi minimal 4 karakter.';hint.className='hint err';return;}
-    if(p1!==p2){hint.textContent='Kode sandi tidak sama.';hint.className='hint err';return;}
-    hint.textContent='';hint.className='hint';
-    setLoading('bkSetupSubmit',true);
-    try{
-      await E2E.backupPrivateKeyWithPassphrase(currentUserId,p1);
-      setLoading('bkSetupSubmit',false);
-      closeModal('bkSetupOverlay');
-      await refreshBackupCard();
-    }catch(e){
-      console.error('Gagal membuat cadangan:',e);
-      setLoading('bkSetupSubmit',false);
-      hint.textContent='Gagal menyimpan cadangan. Cek koneksi lalu coba lagi.';hint.className='hint err';
-    }
-  });
-
-  document.getElementById('bkRemoveBtn').addEventListener('click',()=>openModal('bkRemoveOverlay'));
-  document.getElementById('bkRemoveCancel').addEventListener('click',()=>closeModal('bkRemoveOverlay'));
-  document.getElementById('bkRemoveOverlay').addEventListener('click',(e)=>{if(e.target.id==='bkRemoveOverlay')closeModal('bkRemoveOverlay');});
-  document.getElementById('bkRemoveSubmit').addEventListener('click',async()=>{
-    setLoading('bkRemoveSubmit',true);
-    try{
-      await E2E.removeServerBackup(currentUserId);
-      setLoading('bkRemoveSubmit',false);
-      closeModal('bkRemoveOverlay');
-      await refreshBackupCard();
-    }catch(e){
-      console.error('Gagal menonaktifkan cadangan:',e);
-      setLoading('bkRemoveSubmit',false);
-      alert('Gagal menonaktifkan cadangan. Coba lagi.');
-    }
-  });
-
   async function boot(){
     const {data:{session}} = await supabaseClient.auth.getSession();
     if(!session){ window.location.replace('index.html'); return; }
-    currentUserId=session.user.id;
-    // PENTING: kalau device ini BELUM punya kunci lokal, jangan langsung
-    // rotasi -- lempar ke dashboard.html dulu supaya user ditawari restore
-    // dari cadangan (kalau ada) sebelum kunci baru beneran dibuat.
-    if(!E2E.hasLocalKey(currentUserId)){
-      window.location.replace('dashboard.html?keySetupNext=data-penyimpanan.html');
-      return;
-    }
-    try{ await E2E.ensureKeypair(currentUserId); }catch(e){ console.error('Gagal cek kunci enkripsi:',e); }
     document.getElementById('authGate').style.display = 'none';
-    refreshBackupCard();
   }
   boot();
 </script>
