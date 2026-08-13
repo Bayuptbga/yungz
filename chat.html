@@ -260,6 +260,24 @@
     }
   }
 
+  // ---- Perbaikan race condition kunci ----
+  // peerProfile/peerPublicKeyB64/peerKeyVersion sebelumnya cuma diambil SEKALI
+  // saat init(). Kalau lawan bicara rotasi kunci (ganti device/install ulang)
+  // SEMENTARA chat ini masih terbuka, pesan yang saya kirim akan terenkripsi
+  // pakai public key LAMA dia yang sudah basi di variabel JS -- akibatnya dia
+  // terima pesan itu sebagai "kunci tidak tersedia" walau pesannya baru.
+  // Perbaikan: ambil ulang profil lawan bicara TEPAT sebelum tiap kali kirim,
+  // supaya kunci yang dipakai enkripsi selalu yang benar-benar aktif saat itu.
+  async function refreshPeerKey(){
+    const {data:prof,error}=await supabaseClient.from('profiles').select('username, public_key, key_version, public_key_history').eq('id',peerId).maybeSingle();
+    if(error||!prof) return;
+    peerProfile=prof;
+    peerPublicKeyB64=prof.public_key||null;
+    peerKeyVersion=prof.key_version||1;
+    sharedKey=(myPrivateKey&&peerPublicKeyB64)?await E2E.getSharedKeyForVersions(myPrivateKey,myKeyVersion,peerId,peerKeyVersion,peerPublicKeyB64):null;
+    updateInputAvailability();
+  }
+
   // ---- Input dikunci selama belum ada sharedKey (lawan bicara belum pernah
   // buka aplikasi buat publish public key-nya). ----
   function updateInputAvailability(){
@@ -368,6 +386,9 @@
     const text=normalizeText(msgInput.value);if(!text||!sharedKey)return;msgInput.value='';autoResize();
     if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';const tempId='temp-'+Date.now();
     appendBubble({id:tempId,sender_id:currentUserId,content:text,created_at:new Date().toISOString()},true);scrollToBottom();
+    await refreshPeerKey();
+    const tempRow0=msgArea.querySelector(`[data-id="${tempId}"]`);
+    if(!sharedKey){if(tempRow0){tempRow0.classList.add('send-failed');tempRow0.classList.remove('sending');}msgInput.value=text;return;}
     const encrypted=await E2E.encryptMessage(sharedKey,text);
     const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted,sender_key_version:myKeyVersion,receiver_key_version:peerKeyVersion}).select().single();
     msgInput.focus();const tempRow=msgArea.querySelector(`[data-id="${tempId}"]`);
@@ -407,7 +428,9 @@
     if(!error)window.location.href='dashboard.html';
   });
   document.getElementById('menuPing').addEventListener('click',async(e)=>{
-    e.stopPropagation();chatMenu.classList.remove('open');if(!sharedKey)return;if(navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
+    e.stopPropagation();chatMenu.classList.remove('open');if(!sharedKey)return;
+    await refreshPeerKey();if(!sharedKey)return;
+    if(navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
     const encrypted=await E2E.encryptMessage(sharedKey,'🔔 PING!!!');
     const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted,sender_key_version:myKeyVersion,receiver_key_version:peerKeyVersion}).select().single();
     if(!error){data.content='🔔 PING!!!';if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(data);scrollToBottom();}
