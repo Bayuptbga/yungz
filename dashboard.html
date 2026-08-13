@@ -124,26 +124,6 @@
   .pin-modal .pm-copy{ font-size:12.5px; color:#53bdeb; font-weight:600; background:none; border:none; cursor:pointer; margin-bottom:14px; padding:6px 10px; }
   .pin-modal .pm-close{ width:100%; padding:11px 0; background:var(--bbm-blue); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
 
-  /* ---- Modal pemulihan kunci enkripsi (device baru + ada cadangan di server) ---- */
-  .rkmodal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:250; opacity:0; pointer-events:none; transition:opacity .2s ease; padding:24px; }
-  .rkmodal-overlay.open{ opacity:1; pointer-events:auto; }
-  .rkmodal{ background:var(--card-bg); border:1px solid var(--border); border-radius:16px; width:100%; max-width:340px; padding:24px 20px 20px; box-shadow:0 20px 50px rgba(0,0,0,0.5); }
-  .rkmodal .rm-icon{ width:46px; height:46px; border-radius:50%; background:rgba(83,189,235,0.14); display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
-  .rkmodal .rm-icon svg{ width:22px; height:22px; stroke:#53bdeb; }
-  .rkmodal h3{ font-size:16px; margin:0 0 6px; color:var(--ink); }
-  .rkmodal p{ font-size:12.5px; color:var(--muted); line-height:1.5; margin:0 0 16px; }
-  .rkmodal .input-wrap{ display:flex; align-items:center; gap:2px; border:1.5px solid var(--border); border-radius:11px; background:var(--bg); padding:0 12px; margin-bottom:6px; }
-  .rkmodal .input-wrap:focus-within{ border-color:#53bdeb; }
-  .rkmodal .input-wrap input{ border:none; outline:none; background:transparent; padding:12px 8px; font-size:14.5px; width:100%; color:var(--ink); font-family:inherit; }
-  .rkmodal .toggle-pw{ font-size:10.5px; color:#53bdeb; font-weight:700; cursor:pointer; letter-spacing:0.5px; flex-shrink:0; }
-  .rkmodal .hint{ font-size:11.5px; min-height:14px; margin:2px 0 10px; color:var(--muted); }
-  .rkmodal .hint.err{ color:#f15c6d; }
-  .rkmodal .btn{ width:100%; padding:13px 0; background:linear-gradient(135deg,#53bdeb,#1f8fc7); color:#062733; border:none; border-radius:11px; font-size:14.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; font-family:inherit; }
-  .rkmodal .btn .spinner{ width:14px; height:14px; border-radius:50%; border:2px solid rgba(6,39,51,0.3); border-top-color:#062733; animation:rkspin .7s linear infinite; display:none; }
-  .rkmodal .btn.loading .spinner{ display:inline-block; }
-  .rkmodal .btn:disabled{ cursor:default; opacity:0.85; }
-  .rkmodal .skip-link{ display:block; text-align:center; font-size:12px; color:var(--muted); margin-top:14px; cursor:pointer; text-decoration:underline; }
-  @keyframes rkspin{ to{ transform:rotate(360deg); } }
   .tab-panel{ display:none; flex:1; min-height:0; flex-direction:column; overflow-y:auto; padding-bottom:calc(70px + env(safe-area-inset-bottom)); }
   .tab-panel.active{display:flex; animation:panelFadeIn .18s ease both;}
   #panelChats.active{display:flex;flex-direction:column;flex:1;min-height:0;position:relative;}
@@ -255,19 +235,6 @@
 <div class="phone">
   <div id="authGate"><div class="spinner"></div></div>
 
-  <!-- Modal pemulihan kunci enkripsi: muncul cuma kalau device ini BELUM punya
-       kunci lokal DAN akun ini punya cadangan aktif di server. -->
-  <div class="rkmodal-overlay" id="rkOverlay">
-    <div class="rkmodal">
-      <div class="rm-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
-      <h3>Pulihkan Chat di Perangkat Ini</h3>
-      <p>Kami menemukan cadangan kunci enkripsi untuk akun ini. Masukkan kode sandi cadangan kamu supaya semua chat lama tetap bisa dibaca di perangkat ini.</p>
-      <div class="input-wrap"><input type="password" id="rkPass" placeholder="Kode sandi cadangan" autocomplete="current-password"><span class="toggle-pw" id="rkToggle">LIHAT</span></div>
-      <div class="hint" id="rkHint"></div>
-      <button class="btn" id="rkSubmit"><span class="spinner"></span><span class="lbl">Pulihkan</span></button>
-      <span class="skip-link" id="rkSkip">Lewati &amp; buat kunci baru (chat lama tidak akan terbaca di sini)</span>
-    </div>
-  </div>
   <div class="appbar">
     <div class="left"><div class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></div><div><h1>Private Chat</h1></div></div>
     <div class="right"><div class="icon-btn" id="searchOpenBtn" title="Cari"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div></div>
@@ -282,7 +249,6 @@
     <div class="drawer-body">
       <div class="drawer-item" id="drawerProfil"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></div>
       <div class="drawer-item" id="drawerSetelan"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>Setelan</span></div>
-      <div class="drawer-item" id="drawerDataPenyimpanan"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></svg><span>Data &amp; Penyimpanan</span></div>
       <div class="drawer-item" id="drawerPrivasiKeamanan"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Privasi &amp; Keamanan</span></div>
       <div class="drawer-item" id="drawerInstallApp" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Instal Aplikasi</span></div>
     </div>
@@ -577,76 +543,17 @@
     await supabaseClient.from('contacts').update({status:st,seen_by_requester:false}).eq('id',id);
     item.classList.add('removing');setTimeout(()=>{item.remove();refreshNotifBadge();},300);
   };
-  function rkTogglePw(){
-    const inp=document.getElementById('rkPass'),tg=document.getElementById('rkToggle');
-    const show=inp.type==='password';inp.type=show?'text':'password';tg.textContent=show?'SEMBUNYI':'LIHAT';
-  }
-  document.getElementById('rkToggle').addEventListener('click',rkTogglePw);
-
-  // Tampilkan modal pemulihan & tunggu pilihan user: 'restored' | 'skipped'.
-  function promptRestoreOrSkip(userId){
-    return new Promise((resolve)=>{
-      const overlay=document.getElementById('rkOverlay'),btn=document.getElementById('rkSubmit'),
-            skip=document.getElementById('rkSkip'),passInput=document.getElementById('rkPass'),hint=document.getElementById('rkHint');
-      passInput.value='';hint.textContent='';hint.className='hint';
-      overlay.classList.add('open');
-      async function onSubmit(){
-        const pass=passInput.value;
-        if(!pass){hint.textContent='Masukkan kode sandi cadangan.';hint.className='hint err';return;}
-        btn.disabled=true;btn.classList.add('loading');
-        try{
-          const kp=await E2E.restorePrivateKeyWithPassphrase(userId,pass);
-          btn.disabled=false;btn.classList.remove('loading');
-          overlay.classList.remove('open');cleanup();
-          resolve({status:'restored',kp});
-        }catch(e){
-          btn.disabled=false;btn.classList.remove('loading');
-          hint.textContent='Kode sandi salah, coba lagi.';hint.className='hint err';
-        }
-      }
-      function onSkip(){overlay.classList.remove('open');cleanup();resolve({status:'skipped'});}
-      function cleanup(){btn.removeEventListener('click',onSubmit);skip.removeEventListener('click',onSkip);}
-      btn.addEventListener('click',onSubmit);skip.addEventListener('click',onSkip);
-    });
-  }
-
   async function boot(){
     const {data:{session}}=await supabaseClient.auth.getSession();
     if(!session){window.location.replace('index.html');return;}
     try{
-      if(!E2E.hasLocalKey(session.user.id)){
-        // Device baru (belum punya kunci lokal). Kalau akun ini punya cadangan
-        // di server, tawarkan pemulihan dulu sebelum bikin kunci baru -- kalau
-        // berhasil, chat lama tetap kebaca normal, tidak ada yang hilang.
-        const hasBackup=await E2E.hasServerBackup(session.user.id);
-        if(hasBackup){
-          document.getElementById('authGate').style.display='none';
-          const result=await promptRestoreOrSkip(session.user.id);
-          document.getElementById('authGate').style.display='flex';
-          if(result.status==='restored'){
-            myPrivateKey=result.kp.privateKey;myKeyVersion=result.kp.version||1;
-          }else{
-            const kp=await E2E.ensureKeypair(session.user.id);
-            myPrivateKey=kp.privateKey;myKeyVersion=kp.version||1;
-          }
-        }else{
-          const kp=await E2E.ensureKeypair(session.user.id);
-          myPrivateKey=kp.privateKey;myKeyVersion=kp.version||1;
-        }
-      }else{
-        const kp=await E2E.ensureKeypair(session.user.id);
-        myPrivateKey=kp.privateKey;myKeyVersion=kp.version||1;
-      }
+      // Tidak ada lagi pemulihan lewat cadangan server: device baru selalu
+      // dapat keypair baru (key_version naik). Ini yang memperketat model
+      // end-to-end -- private key tidak pernah punya jalan balik ke server.
+      const kp=await E2E.ensureKeypair(session.user.id);
+      myPrivateKey=kp.privateKey;myKeyVersion=kp.version||1;
     }catch(e){ console.error('Gagal cek kunci enkripsi:',e); }
     document.getElementById('authGate').style.display='none';
-    // Kalau kita nyasar ke sini gara-gara dilempar dari halaman lain (chat.html /
-    // data-penyimpanan.html) yang belum sempat setup kunci, balik lagi ke sana
-    // sekarang setelah kunci beres (baru dibuat ATAU dipulihkan dari cadangan).
-    const nextPage=new URLSearchParams(location.search).get('keySetupNext');
-    if(nextPage && /^[a-zA-Z0-9_-]+\.html(\?.*)?$/.test(nextPage)){
-      window.location.replace(nextPage);
-      return;
-    }
     refreshNotifBadge();
   }
   boot();
@@ -743,7 +650,6 @@
   drwOverlay.addEventListener('click',()=>{drawer.classList.remove('open');drwOverlay.classList.remove('open');});
   document.getElementById('drawerProfil').addEventListener('click',()=>window.location.href='profil.html');
   document.getElementById('drawerSetelan').addEventListener('click',()=>window.location.href='setelan.html');
-  document.getElementById('drawerDataPenyimpanan').addEventListener('click',()=>window.location.href='data-penyimpanan.html');
   document.getElementById('drawerPrivasiKeamanan').addEventListener('click',()=>window.location.href='privasi-keamanan.html');
   document.getElementById('fabNewChat').addEventListener('click',()=>switchTab('kontak'));
   function openAddModal(){
