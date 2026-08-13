@@ -295,11 +295,17 @@
       if(sessErr) throw sessErr;
       if(!session){window.location.replace('index.html');return;}
       currentUserId=session.user.id;
-      // Device baru otomatis dapat keypair baru (versi kunci naik). Kunci lama
-      // saya sendiri hilang (private key lama tidak ada backup) -> pesan lama
-      // saya sendiri tidak bisa dibuka lagi di device ini. TAPI lawan bicara
-      // yang tidak ganti device tetap bisa buka semua histori seperti biasa,
-      // karena kunci publik lama saya diarsipkan di server (public_key_history).
+      // PENTING: kalau device ini BELUM punya kunci lokal, JANGAN langsung
+      // panggil ensureKeypair() di sini -- itu bikin kunci baru dirotasi
+      // otomatis TANPA sempat menawarkan pemulihan dari cadangan (kalau ada).
+      // Prompt pemulihan cuma ada di dashboard.html -> boot(). Jadi lempar ke
+      // situ dulu, biar user ditawari restore (kalau ada cadangan) sebelum
+      // rotasi kunci beneran terjadi, lalu balik lagi ke chat ini.
+      if(!E2E.hasLocalKey(currentUserId)){
+        const back=encodeURIComponent(location.pathname.split('/').pop()+location.search);
+        window.location.replace(`dashboard.html?keySetupNext=${back}`);
+        return;
+      }
       let kp=await E2E.ensureKeypair(currentUserId);
       myPrivateKey=kp.privateKey;myKeyVersion=kp.version||1;
       document.getElementById('authGate').style.display='none';
