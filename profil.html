@@ -80,7 +80,7 @@
   <div id="authGate"><div class="spinner"></div></div>
   <div class="appbar">
     <div class="back" onclick="location.href='dashboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
-    <h1>Profil</h1>
+    <h1 id="pageTitle">Profil</h1>
   </div>
   <div class="content">
     <div class="hero">
@@ -89,11 +89,12 @@
       <div class="h-joined" id="hJoined">Bergabung —</div>
     </div>
 
-    <div class="stats-row">
+    <div class="stats-row" id="statsRow">
       <div class="stat-card"><div class="st-num" id="stKontak">—</div><div class="st-label">Kontak</div></div>
       <div class="stat-card"><div class="st-num" id="stStatus">—</div><div class="st-label">Status Aktif</div></div>
     </div>
 
+    <div id="ownOnlySection">
     <div class="section-title">Info Akun</div>
     <div class="card">
       <div class="info-row">
@@ -105,6 +106,12 @@
     <button class="btn" onclick="location.href='setelan.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
       <span>Buka Setelan</span>
+    </button>
+    </div>
+
+    <button class="btn" id="msgBtn" style="display:none;background:linear-gradient(135deg,var(--accent) 0%,#1f8fc7 100%);color:#062733;border:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg>
+      <span>Kirim Pesan</span>
     </button>
   </div>
 </div>
@@ -121,24 +128,48 @@
 
   let currentPin=null;
 
+  function getParam(name){return new URLSearchParams(window.location.search).get(name);}
+  const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   async function boot(){
     const {data:{session}} = await supabaseClient.auth.getSession();
     if(!session){ window.location.replace('index.html'); return; }
-    const uid=session.user.id;
-    const {data:prof} = await supabaseClient.from('profiles').select('username, pin').eq('id', uid).maybeSingle();
+    const myUid=session.user.id;
+    const rawParam=getParam('uid');
+    const viewUid=(rawParam && UUID_RE.test(rawParam) && rawParam!==myUid) ? rawParam : myUid;
+    const isOwn = viewUid===myUid;
+
+    if(!isOwn){
+      document.getElementById('pageTitle').textContent='Profil Kontak';
+      document.getElementById('ownOnlySection').style.display='none';
+      document.getElementById('statsRow').style.display='none';
+      const msgBtn=document.getElementById('msgBtn');
+      msgBtn.style.display='flex';
+      const {data:prof} = await supabaseClient.from('profiles').select('username').eq('id', viewUid).maybeSingle();
+      if(!prof){ document.getElementById('hUname').textContent='Pengguna tidak ditemukan'; document.getElementById('authGate').style.display='none'; return; }
+      document.getElementById('hUname').textContent = prof.username;
+      document.getElementById('hAvatar').textContent = initials(prof.username);
+      document.getElementById('hAvatar').style.background = colorFor(viewUid);
+      document.getElementById('hJoined').style.display='none';
+      msgBtn.addEventListener('click',()=>{window.location.href=`chat.html?uid=${viewUid}&uname=${encodeURIComponent(prof.username)}`;});
+      document.getElementById('authGate').style.display = 'none';
+      return;
+    }
+
+    const {data:prof} = await supabaseClient.from('profiles').select('username, pin').eq('id', myUid).maybeSingle();
     if(prof){
       currentPin = prof.pin;
       document.getElementById('hUname').textContent = prof.username;
       document.getElementById('iPin').textContent = prof.pin;
       document.getElementById('hAvatar').textContent = initials(prof.username);
-      document.getElementById('hAvatar').style.background = colorFor(uid);
+      document.getElementById('hAvatar').style.background = colorFor(myUid);
     }
     document.getElementById('hJoined').textContent = formatJoined(session.user.created_at);
 
-    const {data:cRows} = await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${uid},addressee_id.eq.${uid}`);
+    const {data:cRows} = await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${myUid},addressee_id.eq.${myUid}`);
     document.getElementById('stKontak').textContent = (cRows||[]).length;
 
-    const {count:sCount} = await supabaseClient.from('statuses').select('id',{count:'exact',head:true}).eq('user_id',uid).gt('expires_at', new Date().toISOString());
+    const {count:sCount} = await supabaseClient.from('statuses').select('id',{count:'exact',head:true}).eq('user_id',myUid).gt('expires_at', new Date().toISOString());
     document.getElementById('stStatus').textContent = sCount ?? 0;
 
     document.getElementById('authGate').style.display = 'none';
