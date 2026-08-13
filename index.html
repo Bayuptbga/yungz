@@ -189,7 +189,7 @@
   .panel{display:none;}
   .panel.active{display:flex;flex-direction:column;}
 
-  /* ---- setel Password Enkripsi (dalam pin-screen) ---- */
+  /* ---- setel PIN Enkripsi (dalam pin-screen) ---- */
   .pw-setup{width:100%;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);text-align:left;}
   .pw-setup .pws-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px;}
   .pw-setup .pws-sub{font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:14px;}
@@ -261,50 +261,10 @@
     </div>
     <div class="pin-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>PIN ini kunci orang lain menemukanmu</span></div>
 
-    <div class="pw-setup">
-      <div class="pws-title">🔑 Setel Password Enkripsi</div>
-      <div class="pws-sub">Dipakai untuk membuka kembali chat terenkripsi kamu kalau nanti login dari HP/browser lain. <b>Beda dari kata sandi login</b>, dan tidak bisa dipulihkan kalau lupa.</div>
-      <form id="setupPwForm">
-        <div class="field"><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="setupPw1" placeholder="Password enkripsi" minlength="6" autocomplete="new-password"><span class="toggle-pw" onclick="const p=document.getElementById('setupPw1');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div></div>
-        <div class="field"><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="setupPw2" placeholder="Ulangi password enkripsi" minlength="6" autocomplete="new-password"></div></div>
-        <div class="hint" id="setupPwHint">Minimal 6 karakter</div>
-        <button type="submit" class="btn" id="setupPwBtn"><span class="spinner"></span><span class="btn-label">Simpan &amp; Lanjut ke Chat</span></button>
-      </form>
-      <span class="skip-link" id="skipPwSetup">Lewati untuk sekarang</span>
-    </div>
+    <button class="btn" id="pinContinueBtn" type="button" style="margin-top:22px;">Lanjut ke Chat</button>
   </div>
 </div>
 
-<!-- Modal: restore Password Enkripsi saat login dari device/browser baru -->
-<div class="kmodal-overlay" id="restoreOverlay">
-  <div class="kmodal">
-    <div class="km-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
-    <h3>Buka Kunci Chat</h3>
-    <p>Kamu login dari perangkat/browser baru. Masukkan <b>Password Enkripsi</b> supaya percakapan lamamu bisa dibaca lagi di sini.</p>
-    <form id="restoreForm">
-      <div class="field"><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="restorePw" placeholder="Password enkripsi" autocomplete="current-password"><span class="toggle-pw" onclick="const p=document.getElementById('restorePw');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div></div>
-      <div class="hint err" id="restoreHint" style="min-height:14px;"></div>
-      <button type="submit" class="btn" id="restoreBtn"><span class="spinner"></span><span class="btn-label">Buka Kunci</span></button>
-    </form>
-    <span class="skip-link" id="restoreForgetLink">Lupa password? Mulai percakapan baru</span>
-  </div>
-</div>
-
-<!-- Modal: tawarkan setel Password Enkripsi untuk akun lama yang belum pernah setel -->
-<div class="kmodal-overlay" id="offerSetupOverlay">
-  <div class="kmodal">
-    <div class="km-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
-    <h3>Amankan Chat Kamu</h3>
-    <p>Perangkat ini belum pernah dipakai buka akun ini, dan kamu belum punya Password Enkripsi. Kunci chat baru sudah dibuat, tapi <b>percakapan di perangkat lamamu tidak akan terbaca di sini</b>. Setel password sekarang biar ke depannya bisa dipulihkan.</p>
-    <form id="offerSetupForm">
-      <div class="field"><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="offerPw1" placeholder="Password enkripsi" minlength="6" autocomplete="new-password"></div></div>
-      <div class="field"><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="offerPw2" placeholder="Ulangi password enkripsi" minlength="6" autocomplete="new-password"></div></div>
-      <div class="hint err" id="offerSetupHint" style="min-height:14px;"></div>
-      <button type="submit" class="btn" id="offerSetupBtn"><span class="spinner"></span><span class="btn-label">Simpan &amp; Lanjut</span></button>
-    </form>
-    <span class="skip-link" id="offerSetupSkip">Lewati untuk sekarang</span>
-  </div>
-</div>
 <script>
   function translateAuthError(msg){
     const m = (msg||'').toLowerCase();
@@ -331,73 +291,10 @@
     else{ applyPanel(which); }
   }
 
-  // ---- Helper umum: proses status hasil E2E.ensureKeypair() ----
-  // Dipanggil setelah login sukses ATAU saat sesi masih aktif (auto-redirect).
-  // Resolve setelah kunci device ini benar-benar siap dipakai (dan redirect ke dashboard).
-  async function resolveKeyStatusAndGo(userId){
-    let r;
-    try{ r = await E2E.ensureKeypair(userId); }
-    catch(e){ console.error('Gagal cek status kunci enkripsi:', e); window.location.replace('dashboard.html'); return; }
-    if(r.status==='ready'){ window.location.replace('dashboard.html'); return; }
-    if(r.status==='needs_restore'){ document.getElementById('authGate').style.display='none'; openRestoreModal(userId); return; }
-    if(r.status==='needs_setup'){ document.getElementById('authGate').style.display='none'; openOfferSetupModal(userId); return; }
-  }
-
-  // ---- Modal: restore key pakai Password Enkripsi (device/browser baru, backup ada) ----
-  function openRestoreModal(userId){
-    document.getElementById('restoreOverlay').classList.add('open');
-    document.getElementById('restorePw').focus();
-    document.getElementById('restoreForm').dataset.uid = userId;
-  }
-  document.getElementById('restoreForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const uid=e.target.dataset.uid, pw=document.getElementById('restorePw').value,
-          b=document.getElementById('restoreBtn'), hint=document.getElementById('restoreHint');
-    hint.textContent='';
-    if(!pw){ hint.textContent='Masukkan password enkripsi kamu.'; return; }
-    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Membuka...';
-    try{
-      await E2E.restorePrivateKey(uid, pw);
-      window.location.replace('dashboard.html');
-    }catch(err){
-      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Buka Kunci';
-      if(err.message==='WRONG_PASSWORD'){ hint.textContent='Password salah, coba lagi.'; }
-      else{ hint.textContent='Gagal membuka kunci, coba lagi.'; console.error(err); }
-    }
-  });
-  document.getElementById('restoreForgetLink').addEventListener('click', async () => {
-    const uid=document.getElementById('restoreForm').dataset.uid;
-    const ok=confirm('Semua percakapan lama tidak akan bisa dibaca lagi di perangkat manapun setelah ini. Yakin mau lanjut tanpa password?');
-    if(!ok) return;
-    try{
-      await E2E.forceNewKeypair(uid);
-      window.location.replace('dashboard.html');
-    }catch(err){ console.error(err); alert('Gagal membuat kunci baru, coba lagi.'); }
-  });
-
-  // ---- Modal: tawarkan setel Password Enkripsi (akun lama, belum pernah ada backup) ----
-  function openOfferSetupModal(userId){
-    document.getElementById('offerSetupOverlay').classList.add('open');
-    document.getElementById('offerSetupForm').dataset.uid = userId;
-  }
-  document.getElementById('offerSetupForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const uid=e.target.dataset.uid, p1=document.getElementById('offerPw1').value, p2=document.getElementById('offerPw2').value,
-          b=document.getElementById('offerSetupBtn'), hint=document.getElementById('offerSetupHint');
-    hint.textContent='';
-    if(p1.length<6){ hint.textContent='Password minimal 6 karakter.'; return; }
-    if(p1!==p2){ hint.textContent='Password tidak cocok.'; return; }
-    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Menyimpan...';
-    try{
-      const kp = await E2E.ensureKeypair(uid); // sudah 'ready' karena baru saja dibuat needs_setup
-      await E2E.backupPrivateKey(uid, kp.privateKey, p1);
-      window.location.replace('dashboard.html');
-    }catch(err){
-      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan & Lanjut';
-      hint.textContent='Gagal menyimpan, coba lagi.'; console.error(err);
-    }
-  });
-  document.getElementById('offerSetupSkip').addEventListener('click', () => { window.location.replace('dashboard.html'); });
+  // Catatan: index.html TIDAK LAGI mengurus status kunci enkripsi (PIN Enkripsi).
+  // Login/daftar langsung lempar ke dashboard. Kunci ECDH dibuat otomatis secara diam-diam
+  // di background (lihat dashboard.html -> boot()), dan modal restore/setel Password
+  // Enkripsi baru muncul saat user benar-benar membuka sebuah chat (lihat chat.html -> init()).
 
   // Login
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -411,12 +308,10 @@
       b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Masuk';
       return;
     }
-    b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Masuk';
-    await resolveKeyStatusAndGo(liData.user.id);
+    window.location.replace('dashboard.html');
   });
 
   // Daftar
-  let pendingPrivateKey=null, pendingUserId=null;
   document.getElementById('daftarForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const u=document.getElementById('daftarUsername').value.trim(), p=document.getElementById('daftarPassword').value,
@@ -435,11 +330,11 @@
     }
     const pin = generatePin();
     await supabaseClient.from('profiles').insert({id: sData.user.id, username: u, pin: pin});
-    pendingUserId = sData.user.id;
-    try{
-      const kp = await E2E.ensureKeypair(sData.user.id); // status pasti 'needs_setup' (akun baru)
-      pendingPrivateKey = kp.privateKey;
-    }catch(e){ console.error('Gagal setup kunci enkripsi:', e); }
+    // Buat & publish keypair ECDH secara diam-diam di background (biar orang lain
+    // langsung bisa kirim pesan terenkripsi ke akun ini). PIN Enkripsi untuk
+    // BACKUP kunci ini baru ditawarkan nanti saat user pertama kali buka sebuah chat.
+    try{ await E2E.ensureKeypair(sData.user.id); }
+    catch(e){ console.error('Gagal setup kunci enkripsi:', e); }
     document.getElementById('panelDaftar').style.display='none';
     document.getElementById('topBadge').style.display='none';
     document.getElementById('pinValue').textContent=pin;
@@ -452,34 +347,18 @@
     setTimeout(()=>{ label.textContent='Salin PIN'; }, 1800);
   });
 
-  // Setel Password Enkripsi langsung setelah daftar
-  document.getElementById('setupPwForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const p1=document.getElementById('setupPw1').value, p2=document.getElementById('setupPw2').value,
-          b=document.getElementById('setupPwBtn'), hint=document.getElementById('setupPwHint');
-    hint.textContent='Minimal 6 karakter'; hint.className='hint';
-    if(p1.length<6){ hint.textContent='Password minimal 6 karakter.'; hint.className='hint err'; return; }
-    if(p1!==p2){ hint.textContent='Password tidak cocok.'; hint.className='hint err'; return; }
-    if(!pendingPrivateKey||!pendingUserId){ window.location.replace('dashboard.html'); return; }
-    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Menyimpan...';
-    try{
-      await E2E.backupPrivateKey(pendingUserId, pendingPrivateKey, p1);
-      window.location.replace('dashboard.html');
-    }catch(err){
-      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan & Lanjut ke Chat';
-      hint.textContent='Gagal menyimpan, coba lagi.'; hint.className='hint err'; console.error(err);
-    }
-  });
-  document.getElementById('skipPwSetup').addEventListener('click', () => { window.location.replace('dashboard.html'); });
+  // Setelah lihat PIN, lanjut langsung ke dashboard. PIN Enkripsi TIDAK
+  // ditanya di sini -- baru ditawarkan nanti saat user pertama kali buka sebuah chat
+  // (lihat chat.html).
+  document.getElementById('pinContinueBtn').addEventListener('click', () => { window.location.replace('dashboard.html'); });
 
   // Buka panel sesuai hash URL (index.html#daftar), default: login
   if(location.hash === '#daftar'){ switchPanel('daftar'); }
 
-  // Kalau sesi masih aktif, langsung lempar ke dashboard tanpa perlu login ulang
-  // (tapi tetap lewat pengecekan status kunci enkripsi dulu).
+  // Kalau sesi masih aktif, langsung lempar ke dashboard tanpa perlu login ulang.
   (async()=>{
     const {data:{session}}=await supabaseClient.auth.getSession();
-    if(session){ await resolveKeyStatusAndGo(session.user.id); return; }
+    if(session){ window.location.replace('dashboard.html'); return; }
     document.getElementById('authGate').style.display='none';
   })();
 </script>
