@@ -231,7 +231,12 @@
     if(!error){if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(data);scrollToBottom();}
   });
   history.pushState({page:'chat'},'',location.href);window.addEventListener('popstate',()=>{window.location.href='index.html';});
-  init();
+  if(typeof supabaseClient==='undefined'){
+    msgArea.innerHTML=`<div class="empty-state"><div class="es-title">Gagal terhubung</div><span>supabaseClient.js gagal dimuat (cek path file / koneksi internet / console browser).</span></div>`;
+    console.error('supabaseClient belum terdefinisi — supabase-js CDN atau supabaseClient.js gagal load.');
+  }else{
+    init();
+  }
 </script>
 </body>
 </html>
