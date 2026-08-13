@@ -255,7 +255,7 @@
   menuBtn.addEventListener('click',(e)=>{e.stopPropagation();chatMenu.classList.toggle('open');});document.addEventListener('click',()=>{chatMenu.classList.remove('open');});
   document.getElementById('menuHapusPermanen').addEventListener('click',async(e)=>{
     e.stopPropagation();chatMenu.classList.remove('open');
-    const ok=await showConfirm('Hapus Permanen','Hapus SEMUA pesan di percakapan ini secara permanen dari server? Ini tidak bisa dibatalkan dan akan menghapusnya juga untuk lawan bicara.','Hapus Permanen');
+    const ok=await showConfirm('Hapus Untuk Semua Orang','Semua percakapan ini akan di hapus untuk semua orang','Hapus Permanen');
     if(!ok)return;
     const {error}=await supabaseClient.from('messages').delete().or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`);
     if(error){alert('Gagal menghapus permanen. Coba lagi.');return;}
@@ -265,7 +265,7 @@
   });
   document.getElementById('menuHapusKontak').addEventListener('click',async(e)=>{
     e.stopPropagation();chatMenu.classList.remove('open');
-    const ok=await showConfirm('Hapus Kontak','Hapus kontak ini?','Hapus');
+    const ok=await showConfirm('Hapus Kontak Ini?','Menghapus kontak, akan menghapus juga kontak dari teman ini.','Hapus');
     if(!ok)return;
     const {error}=await supabaseClient.from('contacts').delete().or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`);
     if(!error)window.location.href='dashboard.html';
