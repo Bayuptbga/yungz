@@ -135,7 +135,7 @@
     <div class="who"><div class="uname"><span id="peerUname">@—</span><span class="status-dot" id="statusDot"></span></div><div class="sub" id="peerSub">-</div></div>
     <div class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
       <div class="chat-menu" id="chatMenu">
-        <div class="item danger" id="menuHapusPermanen">Hapus Permanen (Semua)</div><div class="item danger" id="menuHapusKontak">Hapus Kontak</div><div class="item ping" id="menuPing">🔔 PING!!!</div>
+        <div class="item danger" id="menuHapusPermanen">Hapus Semua Orang</div><div class="item danger" id="menuHapusKontak">Hapus Kontak</div><div class="item ping" id="menuPing">🔔 PING!!!</div>
       </div>
     </div>
   </div>
@@ -265,7 +265,7 @@
   });
   document.getElementById('menuHapusKontak').addEventListener('click',async(e)=>{
     e.stopPropagation();chatMenu.classList.remove('open');
-    const ok=await showConfirm('Hapus Kontak Ini?','Menghapus kontak, akan menghapus juga kontak dari teman ini.','Hapus');
+    const ok=await showConfirm('Hapus Kontak Ini?','Menghapus kontak akan menghapus juga kontak anda dari teman ini.','Hapus');
     if(!ok)return;
     const {error}=await supabaseClient.from('contacts').delete().or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`);
     if(!error)window.location.href='dashboard.html';
