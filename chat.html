@@ -108,18 +108,14 @@
   .empty-state .es-title{ font-size:14px; font-weight:600; color:var(--ink); }
   .loading-spinner{ width:30px;height:30px; border:3px solid var(--border); border-top-color:#005c4b; border-radius:50%; animation:spin .75s linear infinite; }
   @keyframes spin{ to{ transform:rotate(360deg); } }
-  .input-bar{ position:relative; display:flex; align-items:flex-end; gap:9px; padding:12px 12px calc(12px + env(safe-area-inset-bottom)); background:transparent; flex-shrink:0; }
-  .input-bar textarea{ flex:1; resize:none; border:1.5px solid transparent; border-radius:24px; padding:12px 18px; font-size:14.5px; line-height:1.35; font-family:inherit; outline:none; max-height:100px; background:var(--bbm-blue-light); color:var(--ink); box-shadow:inset 0 1px 2px rgba(0,0,0,0.15); transition:border-color .18s ease, box-shadow .18s ease, background .18s ease; }
+  .input-bar{ display:flex; align-items:flex-end; gap:8px; padding:10px 10px calc(10px + env(safe-area-inset-bottom)); background:var(--card-bg); border-top:1px solid var(--border); flex-shrink:0; }
+  .input-bar textarea{ flex:1; resize:none; border:1.5px solid var(--border); border-radius:22px; padding:11px 17px; font-size:14.5px; font-family:inherit; outline:none; max-height:100px; background:var(--bg); color:var(--ink); transition:border-color .15s ease; }
   .input-bar textarea::placeholder{ color:var(--muted); }
-  .input-bar textarea:disabled{ background:var(--bg); color:var(--muted); box-shadow:none; }
-  .input-bar textarea:focus{ border-color:#00a884; background:var(--bbm-blue-light); box-shadow:0 0 0 3px rgba(0,168,132,0.15); }
-  .send-btn{ width:44px;height:44px; border-radius:50%; background:linear-gradient(135deg,#00c896,#00a884 55%,#00614f); border:none; display:flex;align-items:center;justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 3px 10px rgba(0,168,132,0.35), inset 0 1px 0 rgba(255,255,255,0.12); transition:transform .15s ease, box-shadow .15s ease, background .15s ease; }
-  .send-btn svg{ transform:translateX(-1px); transition:transform .15s ease; }
-  .send-btn:not(:disabled):hover{ box-shadow:0 4px 14px rgba(0,168,132,0.45), inset 0 1px 0 rgba(255,255,255,0.12); }
-  .send-btn:not(:disabled):hover svg{ transform:translateX(1px) translateY(-1px); }
-  .send-btn:not(:disabled):active{ transform:scale(0.92); }
-  .send-btn:disabled{ background:var(--bbm-blue-light); box-shadow:none; cursor:default; }
-  .send-btn:disabled svg{ opacity:0.35; }
+  .input-bar textarea:disabled{background:var(--border);color:var(--muted);}
+  .input-bar textarea:focus{ border-color:#005c4b; box-shadow:none; }
+  .send-btn{ width:43px;height:43px; border-radius:50%; background:linear-gradient(135deg,#005c4b,#004236); border:none; display:flex;align-items:center;justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+  .send-btn:not(:disabled):active{ transform:scale(0.94); }
+  .send-btn:disabled{background:var(--border);box-shadow:none;}
   .confirm-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity .18s ease; padding:24px; }
   .confirm-overlay.open{ opacity:1; pointer-events:auto; }
   .confirm-box{ background:var(--card-bg); border:1px solid var(--border); border-radius:16px; width:100%; max-width:320px; padding:22px 20px 16px; box-shadow:0 10px 40px rgba(0,0,0,0.5); transform:translateY(10px) scale(0.97); transition:transform .18s ease; }
@@ -154,8 +150,20 @@
   .kmodal .btn.loading .spinner{display:inline-block;}
   .kmodal .btn:disabled{cursor:default;opacity:0.85;}
   .kmodal .skip-link{display:block;text-align:center;font-size:12px;color:var(--muted);margin-top:14px;cursor:pointer;text-decoration:underline;}
+
+  /* ---- Banner: ajakan buat PIN Enkripsi (di atas area pesan) ---- */
+  .pin-banner{ display:none; flex-shrink:0; background:var(--card-bg); border-bottom:1px solid var(--border); padding:14px; gap:12px; align-items:flex-start; }
+  .pin-banner.show{ display:flex; }
+  .pin-banner .pb-icon{ width:36px;height:36px;border-radius:10px; background:rgba(83,189,235,0.14); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .pin-banner .pb-icon svg{ width:18px;height:18px; stroke:#53bdeb; }
+  .pin-banner .pb-body{ flex:1; min-width:0; }
+  .pin-banner .pb-title{ font-size:14px; font-weight:700; color:var(--ink); margin-bottom:3px; }
+  .pin-banner .pb-sub{ font-size:12px; color:var(--muted); line-height:1.45; margin-bottom:10px; }
+  .pin-banner .pb-actions{ display:flex; gap:10px; align-items:center; }
+  .pin-banner .pb-btn{ background:#53bdeb; color:#062733; border:none; border-radius:8px; padding:8px 14px; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .pin-banner .pb-btn:active{ transform:scale(0.97); }
+  .pin-banner .pb-dismiss{ background:none; border:none; color:var(--muted); font-size:12px; font-weight:600; cursor:pointer; padding:8px 4px; }
 </style>
-<script src="device-gate.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabaseClient.js?v=2"></script>
 <script src="e2e.js?v=2"></script>
@@ -165,7 +173,7 @@
 <div class="phone">
   <div id="authGate"><div class="spinner"></div></div>
   <div class="appbar">
-    <div class="back" onclick="window.location.href='dashboard'"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <div class="back" onclick="window.location.href='dashboard.html'"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
     <div class="avatar" id="peerAvatar">?</div>
     <div class="who"><div class="uname"><span id="peerUname">@—</span><span class="status-dot" id="statusDot"></span></div><div class="sub" id="peerSub">-</div></div>
     <div class="e2e-lock" id="e2eLock" title="Pesan di chat ini dienkripsi end-to-end"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
@@ -173,6 +181,14 @@
       <div class="chat-menu" id="chatMenu">
         <div class="item danger" id="menuHapusPermanen">Hapus Semua Orang</div><div class="item danger" id="menuHapusKontak">Hapus Kontak</div><div class="item ping" id="menuPing">🔔 PING!!!</div>
       </div>
+    </div>
+  </div>
+  <div class="pin-banner" id="pinBanner">
+    <div class="pb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
+    <div class="pb-body">
+      <div class="pb-title">Buat PIN Anda</div>
+      <div class="pb-sub">Buat PIN Enkripsi untuk memulihkan riwayat obrolan kalau kamu login dari perangkat lain. Tanpa PIN ini, chat lama tidak bisa dibuka lagi di perangkat baru.</div>
+      <div class="pb-actions"><button class="pb-btn" id="pinBannerBtn">Buat PIN</button><button class="pb-dismiss" id="pinBannerDismiss">Nanti saja</button></div>
     </div>
   </div>
   <div class="msg-area" id="msgArea"><div class="empty-state"><div class="loading-spinner"></div><span>Memuat percakapan…</span></div></div>
@@ -234,7 +250,6 @@
   const colorPalette = ['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return (u||'?').slice(0,2).toUpperCase();}
-  function escapeHtml(s){const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
   function normalizeText(str){if(!str)return'';str=str.replace(/[\r\v\f\u2028\u2029]/g,'\n');const lines=str.split('\n').map(l=>l.replace(/[ \t]+$/,''));const out=[];let blankRun=0;for(const line of lines){if(line.trim()===''){blankRun++;if(blankRun<=1)out.push('');}else{blankRun=0;out.push(line);}}return out.join('\n').trim();}
   function timeLabel(iso){return new Date(iso).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});}
   function dayLabel(iso){const d=new Date(iso),t=new Date(),y=new Date();y.setDate(t.getDate()-1);const s=(a,b)=>a.toDateString()===b.toDateString();if(s(d,t))return'Hari ini';if(s(d,y))return'Kemarin';return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});}
@@ -245,10 +260,10 @@
   }
   async function init(){
     try{
-      if(!peerId){window.location.href='dashboard';return;}
+      if(!peerId){window.location.href='dashboard.html';return;}
       const {data:{session},error:sessErr} = await supabaseClient.auth.getSession();
       if(sessErr) throw sessErr;
-      if(!session){window.location.replace('./');return;}
+      if(!session){window.location.replace('index.html');return;}
       currentUserId=session.user.id;
       let kp=await E2E.ensureKeypair(currentUserId);
       if(kp.status==='needs_restore'){
@@ -271,9 +286,10 @@
         msgInput.placeholder='Menunggu '+peerUsername+' membuka aplikasi buat aktifkan enkripsi...';
       }
       await loadMessages();await markIncomingAsRead();subscribeRealtime();subscribePresence();msgInput.disabled=!sharedKey;
-      // Tawarkan setel PIN Enkripsi (kalau device ini belum pernah punya backup).
-      // Non-blocking: chat di atas sudah tetap bisa dipakai sambil modal ini tampil.
-      maybeOfferBackupSetup(currentUserId);
+      // Tampilkan banner "Buat PIN Anda" (bukan langsung modal) kalau device ini
+      // sudah punya kunci aktif TAPI belum ada backup PIN Enkripsi sama sekali.
+      // Banner ini akan muncul lagi tiap kali chat dibuka selama PIN belum dibuat.
+      checkPinBanner(currentUserId);
     }catch(err){
       console.error('init error:',err);
       document.getElementById('authGate').style.display='none';
@@ -319,18 +335,24 @@
     }catch(err){ console.error(err); alert('Gagal membuat kunci baru, coba lagi.'); }
   });
 
-  // ---- Modal: tawarkan setel PIN Enkripsi, muncul cukup SEKALI per akun per device ----
-  async function maybeOfferBackupSetup(userId){
-    const seenKey='e2e_offer_seen_'+userId;
-    if(localStorage.getItem(seenKey)) return; // sudah pernah ditampilkan sebelumnya, jangan lagi
+  // ---- Banner "Buat PIN Anda": muncul tiap kali chat dibuka selama device ini
+  // punya kunci aktif tapi belum ada backup PIN Enkripsi di server. ----
+  async function checkPinBanner(userId){
     if(!myPrivateKey) return;
     let hasBackup=false;
     try{ hasBackup=await E2E.hasBackup(userId); }catch(e){ return; }
-    localStorage.setItem(seenKey,'1'); // tandai sudah pernah muncul, apapun hasilnya nanti
     if(hasBackup) return; // sudah aman, tidak perlu ditawarkan
     document.getElementById('offerSetupForm').dataset.uid=userId;
-    document.getElementById('offerSetupOverlay').classList.add('open');
+    document.getElementById('pinBanner').classList.add('show');
   }
+  document.getElementById('pinBannerBtn').addEventListener('click', () => {
+    document.getElementById('offerSetupHint').textContent='';
+    document.getElementById('offerSetupForm').reset();
+    document.getElementById('offerSetupOverlay').classList.add('open');
+  });
+  document.getElementById('pinBannerDismiss').addEventListener('click', () => {
+    document.getElementById('pinBanner').classList.remove('show');
+  });
   document.getElementById('offerSetupForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const uid=e.target.dataset.uid, p1=document.getElementById('offerPw1').value, p2=document.getElementById('offerPw2').value,
@@ -344,6 +366,7 @@
       await E2E.backupPrivateKey(uid,myPrivateKey,p1);
       b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan';
       document.getElementById('offerSetupOverlay').classList.remove('open');
+      document.getElementById('pinBanner').classList.remove('show');
     }catch(err){
       b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan';
       hint.textContent='Gagal menyimpan, coba lagi.'; console.error(err);
@@ -368,7 +391,7 @@
     let query=supabaseClient.from('messages').select('id, sender_id, content, created_at, delivered_at, read_at').or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`).order('created_at',{ascending:true});
     if(clearedBefore)query=query.gt('created_at',clearedBefore);
     const {data:rows,error}=await query;
-    const banner=`<div class="e2e-banner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Pesan di chat ini dienkripsi end-to-end. Hanya kamu dan ${escapeHtml(peerUsername||'lawan bicaramu')} yang bisa membacanya.</span></div>`;
+    const banner=`<div class="e2e-banner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Pesan di chat ini dienkripsi end-to-end. Hanya kamu dan ${peerUsername||'lawan bicaramu'} yang bisa membacanya.</span></div>`;
     if(error||!rows||rows.length===0){msgArea.innerHTML=banner+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`;return;}
     for(const m of rows){m.content=await E2E.decryptMessage(sharedKey,m.content);}
     msgArea.innerHTML=banner;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});scrollToBottom();
@@ -431,37 +454,15 @@
     const ok=await showConfirm('Hapus Kontak Ini?','Menghapus kontak akan menghapus juga kontak anda dari teman ini.','Hapus');
     if(!ok)return;
     const {error}=await supabaseClient.from('contacts').delete().or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`);
-    if(!error)window.location.href='dashboard';
+    if(!error)window.location.href='dashboard.html';
   });
-  const PING_MAX=3, PING_WINDOW_MS=3*60*1000;
-  function pingTimestamps(){
-    try{ return JSON.parse(sessionStorage.getItem('ping_ts_'+peerId)||'[]'); }catch(e){ return []; }
-  }
-  function pruneAndGetPings(){
-    const now=Date.now();
-    const kept=pingTimestamps().filter(t=>now-t<PING_WINDOW_MS);
-    return kept;
-  }
   document.getElementById('menuPing').addEventListener('click',async(e)=>{
-    e.stopPropagation();chatMenu.classList.remove('open');if(!sharedKey)return;
-    const recent=pruneAndGetPings();
-    if(recent.length>=PING_MAX){
-      const waitMs=PING_WINDOW_MS-(Date.now()-recent[0]);
-      const waitSec=Math.ceil(waitMs/1000);
-      const mm=Math.floor(waitSec/60), ss=waitSec%60;
-      alert(`Kirim ping terlalu sering. Coba lagi dalam ${mm}:${String(ss).padStart(2,'0')}.`);
-      return;
-    }
-    if(navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
+    e.stopPropagation();chatMenu.classList.remove('open');if(!sharedKey)return;if(navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
     const encrypted=await E2E.encryptMessage(sharedKey,'🔔 PING!!!');
     const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted}).select().single();
-    if(!error){
-      recent.push(Date.now());
-      sessionStorage.setItem('ping_ts_'+peerId,JSON.stringify(recent));
-      data.content='🔔 PING!!!';if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(data);scrollToBottom();
-    }
+    if(!error){data.content='🔔 PING!!!';if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(data);scrollToBottom();}
   });
-  history.pushState({page:'chat'},'',location.href);window.addEventListener('popstate',()=>{window.location.href='dashboard';});
+  history.pushState({page:'chat'},'',location.href);window.addEventListener('popstate',()=>{window.location.href='dashboard.html';});
   if(typeof supabaseClient==='undefined'){
     msgArea.innerHTML=`<div class="empty-state"><div class="es-title">Gagal terhubung</div><span>supabaseClient.js gagal dimuat (cek path file / koneksi internet / console browser).</span></div>`;
     console.error('supabaseClient belum terdefinisi — supabase-js CDN atau supabaseClient.js gagal load.');
