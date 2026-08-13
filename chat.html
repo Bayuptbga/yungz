@@ -160,6 +160,8 @@
   .kpage-skip{ background:none; border:none; color:#53bdeb; font-size:15px; font-weight:600; cursor:pointer; padding:8px; margin:-8px; font-family:inherit; }
   .kpage-body{ padding:26px 22px 0; flex:1; overflow-y:auto; }
   .kpage-title-row h2{ font-size:23px; font-weight:700; line-height:1.3; margin:0 0 26px; color:var(--ink); max-width:300px; }
+  .kpage-title-row h2.has-sub{ margin-bottom:10px; }
+  .kpage-sub{ font-size:13px; color:var(--muted); line-height:1.55; margin:0 0 24px; max-width:300px; }
   .pin-boxes{ display:flex; gap:9px; margin-bottom:16px; }
   .pin-box{ width:100%; aspect-ratio:4/5; min-width:0; text-align:center; font-size:22px; font-weight:700; color:var(--ink); background:var(--card-bg); border:1.5px solid var(--border); border-radius:12px; outline:none; font-family:inherit; caret-color:#53bdeb; }
   .pin-box::placeholder{ color:var(--muted); font-weight:400; }
@@ -255,19 +257,26 @@
     </div>
   </div>
 
-  <!-- Modal: tawarkan setel PIN Enkripsi (device baru, belum pernah ada backup) -->
-  <div class="kmodal-overlay" id="offerSetupOverlay">
-    <div class="kmodal">
-      <div class="km-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
-      <h3>Amankan Chat Kamu</h3>
-      <p>Kamu belum punya PIN Enkripsi. Setel sekarang biar nanti kalau login dari HP/browser lain, percakapanmu masih bisa dibuka lagi. <b>Beda dari kata sandi login</b>, dan tidak bisa dipulihkan kalau lupa.</p>
+  <!-- Halaman: buat PIN Enkripsi (device ini punya kunci aktif, belum ada backup PIN) -->
+  <div class="kpage-overlay" id="offerSetupOverlay">
+    <div class="kpage-top">
+      <button type="button" class="kpage-back" id="offerBackBtn" aria-label="Kembali"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <button type="button" class="kpage-skip" id="offerSkipBtn">Lewati</button>
+    </div>
+    <div class="kpage-body">
+      <div class="kpage-title-row"><h2 id="offerTitle" class="has-sub">Buat PIN Enkripsi Anda</h2></div>
+      <p class="kpage-sub" id="offerSubtitle">PIN 6 digit ini beda dari kata sandi login. Kamu butuh PIN ini kalau nanti login dari HP/browser lain — dan tidak bisa dipulihkan kalau lupa.</p>
       <form id="offerSetupForm">
-        <div class="field"><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="offerPw1" placeholder="PIN enkripsi (6 digit)" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);"></div></div>
-        <div class="field"><div class="input-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><input type="password" id="offerPw2" placeholder="Ulangi PIN enkripsi" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="off" oninput="this.value=this.value.replace(/\D/g,'').slice(0,6);"></div></div>
+        <div class="pin-boxes" id="offerBoxes">
+          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
+          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
+          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
+          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
+          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
+          <input type="password" class="pin-box" placeholder="–" inputmode="numeric" pattern="\d*" maxlength="1" autocomplete="off">
+        </div>
         <div class="hint err" id="offerSetupHint"></div>
-        <button type="submit" class="btn" id="offerSetupBtn"><span class="spinner"></span><span class="btn-label">Simpan</span></button>
       </form>
-      <span class="skip-link" id="offerSetupSkip">Lewati untuk sekarang</span>
     </div>
   </div>
 
@@ -386,53 +395,59 @@
     // PIN-nya (relevan buat kasus "Lupa PIN, mulai baru": kunci baru = belum ada backup).
     checkPinBanner(currentUserId);
   }
-  // ---- Kotak PIN (6 digit terpisah): auto-lanjut ke kotak berikutnya, auto-submit
-  // begitu 6 digit lengkap, backspace mundur ke kotak sebelumnya, dukung paste. ----
-  const pinBoxes = Array.from(document.querySelectorAll('#pinBoxes .pin-box'));
-  function pinBoxesValue(){ return pinBoxes.map(b=>b.value).join(''); }
-  function clearPinBoxes(focusFirst){
-    pinBoxes.forEach(b=>{ b.value=''; b.disabled=false; });
-    if(focusFirst) pinBoxes[0].focus();
+  // ---- Kotak PIN (6 digit terpisah), dipakai di halaman "Pulihkan Pesan" &
+  // "Buat PIN": auto-lanjut ke kotak berikutnya, auto-submit begitu 6 digit
+  // lengkap, backspace mundur ke kotak sebelumnya, dukung paste. ----
+  function pinBoxesValue(boxes){ return boxes.map(b=>b.value).join(''); }
+  function clearPinBoxes(boxes, focusFirst){
+    boxes.forEach(b=>{ b.value=''; b.disabled=false; });
+    if(focusFirst) boxes[0].focus();
   }
+  function wirePinBoxes(boxes, onComplete){
+    boxes.forEach((box,i)=>{
+      box.addEventListener('input', () => {
+        box.value=box.value.replace(/\D/g,'').slice(0,1);
+        if(box.value && i<boxes.length-1) boxes[i+1].focus();
+        const pin=pinBoxesValue(boxes);
+        if(pin.length===6) onComplete(pin);
+      });
+      box.addEventListener('keydown', (e) => {
+        if(e.key==='Backspace' && !box.value && i>0){ boxes[i-1].focus(); boxes[i-1].value=''; }
+      });
+      box.addEventListener('paste', (e) => {
+        const text=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+        if(!text) return;
+        e.preventDefault();
+        boxes.forEach((b,idx)=>{ b.value=text[idx]||''; });
+        const lastIdx=Math.min(text.length,boxes.length)-1;
+        if(lastIdx>=0) boxes[lastIdx].focus();
+        if(text.length===6) onComplete(text);
+      });
+    });
+  }
+
+  // ---- Halaman "Pulihkan Pesan": kotak PIN restore ----
+  const restoreBoxes = Array.from(document.querySelectorAll('#pinBoxes .pin-box'));
   let restoring=false;
   async function attemptRestore(pin){
     if(restoring) return;
     restoring=true;
     const uid=document.getElementById('restoreForm').dataset.uid, hint=document.getElementById('restoreHint');
     hint.textContent='';
-    pinBoxes.forEach(b=>b.disabled=true);
+    restoreBoxes.forEach(b=>b.disabled=true);
     try{
       const kp=await E2E.restorePrivateKey(uid,pin);
-      clearPinBoxes(false);
+      clearPinBoxes(restoreBoxes,false);
       await onKeyReady({status:'ready', ...kp});
     }catch(err){
       if(err.message==='WRONG_PASSWORD'){ hint.textContent='PIN salah, coba lagi.'; }
       else{ hint.textContent='Gagal membuka kunci, coba lagi.'; console.error(err); }
-      clearPinBoxes(true);
+      clearPinBoxes(restoreBoxes,true);
     }finally{
       restoring=false;
     }
   }
-  pinBoxes.forEach((box,i)=>{
-    box.addEventListener('input', () => {
-      box.value=box.value.replace(/\D/g,'').slice(0,1);
-      if(box.value && i<pinBoxes.length-1) pinBoxes[i+1].focus();
-      const pin=pinBoxesValue();
-      if(pin.length===6) attemptRestore(pin);
-    });
-    box.addEventListener('keydown', (e) => {
-      if(e.key==='Backspace' && !box.value && i>0){ pinBoxes[i-1].focus(); pinBoxes[i-1].value=''; }
-    });
-    box.addEventListener('paste', (e) => {
-      const text=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
-      if(!text) return;
-      e.preventDefault();
-      pinBoxes.forEach((b,idx)=>{ b.value=text[idx]||''; });
-      const lastIdx=Math.min(text.length,pinBoxes.length)-1;
-      if(lastIdx>=0) pinBoxes[lastIdx].focus();
-      if(text.length===6) attemptRestore(text);
-    });
-  });
+  wirePinBoxes(restoreBoxes, attemptRestore);
   document.getElementById('restoreForm').addEventListener('submit', e => e.preventDefault());
   function closeRestorePage(){
     document.getElementById('restoreOverlay').classList.remove('open');
@@ -459,36 +474,68 @@
     document.getElementById('offerSetupForm').dataset.uid=userId;
     document.getElementById('pinBanner').classList.add('show');
   }
-  document.getElementById('pinBannerBtn').addEventListener('click', () => {
-    document.getElementById('offerSetupHint').textContent='';
-    document.getElementById('offerSetupForm').reset();
-    document.getElementById('offerSetupOverlay').classList.add('open');
-  });
   document.getElementById('pinBannerDismiss').addEventListener('click', () => {
     document.getElementById('pinBanner').classList.remove('show');
   });
-  document.getElementById('offerSetupForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const uid=e.target.dataset.uid, p1=document.getElementById('offerPw1').value, p2=document.getElementById('offerPw2').value,
-          b=document.getElementById('offerSetupBtn'), hint=document.getElementById('offerSetupHint');
+
+  // ---- Halaman "Buat PIN": 2 langkah pakai grup kotak PIN yang sama —
+  // langkah 1 isi PIN baru, langkah 2 konfirmasi ulang PIN yang sama. ----
+  const offerBoxes = Array.from(document.querySelectorAll('#offerBoxes .pin-box'));
+  let offerFirstPin = null;
+  function resetOfferFlow(){
+    offerFirstPin=null;
+    document.getElementById('offerTitle').textContent='Buat PIN Enkripsi Anda';
+    document.getElementById('offerSubtitle').style.display='';
+    document.getElementById('offerSetupHint').textContent='';
+    clearPinBoxes(offerBoxes,false);
+  }
+  document.getElementById('pinBannerBtn').addEventListener('click', () => {
+    resetOfferFlow();
+    document.getElementById('offerSetupOverlay').classList.add('open');
+    offerBoxes[0].focus();
+  });
+  function closeOfferPage(){
+    document.getElementById('offerSetupOverlay').classList.remove('open');
+  }
+  document.getElementById('offerBackBtn').addEventListener('click', closeOfferPage);
+  document.getElementById('offerSkipBtn').addEventListener('click', closeOfferPage);
+  async function handleOfferPinComplete(pin){
+    const hint=document.getElementById('offerSetupHint');
     hint.textContent='';
-    if(!/^\d{6}$/.test(p1)){ hint.textContent='PIN harus 6 digit angka.'; return; }
-    if(p1!==p2){ hint.textContent='PIN tidak cocok.'; return; }
+    if(offerFirstPin===null){
+      // Langkah 1 selesai -> lanjut ke langkah konfirmasi.
+      offerFirstPin=pin;
+      clearPinBoxes(offerBoxes,true);
+      document.getElementById('offerTitle').textContent='Konfirmasi PIN Anda';
+      document.getElementById('offerSubtitle').style.display='none';
+      return;
+    }
+    if(pin!==offerFirstPin){
+      hint.textContent='PIN tidak cocok, coba lagi dari awal.';
+      offerFirstPin=null;
+      clearPinBoxes(offerBoxes,true);
+      document.getElementById('offerTitle').textContent='Buat PIN Enkripsi Anda';
+      document.getElementById('offerSubtitle').style.display='';
+      return;
+    }
+    const uid=document.getElementById('offerSetupForm').dataset.uid;
     if(!myPrivateKey) return;
-    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Menyimpan...';
+    offerBoxes.forEach(b=>b.disabled=true);
     try{
-      await E2E.backupPrivateKey(uid,myPrivateKey,p1);
-      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan';
+      await E2E.backupPrivateKey(uid,myPrivateKey,pin);
       document.getElementById('offerSetupOverlay').classList.remove('open');
       document.getElementById('pinBanner').classList.remove('show');
+      resetOfferFlow();
     }catch(err){
-      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan';
       hint.textContent='Gagal menyimpan, coba lagi.'; console.error(err);
+      offerFirstPin=null;
+      clearPinBoxes(offerBoxes,true);
+      document.getElementById('offerTitle').textContent='Buat PIN Enkripsi Anda';
+      document.getElementById('offerSubtitle').style.display='';
     }
-  });
-  document.getElementById('offerSetupSkip').addEventListener('click', () => {
-    document.getElementById('offerSetupOverlay').classList.remove('open');
-  });
+  }
+  wirePinBoxes(offerBoxes, handleOfferPinComplete);
+  document.getElementById('offerSetupForm').addEventListener('submit', e => e.preventDefault());
   const peerSubEl=document.getElementById('peerSub'),statusDotEl=document.getElementById('statusDot');let presenceChannel=null;
   function subscribePresence(){
     presenceChannel=supabaseClient.channel('online-users',{config:{presence:{key:currentUserId}}});
