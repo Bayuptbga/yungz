@@ -19,6 +19,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
+  @view-transition { navigation: auto; }
   :root{
     --bg-void:#070c10;
     --bbm-blue-dark:#0b141a;
@@ -254,7 +255,7 @@
     return 'Terjadi kesalahan, coba lagi.';
   }
 
-  function switchPanel(which){
+  function applyPanel(which){
     const isLogin = which==='login';
     document.getElementById('panelLogin').classList.toggle('active', isLogin);
     document.getElementById('panelDaftar').classList.toggle('active', !isLogin);
@@ -264,6 +265,10 @@
     document.getElementById('tabDaftar2').classList.toggle('active', !isLogin);
     document.getElementById('topSub').textContent = isLogin ? 'Masuk untuk lanjut ngobrol' : 'Buat akun untuk mulai ngobrol';
     history.replaceState(null, '', isLogin ? '#masuk' : '#daftar');
+  }
+  function switchPanel(which){
+    if(document.startViewTransition){ document.startViewTransition(()=>applyPanel(which)); }
+    else{ applyPanel(which); }
   }
 
   // Login
