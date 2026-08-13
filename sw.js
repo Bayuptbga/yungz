@@ -5,9 +5,13 @@ const CACHE_NAME = 'private-chat-v3';
 const APP_SHELL = [
   './',
   './index.html',
+  './dashboard',
   './dashboard.html',
+  './chat',
   './chat.html',
+  './setelan',
   './setelan.html',
+  './akses-ditolak',
   './akses-ditolak.html',
   './manifest.json',
   './supabaseClient.js',
@@ -18,12 +22,17 @@ const APP_SHELL = [
   './icons/apple-touch-icon.png'
 ];
 
-// Install: cache app shell
+// Install: cache app shell.
+// Pakai penambahan satu per satu (bukan cache.addAll) supaya kalau satu URL gagal
+// (misal versi extensionless './dashboard' cuma resolve di GitHub Pages, gagal di
+// hosting lain saat testing lokal), instalasi SW tetap lanjut untuk file lainnya.
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        APP_SHELL.map((url) => cache.add(url).catch((err) => console.warn('Gagal cache:', url, err)))
+      )
+    ).then(() => self.skipWaiting())
   );
 });
 
@@ -67,7 +76,7 @@ self.addEventListener('fetch', (event) => {
       .catch(() => {
         // Offline -> ambil dari cache
         return caches.match(event.request).then((cached) => {
-          return cached || caches.match('./index.html');
+          return cached || caches.match('./');
         });
       })
   );
@@ -75,7 +84,7 @@ self.addEventListener('fetch', (event) => {
 
 // Terima push notification dari server (dikirim lewat Supabase Edge Function)
 self.addEventListener('push', (event) => {
-  let payload = { title: 'Private Chat', body: 'Ada pesan baru', url: './index.html' };
+  let payload = { title: 'Private Chat', body: 'Ada pesan baru', url: './' };
   try {
     if (event.data) payload = { ...payload, ...event.data.json() };
   } catch (e) {
@@ -87,7 +96,7 @@ self.addEventListener('push', (event) => {
       body: payload.body,
       icon: './icons/icon-192.png',
       badge: './icons/icon-96.png',
-      data: { url: payload.url || './index.html' },
+      data: { url: payload.url || './' },
       vibrate: [200, 100, 200],
       tag: payload.url, // notif dari peer yang sama akan menumpuk jadi 1
       renotify: true,
@@ -100,7 +109,7 @@ self.addEventListener('push', (event) => {
 // Waktu notifikasi diklik: fokus/buka tab chat yang relevan
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = event.notification.data?.url || './index.html';
+  const targetUrl = event.notification.data?.url || './';
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
