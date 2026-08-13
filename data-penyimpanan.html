@@ -120,7 +120,7 @@
             <div class="bk-sub">Kalau kamu ganti HP tanpa cadangan, chat lama di HP baru tidak akan terbaca lagi (tapi lawan bicara tetap aman).</div>
           </div>
         </div>
-        <button class="bk-btn" id="bkSetupBtn">Aktifkan Cadangan Terenkripsi</button>
+        <button class="bk-btn" id="bkSetupBtn">Cadangkan Sekarang</button>
         <div class="bk-note">Cadangan dilindungi kode sandi yang cuma kamu tahu. Kode sandi ini <b>tidak pernah</b> dikirim ke server — kalau lupa, cadangan tidak bisa dipulihkan siapa pun.</div>
       </div>
 
@@ -132,7 +132,7 @@
             <div class="bk-sub" id="bkUpdatedAt">Kunci enkripsi kamu sudah dicadangkan.</div>
           </div>
         </div>
-        <button class="bk-btn-outline" id="bkChangeBtn">Ubah Kode Sandi Cadangan</button>
+        <button class="bk-btn-outline" id="bkChangeBtn">Cadangkan Ulang / Ubah Kode Sandi</button>
         <button class="bk-btn-outline danger" id="bkRemoveBtn">Nonaktifkan Cadangan</button>
       </div>
     </div>
@@ -143,7 +143,7 @@
     <div class="bkmodal">
       <div class="bm-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
       <h3 id="bkSetupTitle">Buat Kode Sandi Cadangan</h3>
-      <p>Kode sandi ini dipakai buat mengunci cadangan kunci enkripsi kamu. Ingat baik-baik — tidak bisa direset.</p>
+      <p>Kode sandi ini dipakai buat mengunci cadangan kunci enkripsi kamu. Pakai kode sandi yang <b>sama</b> kalau cuma mau menyegarkan cadangan, atau kode <b>baru</b> kalau mau ganti kode sandi. Ingat baik-baik — tidak bisa direset.</p>
       <div class="field">
         <div class="input-wrap"><input type="password" id="bkPass1" placeholder="Kode sandi (min. 4 karakter)" autocomplete="new-password"><span class="toggle-pw" id="bkToggle1">LIHAT</span></div>
       </div>
@@ -215,7 +215,7 @@
     openModal('bkSetupOverlay');
   });
   document.getElementById('bkChangeBtn').addEventListener('click',()=>{
-    document.getElementById('bkSetupTitle').textContent='Ubah Kode Sandi Cadangan';
+    document.getElementById('bkSetupTitle').textContent='Cadangkan Ulang / Ubah Kode Sandi';
     document.getElementById('bkPass1').value='';document.getElementById('bkPass2').value='';
     document.getElementById('bkSetupHint').textContent='';document.getElementById('bkSetupHint').className='hint';
     openModal('bkSetupOverlay');
