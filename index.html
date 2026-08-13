@@ -39,6 +39,9 @@
   }
   input, textarea{ user-select:text; }
   .phone{ width:100%; max-width:420px; height:100%; background:var(--bg); box-shadow:0 0 40px rgba(0,0,0,0.5); display:flex; flex-direction:column; position:relative; overflow:hidden; }
+  #authGate{ position:absolute; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center; }
+  #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:#53bdeb; animation:authSpin .75s linear infinite; }
+  @keyframes authSpin{ to{ transform:rotate(360deg); } }
   .appbar,.tabbar{flex-shrink:0;}
   .appbar{ background:var(--bbm-blue); color:#fff; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; }
   .appbar .left{ display:flex; align-items:center; gap:18px; }
@@ -140,6 +143,7 @@
 </head>
 <body>
 <div class="phone">
+  <div id="authGate"><div class="spinner"></div></div>
   <div class="appbar">
     <div class="left"><div class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></div><div><h1>Private Chat</h1></div></div>
     <div class="right"><div class="icon-btn" id="menuBtn"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
@@ -270,7 +274,14 @@
     ul.innerHTML=rows.map(r=>`<div class="notif-item ${r.seen_by_requester?'':'unseen'}"><div class="avatar" style="background:${colorFor(r.addressee_id)}">${initials(pMap[r.addressee_id])}</div><div class="info"><div class="uname">@${pMap[r.addressee_id]}</div><div class="sub">${r.status==='accepted'?'✅ Diterima':'❌ Ditolak'}</div></div>${r.seen_by_requester?'':'<span class="status-dot new"></span>'}</div>`).join('');
     const uIds=rows.filter(r=>!r.seen_by_requester).map(r=>r.id);if(uIds.length>0){await supabaseClient.from('contacts').update({seen_by_requester:true}).in('id',uIds);refreshNotifBadge();}
   }
-  refreshNotifBadge();window.addEventListener('pageshow',(e)=>{if(e.persisted)refreshNotifBadge();});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshNotifBadge();});
+  async function boot(){
+    const {data:{session}}=await supabaseClient.auth.getSession();
+    if(!session){window.location.replace('login.html');return;}
+    document.getElementById('authGate').style.display='none';
+    refreshNotifBadge();
+  }
+  boot();
+  window.addEventListener('pageshow',(e)=>{if(e.persisted)refreshNotifBadge();});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshNotifBadge();});
   const tabDefs={chats:{tabEl:'tabChats',panelEl:'panelChats',title:'Private Chat'},status:{tabEl:'tabStatus',panelEl:'panelStatus',title:'Status'},kontak:{tabEl:'tabKontak',panelEl:'panelKontak',title:'Kontak'},notif:{tabEl:'tabNotif',panelEl:'panelNotif',title:'Notifikasi'}};
   let activeTab='chats',onNonChatTab=false;
   function switchTab(name,fromPopstate){
