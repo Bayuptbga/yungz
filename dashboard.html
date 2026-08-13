@@ -118,7 +118,8 @@
   .tab-panel.active{display:flex; animation:panelFadeIn .18s ease both;}
   #panelChats.active{display:flex;flex-direction:column;flex:1;min-height:0;position:relative;}
   @keyframes panelFadeIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
-  .status-empty, .panel-empty{ padding:60px 24px; text-align:center; color:var(--muted); font-size:13.5px; line-height:1.6; }
+  .status-empty, .panel-empty{ padding:48px 24px; text-align:center; color:var(--muted); font-size:13.5px; line-height:1.6; }
+  .status-empty .icon, .panel-empty .icon{ margin-bottom:12px; display:flex; justify-content:center; }
   .add-section{ padding:18px 16px; border-bottom:8px solid var(--card-bg); flex-shrink:0; }
   .add-section .label{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px; }
   .add-row{display:flex;gap:8px;}
@@ -134,24 +135,30 @@
   .found-card .info .uname{font-weight:600;font-size:15px; color:var(--ink);}
   .found-card .info .pin-label{font-size:11.5px;color:var(--muted);}
   .found-card button{ background:var(--bbm-blue); color:#fff;border:none;border-radius:8px; padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer; }
-  .section-title{ padding:14px 16px 6px; font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; flex-shrink:0; }
-  .contact-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
+  .section-title{ padding:16px 16px 8px; font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; flex-shrink:0; display:flex; align-items:center; gap:8px; }
+  .section-title::after{ content:''; flex:1; height:1px; background:var(--border); }
+  .contact-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background-color .15s ease; }
   .contact-item:active{background:var(--border);}
   .contact-item .avatar{ width:48px;height:48px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:16px; }
   .contact-item .uname{font-size:15.5px;font-weight:600; color:var(--ink);}
-  .req-item, .notif-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--border); }
-  .req-item .avatar, .notif-item .avatar{ width:48px;height:48px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:16px; }
+  .req-item, .notif-item{ display:flex; align-items:center; gap:13px; padding:13px 16px; border-bottom:1px solid var(--border); transition:background-color .3s ease, opacity .3s ease; }
+  .req-item .avatar, .notif-item .avatar{ width:46px;height:46px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:15.5px; flex-shrink:0; box-shadow:0 0 0 2px var(--card-bg); }
   .req-item .info, .notif-item .info{flex:1;min-width:0;}
-  .req-item .uname, .notif-item .uname{font-size:15px;font-weight:600; color:var(--ink);}
-  .req-item .sub, .notif-item .sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .req-item .uname, .notif-item .uname{font-size:15px;font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .req-item .sub, .notif-item .sub{font-size:12px;color:var(--muted);margin-top:3px; display:flex; align-items:center; gap:5px;}
   .req-actions{display:flex;gap:8px;flex-shrink:0;}
-  .btn-accept, .btn-decline{ border:none; border-radius:8px; padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer; }
-  .btn-accept{background:var(--ok);color:#fff;}
+  .btn-accept, .btn-decline{ border:none; border-radius:20px; padding:8px 15px; font-size:12.5px; font-weight:700; cursor:pointer; transition:transform .12s ease, opacity .15s ease; }
+  .btn-accept:active, .btn-decline:active{transform:scale(0.94);}
+  .btn-accept{background:var(--ok);color:#0b1a12;}
   .btn-decline{background:var(--border);color:var(--ink);}
-  .btn-accept:disabled, .btn-decline:disabled{opacity:0.5;}
-  .notif-item.unseen{background:rgba(255,255,255,0.05);}
-  .status-dot{ width:8px;height:8px;border-radius:50%; margin-left:4px; }
-  .status-dot.new{background:#53bdeb;}
+  .btn-accept:disabled, .btn-decline:disabled{opacity:0.45;}
+  .notif-item.unseen{background:rgba(83,189,235,0.06); position:relative;}
+  .notif-item.unseen::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:#53bdeb; }
+  .notif-item.unseen .avatar{box-shadow:0 0 0 2px #53bdeb;}
+  .status-dot{ width:8px;height:8px;border-radius:50%; margin-left:4px; flex-shrink:0; }
+  .status-dot.new{background:#53bdeb; box-shadow:0 0 0 3px rgba(83,189,235,0.25); animation:dotPulse 1.8s ease-in-out infinite;}
+  @keyframes dotPulse{ 0%,100%{box-shadow:0 0 0 3px rgba(83,189,235,0.25);} 50%{box-shadow:0 0 0 5px rgba(83,189,235,0.08);} }
+  .req-item.removing, .notif-item.removing{opacity:0; transform:translateX(24px);}
 </style>
 <script src="device-gate.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -286,19 +293,19 @@
   async function loadRequests(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const rl=document.getElementById('reqList');rl.innerHTML=skeletonRow().repeat(3);
     const {data:rows}=await supabaseClient.from('contacts').select('id, requester_id').eq('addressee_id',session.user.id).eq('status','pending');
-    if(!rows||rows.length===0){rl.innerHTML='<div class="panel-empty">Tidak ada.</div>';return;}
+    if(!rows||rows.length===0){rl.innerHTML='<div class="panel-empty"><div class="icon"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"/></svg></div>Tidak ada permintaan pertemanan.</div>';return;}
     const rIds=rows.map(r=>r.requester_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',rIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
-    rl.innerHTML=rows.map(r=>`<div class="req-item"><div class="avatar" style="background:${colorFor(r.requester_id)}">${initials(pMap[r.requester_id])}</div><div class="info"><div class="uname">@${pMap[r.requester_id]}</div><div class="sub">Permintaan</div></div><div class="req-actions"><button class="btn-accept" onclick="respondReq('${r.id}','accepted',this)">Terima</button><button class="btn-decline" onclick="respondReq('${r.id}','declined',this)">Tolak</button></div></div>`).join('');
+    rl.innerHTML=rows.map(r=>`<div class="req-item"><div class="avatar" style="background:${colorFor(r.requester_id)}">${initials(pMap[r.requester_id])}</div><div class="info"><div class="uname">@${pMap[r.requester_id]}</div><div class="sub">Ingin berteman dengan kamu</div></div><div class="req-actions"><button class="btn-accept" onclick="respondReq('${r.id}','accepted',this)">✓ Terima</button><button class="btn-decline" onclick="respondReq('${r.id}','declined',this)">Tolak</button></div></div>`).join('');
   }
   window.respondReq=async(id,st,btn)=>{
     const item=btn.closest('.req-item');item.querySelectorAll('button').forEach(b=>b.disabled=true);
     await supabaseClient.from('contacts').update({status:st,seen_by_requester:false}).eq('id',id);
-    item.style.opacity='0.4';setTimeout(()=>{item.remove();refreshNotifBadge();},300);
+    item.classList.add('removing');setTimeout(()=>{item.remove();refreshNotifBadge();},300);
   };
   async function loadUpdates(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const ul=document.getElementById('updateList');ul.innerHTML=skeletonRow().repeat(3);
     const {data:rows}=await supabaseClient.from('contacts').select('id, addressee_id, status, seen_by_requester').eq('requester_id',session.user.id).in('status',['accepted','declined']).order('id',{ascending:false});
-    if(!rows||rows.length===0){ul.innerHTML='<div class="panel-empty">Tidak ada.</div>';return;}
+    if(!rows||rows.length===0){ul.innerHTML='<div class="panel-empty"><div class="icon"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="var(--muted)" stroke-width="1.6"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>Belum ada pembaruan.</div>';return;}
     const oIds=rows.map(r=>r.addressee_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
     ul.innerHTML=rows.map(r=>`<div class="notif-item ${r.seen_by_requester?'':'unseen'}"><div class="avatar" style="background:${colorFor(r.addressee_id)}">${initials(pMap[r.addressee_id])}</div><div class="info"><div class="uname">@${pMap[r.addressee_id]}</div><div class="sub">${r.status==='accepted'?'✅ Diterima':'❌ Ditolak'}</div></div>${r.seen_by_requester?'':'<span class="status-dot new"></span>'}</div>`).join('');
     const uIds=rows.filter(r=>!r.seen_by_requester).map(r=>r.id);if(uIds.length>0){await supabaseClient.from('contacts').update({seen_by_requester:true}).in('id',uIds);refreshNotifBadge();}
