@@ -148,15 +148,22 @@
     return `<svg viewBox="0 0 16 15" width="13" height="12" fill="none" stroke="#8696a0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L14 3"/></svg>`;
   }
   async function init(){
-    if(!peerId){window.location.href='index.html';return;}
-    const {data:{session}} = await supabaseClient.auth.getSession();
-    if(!session){window.location.replace('login.html');return;}
-    currentUserId=session.user.id;
-    const {data:rel}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
-    if(!rel){msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.6 3-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/><path d="M18 8v5M15.5 10.5h5"/></svg></div><div class="es-title">Belum berteman</div><span>Tambahkan lewat tab Kontak dulu ya.</span></div>`;return;}
-    if(!peerUsername){const {data:prof}=await supabaseClient.from('profiles').select('username').eq('id',peerId).maybeSingle();peerUsername=prof?prof.username:'Pengguna';}
-    peerAvatar.textContent=initials(peerUsername);peerAvatar.style.background=colorFor(peerId);peerUnameEl.textContent='@'+peerUsername;
-    await loadMessages();await markIncomingAsRead();subscribeRealtime();subscribePresence();msgInput.disabled=false;
+    try{
+      if(!peerId){window.location.href='index.html';return;}
+      const {data:{session},error:sessErr} = await supabaseClient.auth.getSession();
+      if(sessErr) throw sessErr;
+      if(!session){window.location.replace('login.html');return;}
+      currentUserId=session.user.id;
+      const {data:rel,error:relErr}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
+      if(relErr) throw relErr;
+      if(!rel){msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.6 3-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/><path d="M18 8v5M15.5 10.5h5"/></svg></div><div class="es-title">Belum berteman</div><span>Tambahkan lewat tab Kontak dulu ya.</span></div>`;return;}
+      if(!peerUsername){const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username').eq('id',peerId).maybeSingle();if(profErr) throw profErr;peerUsername=prof?prof.username:'Pengguna';}
+      peerAvatar.textContent=initials(peerUsername);peerAvatar.style.background=colorFor(peerId);peerUnameEl.textContent='@'+peerUsername;
+      await loadMessages();await markIncomingAsRead();subscribeRealtime();subscribePresence();msgInput.disabled=false;
+    }catch(err){
+      console.error('init error:',err);
+      msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#f15c6d" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div><div class="es-title">Gagal memuat percakapan</div><span>Cek koneksi internet lalu tarik-turun atau buka ulang chat ini.</span></div>`;
+    }
   }
   const peerSubEl=document.getElementById('peerSub'),statusDotEl=document.getElementById('statusDot');let presenceChannel=null;
   function subscribePresence(){
