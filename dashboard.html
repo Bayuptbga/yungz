@@ -70,6 +70,20 @@
   .tabbar .tabitem svg{ width:22px; height:22px; }
   .tabbar .tabitem .badge{ position:absolute; top:4px; right:8px; width:9px; height:9px; border-radius:50%; background:var(--error); border:1.5px solid var(--card-bg); }
   .chatlist{ flex:1; overflow-y:auto; }
+  .skel-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; }
+  .skel-avatar{ width:52px; height:52px; border-radius:50%; flex-shrink:0; background:var(--border); }
+  .skel-lines{ flex:1; display:flex; flex-direction:column; gap:8px; }
+  .skel-line{ height:11px; border-radius:6px; background:var(--border); }
+  .skel-line.w60{ width:60%; }
+  .skel-line.w40{ width:40%; }
+  .skel-avatar,.skel-line{ position:relative; overflow:hidden; }
+  .skel-avatar::after,.skel-line::after{
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    animation:skelShimmer 1.3s ease-in-out infinite;
+  }
+  @keyframes skelShimmer{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
+  @media (prefers-reduced-motion:reduce){ .skel-avatar::after,.skel-line::after{animation:none;} }
   .chat-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
   .chat-item:active{ background:var(--border); }
   .avatar{ width:52px; height:52px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px; color:#fff; }
@@ -194,8 +208,9 @@
     list.innerHTML=chats.map(chat=>`<div class="chat-item" data-uid="${escapeHtml(chat.uid)}" data-uname="${escapeHtml(chat.uname)}"><div class="avatar" style="background:${colorFor(chat.uid)}">${escapeHtml(initials(chat.uname))}</div><div class="chat-main"><div class="chat-top"><div class="chat-name" style="${chat.unread?'font-weight:700;':''}">${escapeHtml(chat.uname)}</div><div style="font-size:11.5px;color:var(--muted);">${escapeHtml(timeLabel(chat.time))}</div></div><div class="chat-bottom">${statusIconHTML(chat)}<div class="chat-msg" style="${chat.unread?'color:var(--ink);font-weight:600;':''}">${escapeHtml(chat.preview)}</div></div></div></div>`).join('');
     document.querySelectorAll('.chat-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
   }
+  function skeletonRow(){return `<div class="skel-item"><div class="skel-avatar"></div><div class="skel-lines"><div class="skel-line w60"></div><div class="skel-line w40"></div></div></div>`;}
   async function loadChats(userId){
-    const list=document.getElementById('chatlist');list.innerHTML='<div class="panel-empty">Memuat...</div>';
+    const list=document.getElementById('chatlist');list.innerHTML=skeletonRow().repeat(6);
     const {data:contactRows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
     const acceptedIds=new Set((contactRows||[]).map(r=>r.requester_id===userId?r.addressee_id:r.requester_id));
     if(acceptedIds.size===0){render([]);return;}
@@ -246,7 +261,7 @@
   });
   async function loadContacts(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
-    const cList=document.getElementById('contactList');cList.innerHTML='<div class="panel-empty">Memuat...</div>';
+    const cList=document.getElementById('contactList');cList.innerHTML=skeletonRow().repeat(4);
     const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
     if(!rows||rows.length===0){cList.innerHTML='<div class="panel-empty">Belum ada kontak.</div>';return;}
     const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
@@ -255,7 +270,7 @@
     document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
   }
   async function loadRequests(){
-    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const rl=document.getElementById('reqList');rl.innerHTML='<div class="panel-empty">Memuat...</div>';
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const rl=document.getElementById('reqList');rl.innerHTML=skeletonRow().repeat(3);
     const {data:rows}=await supabaseClient.from('contacts').select('id, requester_id').eq('addressee_id',session.user.id).eq('status','pending');
     if(!rows||rows.length===0){rl.innerHTML='<div class="panel-empty">Tidak ada.</div>';return;}
     const rIds=rows.map(r=>r.requester_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',rIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
@@ -267,7 +282,7 @@
     item.style.opacity='0.4';setTimeout(()=>{item.remove();refreshNotifBadge();},300);
   };
   async function loadUpdates(){
-    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const ul=document.getElementById('updateList');
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const ul=document.getElementById('updateList');ul.innerHTML=skeletonRow().repeat(3);
     const {data:rows}=await supabaseClient.from('contacts').select('id, addressee_id, status, seen_by_requester').eq('requester_id',session.user.id).in('status',['accepted','declined']).order('id',{ascending:false});
     if(!rows||rows.length===0){ul.innerHTML='<div class="panel-empty">Tidak ada.</div>';return;}
     const oIds=rows.map(r=>r.addressee_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
