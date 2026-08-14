@@ -22,9 +22,7 @@ const APP_SHELL = [
   './akses-ditolak',
   './akses-ditolak.html',
   './manifest.json',
-  './supabaseClient.js',
-  './device-gate.js',
-  './push-notif.js',
+  './app.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png'
