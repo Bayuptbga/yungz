@@ -167,7 +167,7 @@
 <div class="phone">
   <div id="authGate"><div class="spinner"></div></div>
   <div class="appbar">
-    <div class="back" onclick="location.href='dashboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <div class="back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
     <h1 id="pageTitle">Profil</h1>
   </div>
   <div class="content">
@@ -265,6 +265,14 @@
   let currentPin=null;
 
   function getParam(name){return new URLSearchParams(window.location.search).get(name);}
+
+  function goBack(){
+    // Kalau ada riwayat navigasi (misalnya dibuka dari chat.html), kembali ke halaman
+    // sebelumnya persis (termasuk percakapan chat yang sedang dibuka).
+    // Fallback ke dashboard hanya kalau halaman ini dibuka tanpa riwayat sebelumnya.
+    if(window.history.length>1){ window.history.back(); }
+    else { window.location.href='dashboard.html'; }
+  }
   const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   function showConfirm(title,msg,okLabel){
