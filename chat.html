@@ -101,6 +101,13 @@
   .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(83,189,235,0.14); color:#53bdeb; border:1px solid rgba(83,189,235,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
   .e2e-info-close-btn:active{ background:rgba(83,189,235,0.22); }
   .e2e-banner svg{width:14px;height:14px;flex-shrink:0;stroke:#53bdeb;}
+  .keychange-notice{
+    align-self:center; max-width:88%; text-align:center; background:rgba(224,138,0,0.1); border:1px solid rgba(224,138,0,0.28);
+    color:#f0b429; font-size:11.5px; line-height:16px; padding:9px 14px; border-radius:10px; margin:6px 0 12px; flex-shrink:0;
+    display:flex; align-items:center; gap:7px; cursor:pointer;
+  }
+  .keychange-notice svg{width:14px;height:14px;flex-shrink:0;stroke:#f0b429;}
+  .keychange-notice .e2e-learn{font-weight:700;color:#f0b429;text-decoration:underline;}
   .day-sep{
     align-self:center; position:sticky; top:6px; background:rgba(27,42,50,0.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
     color:var(--ink-soft); font-size:11px; font-weight:600; padding:5px 13px; border-radius:20px; margin:12px 0 10px; flex-shrink:0; box-shadow:0 1px 5px rgba(0,0,0,0.2); z-index:3;
@@ -246,6 +253,17 @@
       <button type="button" class="e2e-info-close-btn" id="e2eInfoCloseBtn">Mengerti</button>
     </div>
   </div>
+
+  <!-- Popup info saat kode keamanan enkripsi lawan bicara berubah (mirip notifikasi WhatsApp) -->
+  <div class="e2e-info-overlay" id="keyChangeInfoOverlay">
+    <div class="e2e-info-sheet">
+      <div class="e2e-info-grip"></div>
+      <div class="e2e-info-icon" style="background:rgba(224,138,0,0.14);"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="stroke:#f0b429;"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div>
+      <h3>Kode keamanan berubah</h3>
+      <p id="keyChangeInfoText">Kode keamanan enkripsi kamu dengan kontak ini sudah berubah.</p>
+      <button type="button" class="e2e-info-close-btn" id="keyChangeInfoCloseBtn">Mengerti</button>
+    </div>
+  </div>
   <div class="confirm-overlay" id="confirmOverlay">
     <div class="confirm-box">
       <div class="confirm-title" id="confirmTitle">Konfirmasi</div>
@@ -273,6 +291,10 @@
   const colorPalette = ['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return (u||'?').slice(0,2).toUpperCase();}
+  function escapeHtml(s){const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
+  function keyChangeNoticeHTML(uname){
+    return `<div class="keychange-notice"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg><span>Kode keamanan enkripsi dengan <b>${escapeHtml(uname||'kontak ini')}</b> telah berubah. <span class="e2e-learn">Info lebih lanjut</span>.</span></div>`;
+  }
   function normalizeText(str){if(!str)return'';str=str.replace(/[\r\v\f\u2028\u2029]/g,'\n');const lines=str.split('\n').map(l=>l.replace(/[ \t]+$/,''));const out=[];let blankRun=0;for(const line of lines){if(line.trim()===''){blankRun++;if(blankRun<=1)out.push('');}else{blankRun=0;out.push(line);}}return out.join('\n').trim();}
   function timeLabel(iso){return new Date(iso).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});}
   if(peerId){
@@ -305,9 +327,22 @@
       if(profErr) throw profErr;
       if(!peerUsername) peerUsername=prof?prof.username:'Pengguna';
       peerPublicKeyB64=prof&&prof.public_key?prof.public_key:null;
+      document.getElementById('keyChangeInfoText').textContent='Kode keamanan enkripsi kamu dengan '+(peerUsername||'kontak ini')+' sudah berubah sejak percakapan terakhir. Ini biasanya terjadi kalau dia memasang ulang aplikasi, ganti HP, atau menghapus data aplikasi. Kalau ragu, coba konfirmasi lewat cara lain sebelum membagikan info sensitif.';
+      // ---- Deteksi kode keamanan berubah sejak percakapan terakhir dibuka ----
+      // Bandingkan public key peer yang baru saja diambil dengan yang terakhir
+      // kali "dilihat" di device ini (disimpan di localStorage). Kalau beda dan
+      // sebelumnya memang sudah pernah ada catatan (bukan chat pertama kali),
+      // tampilkan peringatan di dalam chat (mirip notifikasi WhatsApp).
+      const peerKeySeenLS='e2e_peerkey_seen_'+currentUserId+'_'+peerId;
+      let showKeyChangeNotice=false;
+      if(peerPublicKeyB64){
+        const lastSeenKey=localStorage.getItem(peerKeySeenLS);
+        if(lastSeenKey && lastSeenKey!==peerPublicKeyB64) showKeyChangeNotice=true;
+        localStorage.setItem(peerKeySeenLS,peerPublicKeyB64);
+      }
       peerAvatar.textContent=initials(peerUsername);peerAvatar.style.background=colorFor(peerId);peerUnameEl.textContent=peerUsername;
       updateInputAvailability();
-      await loadMessages();await markIncomingAsRead();subscribeRealtime();subscribePresence();subscribePeerKeyChange();
+      await loadMessages(showKeyChangeNotice);await markIncomingAsRead();subscribeRealtime();subscribePresence();subscribePeerKeyChange();
     }catch(err){
       console.error('init error:',err);
       document.getElementById('authGate').style.display='none';
@@ -334,16 +369,17 @@
     if(isOnline){peerSubEl.textContent='Online';peerSubEl.classList.add('online');statusDotEl.classList.add('online');}else{peerSubEl.textContent='Offline';peerSubEl.classList.remove('online');statusDotEl.classList.remove('online');}
   }
   let clearedBefore=null;
-  async function loadMessages(){
+  async function loadMessages(showKeyChangeNotice){
     const {data:clearRow}=await supabaseClient.from('chat_clears').select('cleared_before').eq('user_id',currentUserId).eq('peer_id',peerId).maybeSingle();
     clearedBefore=clearRow?clearRow.cleared_before:null;
     let query=supabaseClient.from('messages').select('id, sender_id, content, created_at, delivered_at, read_at').or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`).order('created_at',{ascending:true});
     if(clearedBefore)query=query.gt('created_at',clearedBefore);
     const {data:rows,error}=await query;
     const banner=`<div class="e2e-banner" id="e2eBanner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Pesan terenkripsi secara end-to-end. Hanya orang di obrolan ini yang bisa membaca atau membagikannya. <span class="e2e-learn">Pelajari selengkapnya</span>.</span></div>`;
-    if(error||!rows||rows.length===0){msgArea.innerHTML=banner+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`;return;}
+    const keyNotice=showKeyChangeNotice?keyChangeNoticeHTML(peerUsername):'';
+    if(error||!rows||rows.length===0){msgArea.innerHTML=banner+keyNotice+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`;return;}
     for(const m of rows){m.content=await E2E.decryptMessage(myPrivateKey,m.content,m.sender_id===currentUserId,peerPublicKeyB64);}
-    msgArea.innerHTML=banner;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});scrollToBottom();
+    msgArea.innerHTML=banner+keyNotice;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});scrollToBottom();
   }
   function appendBubble(m,sending){
     const mine=m.sender_id===currentUserId;const row=document.createElement('div');row.className='bubble-row '+(mine?'mine':'theirs')+(sending?' sending':'');row.dataset.id=m.id;
@@ -358,16 +394,23 @@
   // "mismatch nyangkut" gara-gara peer ganti device. `peerPublicKeyB64` di bawah
   // cuma dipakai sebagai fallback untuk buka pesan lama format v1 (shared-key).
 
-  // ---- Popup "Pelajari selengkapnya" (info enkripsi E2E) ----
-  // Pakai event delegation karena banner di dalam msgArea di-render ulang tiap loadMessages().
+  // ---- Popup "Pelajari selengkapnya" (info enkripsi E2E) & popup kode keamanan berubah ----
+  // Pakai event delegation karena banner/notice di dalam msgArea di-render ulang tiap loadMessages().
   document.addEventListener('click', (e) => {
     if(e.target.closest('#e2eBanner')) document.getElementById('e2eInfoOverlay').classList.add('open');
+    if(e.target.closest('.keychange-notice')) document.getElementById('keyChangeInfoOverlay').classList.add('open');
   });
   document.getElementById('e2eInfoCloseBtn').addEventListener('click', () => {
     document.getElementById('e2eInfoOverlay').classList.remove('open');
   });
   document.getElementById('e2eInfoOverlay').addEventListener('click', (e) => {
     if(e.target.id==='e2eInfoOverlay') document.getElementById('e2eInfoOverlay').classList.remove('open');
+  });
+  document.getElementById('keyChangeInfoCloseBtn').addEventListener('click', () => {
+    document.getElementById('keyChangeInfoOverlay').classList.remove('open');
+  });
+  document.getElementById('keyChangeInfoOverlay').addEventListener('click', (e) => {
+    if(e.target.id==='keyChangeInfoOverlay') document.getElementById('keyChangeInfoOverlay').classList.remove('open');
   });
   async function markIncomingAsRead(){const n=new Date().toISOString();await supabaseClient.from('messages').update({delivered_at:n,read_at:n}).eq('sender_id',peerId).eq('receiver_id',currentUserId).is('read_at',null);}
   function subscribeRealtime(){
@@ -395,12 +438,12 @@
         const newKey=p.new.public_key;
         if(!newKey || newKey===peerPublicKeyB64) return;
         peerPublicKeyB64=newKey;
+        localStorage.setItem('e2e_peerkey_seen_'+currentUserId+'_'+peerId,newKey);
         updateInputAvailability();
         if(msgArea.querySelector('.empty-state')===null){
-          const sep=document.createElement('div');
-          sep.className='day-sep';
-          sep.textContent='🔒 Kode keamanan enkripsi dengan '+(peerUsername||'kontak ini')+' telah diperbarui';
-          msgArea.appendChild(sep);
+          const div=document.createElement('div');
+          div.innerHTML=keyChangeNoticeHTML(peerUsername);
+          msgArea.appendChild(div.firstElementChild);
           scrollToBottom();
         }
       }).subscribe();
