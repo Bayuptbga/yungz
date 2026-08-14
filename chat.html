@@ -127,6 +127,20 @@
   .bubble-row.theirs .bubble{ background:var(--card-bg); border:1px solid var(--border); border-top-left-radius:4px; }
   .bubble .txt{ align-self:stretch; min-width:36px; text-align:left; white-space:pre-wrap; word-wrap:break-word; }
   .bubble .meta{ display:flex; align-items:center; gap:4px; margin-top:3px; font-size:10.5px; color:var(--ink-soft); white-space:nowrap; }
+  .bubble-row.pressing .bubble{ transform:scale(0.96); transition:transform .12s ease; }
+  .reply-quote{ align-self:stretch; display:flex; flex-direction:column; gap:1px; padding:6px 9px; margin-bottom:5px; border-radius:7px; background:rgba(255,255,255,0.07); border-left:3px solid #53bdeb; cursor:pointer; max-width:100%; }
+  .bubble-row.mine .reply-quote{ border-left-color:#5fd6b0; background:rgba(0,0,0,0.15); }
+  .reply-quote .rq-name{ font-size:12px; font-weight:700; color:#53bdeb; }
+  .bubble-row.mine .reply-quote .rq-name{ color:#5fd6b0; }
+  .reply-quote .rq-text{ font-size:12.5px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bubble-row.highlight .bubble{ animation:replyFlash 1s ease; }
+  @keyframes replyFlash{ 0%{ box-shadow:0 0 0 2px #53bdeb; } 100%{ box-shadow:none; } }
+  .reply-bar{ display:none; align-items:center; gap:10px; padding:9px 12px; background:var(--card-bg); border-top:1px solid var(--border); border-left:3px solid #53bdeb; flex-shrink:0; }
+  .reply-bar.show{ display:flex; }
+  .reply-bar .rb-body{ flex:1; min-width:0; }
+  .reply-bar .rb-name{ font-size:12.5px; font-weight:700; color:#53bdeb; }
+  .reply-bar .rb-text{ font-size:12.5px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
+  .reply-bar .rb-close{ cursor:pointer; padding:6px; color:var(--muted); flex-shrink:0; display:flex; }
   .empty-state{ margin:auto; text-align:center; color:var(--muted); font-size:13.5px; padding:32px 30px; display:flex; flex-direction:column; align-items:center; gap:12px; }
   .empty-state .es-icon{ width:54px;height:54px; border-radius:50%; background:var(--card-bg); display:flex;align-items:center;justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
   .empty-state .es-title{ font-size:14px; font-weight:600; color:var(--ink); }
@@ -314,6 +328,13 @@
     </div>
   </div>
 
+  <div class="reply-bar" id="replyBar">
+    <div class="rb-body">
+      <div class="rb-name" id="rbName">Membalas</div>
+      <div class="rb-text" id="rbText"></div>
+    </div>
+    <div class="rb-close" id="rbClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+  </div>
   <div class="input-bar">
     <textarea id="msgInput" rows="1" placeholder="Ketik pesan..." disabled></textarea>
     <button class="send-btn" id="sendBtn" disabled><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
@@ -327,6 +348,9 @@
   let currentUserId = null; let peerUsername = params.get('uname') || '';
   let myPrivateKey = null, myPublicKeyB64 = null, peerPublicKeyB64 = null;
   const msgArea = document.getElementById('msgArea'), msgInput = document.getElementById('msgInput'), sendBtn = document.getElementById('sendBtn'), peerAvatar = document.getElementById('peerAvatar'), peerUnameEl = document.getElementById('peerUname');
+  const replyBar = document.getElementById('replyBar'), rbName = document.getElementById('rbName'), rbText = document.getElementById('rbText'), rbClose = document.getElementById('rbClose');
+  const messagesById = new Map(); // id -> {id, sender_id, content}  (buat render kutipan reply)
+  let replyingTo = null; // {id, sender_id, content} pesan yang sedang dibalas, atau null
   const colorPalette = ['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return (u||'?').slice(0,2).toUpperCase();}
@@ -415,7 +439,7 @@
   async function loadMessages(showKeyChangeNotice){
     const {data:clearRow}=await supabaseClient.from('chat_clears').select('cleared_before').eq('user_id',currentUserId).eq('peer_id',peerId).maybeSingle();
     clearedBefore=clearRow?clearRow.cleared_before:null;
-    let query=supabaseClient.from('messages').select('id, sender_id, content, created_at, delivered_at, read_at').or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`).order('created_at',{ascending:true});
+    let query=supabaseClient.from('messages').select('id, sender_id, content, created_at, delivered_at, read_at, reply_to_id').or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`).order('created_at',{ascending:true});
     if(clearedBefore)query=query.gt('created_at',clearedBefore);
     const {data:rows,error}=await query;
     const banner=`<div class="e2e-banner" id="e2eBanner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Pesan terenkripsi secara end-to-end. Hanya orang di obrolan ini yang bisa membaca atau membagikannya. <span class="e2e-learn">Pelajari selengkapnya</span>.</span></div>`;
@@ -426,12 +450,56 @@
     if(keyNotice){const div=document.createElement('div');div.innerHTML=keyNotice;msgArea.appendChild(div.firstElementChild);}
     scrollToBottom();
   }
+  function replyQuoteHTML(replyToId){
+    if(!replyToId) return '';
+    const q=messagesById.get(replyToId);
+    if(!q) return `<div class="reply-quote" data-jump="${replyToId}"><div class="rq-name">Pesan asli</div><div class="rq-text">Pesan tidak tersedia</div></div>`;
+    const who=q.sender_id===currentUserId?'Anda':(peerUsername||'Kontak');
+    return `<div class="reply-quote" data-jump="${replyToId}"><div class="rq-name">${escapeHtml(who)}</div><div class="rq-text">${escapeHtml(normalizeText(q.content).slice(0,120))}</div></div>`;
+  }
   function appendBubble(m,sending){
     const mine=m.sender_id===currentUserId;const row=document.createElement('div');row.className='bubble-row '+(mine?'mine':'theirs')+(sending?' sending':'');row.dataset.id=m.id;
-    row.innerHTML=`<div class="bubble"><div class="txt"></div><div class="meta"><span>${timeLabel(m.created_at)}</span>${mine?`<span class="tick">${tickSvg(m.delivered_at,m.read_at)}</span>`:''}</div></div>`;
+    row.innerHTML=`<div class="bubble">${replyQuoteHTML(m.reply_to_id)}<div class="txt"></div><div class="meta"><span>${timeLabel(m.created_at)}</span>${mine?`<span class="tick">${tickSvg(m.delivered_at,m.read_at)}</span>`:''}</div></div>`;
     row.querySelector('.txt').textContent=normalizeText(m.content);msgArea.appendChild(row);
+    if(m.id && !String(m.id).startsWith('temp-')) messagesById.set(m.id,{id:m.id,sender_id:m.sender_id,content:m.content});
+    bindBubblePress(row,m);
   }
   function scrollToBottom(){msgArea.scrollTop=msgArea.scrollHeight;}
+
+  // ---- Balas pesan: tekan-tahan (long press) bubble untuk mulai membalas ----
+  function startReply(m){
+    if(!m||!m.id||String(m.id).startsWith('temp-'))return; // jangan bisa balas pesan yg belum terkirim
+    replyingTo={id:m.id,sender_id:m.sender_id,content:m.content};
+    rbName.textContent=m.sender_id===currentUserId?'Membalas Anda':'Membalas '+(peerUsername||'kontak');
+    rbText.textContent=normalizeText(m.content).slice(0,140);
+    replyBar.classList.add('show');msgInput.focus();
+    if(navigator.vibrate)navigator.vibrate(30);
+  }
+  function cancelReply(){replyingTo=null;replyBar.classList.remove('show');}
+  rbClose.addEventListener('click',cancelReply);
+  function bindBubblePress(row,m){
+    let pressTimer=null,moved=false;
+    const clearTimer=()=>{if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}row.classList.remove('pressing');};
+    row.addEventListener('touchstart',()=>{
+      moved=false;row.classList.add('pressing');
+      pressTimer=setTimeout(()=>{startReply(m);row.classList.remove('pressing');},480);
+    },{passive:true});
+    row.addEventListener('touchmove',()=>{moved=true;clearTimer();},{passive:true});
+    row.addEventListener('touchend',clearTimer,{passive:true});
+    row.addEventListener('touchcancel',clearTimer,{passive:true});
+    // fallback buat testing di browser desktop (mouse)
+    row.addEventListener('mousedown',()=>{pressTimer=setTimeout(()=>startReply(m),480);});
+    row.addEventListener('mouseup',clearTimer);row.addEventListener('mouseleave',clearTimer);
+  }
+  // Ketuk kutipan di dalam bubble -> lompat & sorot pesan aslinya
+  msgArea.addEventListener('click',(e)=>{
+    const q=e.target.closest('.reply-quote');if(!q)return;
+    const targetId=q.dataset.jump;const targetRow=msgArea.querySelector(`.bubble-row[data-id="${targetId}"]`);
+    if(!targetRow)return;
+    targetRow.scrollIntoView({behavior:'smooth',block:'center'});
+    targetRow.classList.remove('highlight');void targetRow.offsetWidth;targetRow.classList.add('highlight');
+    setTimeout(()=>targetRow.classList.remove('highlight'),1000);
+  });
 
   // ---- Catatan: tidak perlu lagi mekanisme retry-fetch-kunci-terbaru di sini.
   // Di skema v2, dekripsi pesan HANYA butuh private key SAYA SENDIRI (tidak
@@ -496,10 +564,11 @@
   }
   async function sendMessage(){
     const text=normalizeText(msgInput.value);if(!text||!myPublicKeyB64||!peerPublicKeyB64)return;msgInput.value='';autoResize();
+    const replyToId=replyingTo?replyingTo.id:null;cancelReply();
     if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';const tempId='temp-'+Date.now();
-    appendBubble({id:tempId,sender_id:currentUserId,content:text,created_at:new Date().toISOString()},true);scrollToBottom();
+    appendBubble({id:tempId,sender_id:currentUserId,content:text,created_at:new Date().toISOString(),reply_to_id:replyToId},true);scrollToBottom();
     const encrypted=await E2E.encryptMessage(myPublicKeyB64,peerPublicKeyB64,text);
-    const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted}).select().single();
+    const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted,reply_to_id:replyToId}).select().single();
     msgInput.focus();const tempRow=msgArea.querySelector(`[data-id="${tempId}"]`);
     if(error){if(tempRow){tempRow.classList.add('send-failed');tempRow.classList.remove('sending');}msgInput.value=text;return;}
     if(tempRow)tempRow.remove();data.content=text;appendBubble(data);
@@ -528,6 +597,7 @@
     clearedBefore=null;
     await supabaseClient.from('chat_clears').delete().eq('user_id',currentUserId).eq('peer_id',peerId);
     localStorage.removeItem('e2e_keychange_notice_'+currentUserId+'_'+peerId);
+    messagesById.clear();cancelReply();
     msgArea.innerHTML=`<div class="empty-state"><span>Belum ada pesan.</span></div>`;
   });
   document.getElementById('menuPing').addEventListener('click',async(e)=>{
