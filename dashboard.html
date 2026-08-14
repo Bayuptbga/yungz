@@ -46,18 +46,18 @@
   .ptr-spinner{ width:22px; height:22px; border-radius:50%; border:2.5px solid var(--border); border-top-color:var(--border); }
   .ptr-indicator.loading .ptr-spinner{ border-top-color:#53bdeb; animation:authSpin .7s linear infinite; }
   .appbar,.tabbar{flex-shrink:0;}
-  .appbar{ background:var(--bbm-blue); color:#fff; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; }
+  .appbar{ position:relative; background:var(--bbm-blue); color:#fff; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; }
   .appbar .left{ display:flex; align-items:center; gap:18px; }
   .appbar .hamburger{ display:flex; flex-direction:column; gap:4px; cursor:pointer; }
   .appbar .hamburger span{ width:22px; height:2.5px; background:#fff; border-radius:2px; }
   .appbar h1{ margin:0; font-size:22px; font-weight:500; }
   .appbar .right{ display:flex; align-items:center; gap:20px; }
   .appbar .icon-btn{ cursor:pointer; display:flex; align-items:center; justify-content:center; }
-  .search-bar{ display:none; align-items:center; gap:10px; background:var(--bg); padding:10px 12px; flex-shrink:0; }
+  .search-bar{ display:none; align-items:center; gap:10px; background:var(--bbm-blue); padding:14px 16px; flex-shrink:0; position:absolute; inset:0; z-index:5; }
   .search-bar.show{ display:flex; }
-  .search-bar .search-close{ cursor:pointer; color:var(--ink); display:flex; align-items:center; justify-content:center; flex-shrink:0; width:32px; height:32px; }
-  .search-bar .search-wrap{ flex:1; position:relative; display:flex; align-items:center; background:var(--card-bg); border-radius:999px; padding:0 16px; height:44px; }
-  .search-bar input{ flex:1; background:transparent; border:none; color:var(--ink); font-size:16.5px; outline:none; font-family:inherit; caret-color:#53bdeb; }
+  .search-bar .search-close{ cursor:pointer; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; width:32px; height:32px; }
+  .search-bar .search-wrap{ flex:1; position:relative; display:flex; align-items:center; background:var(--bbm-blue-light); border-radius:999px; padding:0 16px; height:40px; }
+  .search-bar input{ flex:1; background:transparent; border:none; color:#fff; font-size:16.5px; outline:none; font-family:inherit; caret-color:#53bdeb; }
   .search-bar input::placeholder{ color:var(--muted); }
   .no-results{ padding:40px 24px; text-align:center; color:var(--muted); font-size:13.5px; }
   .drawer-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:40; }
@@ -307,10 +307,10 @@
   <div class="appbar">
     <div class="left"><div class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></div><div><h1>Private Chat</h1></div></div>
     <div class="right"><div class="icon-btn" id="searchOpenBtn" title="Cari"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div></div>
-  </div>
-  <div class="search-bar" id="searchBar">
-    <div class="search-close" id="searchCloseBtn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
-    <div class="search-wrap"><input type="text" id="searchInput" placeholder="Cari..."></div>
+    <div class="search-bar" id="searchBar">
+      <div class="search-close" id="searchCloseBtn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
+      <div class="search-wrap"><input type="text" id="searchInput" placeholder="Cari..."></div>
+    </div>
   </div>
   <div class="drawer-overlay" id="drawerOverlay"></div>
   <div class="drawer" id="drawer">
