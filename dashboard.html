@@ -152,6 +152,18 @@
   .pin-modal .pm-pin{ font-size:26px; font-weight:800; letter-spacing:4px; color:var(--ink); font-family:'Courier New',monospace; }
   .pin-modal .pm-copy{ font-size:12.5px; color:#53bdeb; font-weight:600; background:none; border:none; cursor:pointer; margin-bottom:14px; padding:6px 10px; }
   .pin-modal .pm-close{ width:100%; padding:11px 0; background:var(--bbm-blue); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
+  .cprev-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:70; padding:24px; }
+  .cprev-overlay.open{ opacity:1; pointer-events:auto; }
+  .cprev-card{ background:var(--card-bg); border-radius:16px; padding:28px 22px 14px; width:100%; max-width:290px; text-align:center; border:1px solid var(--border); }
+  .cprev-avatar{ width:84px; height:84px; border-radius:50%; margin:0 auto 14px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:30px; }
+  .cprev-uname{ font-size:17px; font-weight:700; color:var(--ink); word-break:break-word; }
+  .cprev-sub{ font-size:12.5px; color:var(--muted); margin-top:3px; margin-bottom:20px; }
+  .cprev-actions{ display:flex; flex-direction:column; gap:8px; }
+  .cprev-btn{ width:100%; padding:12px 0; border-radius:10px; font-size:14.5px; font-weight:700; cursor:pointer; border:none; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .cprev-btn svg{ width:18px; height:18px; flex-shrink:0; }
+  .cprev-btn.primary{ background:var(--bbm-blue); color:#fff; }
+  .cprev-btn.secondary{ background:var(--bg); color:var(--ink); border:1px solid var(--border); }
+  .cprev-cancel{ width:100%; padding:13px 0; margin-top:6px; background:none; border:none; border-top:1px solid var(--border); color:var(--muted); font-size:14px; font-weight:600; cursor:pointer; }
   .tab-panel{ display:none; flex:1; min-height:0; flex-direction:column; overflow-y:auto; padding-bottom:calc(70px + env(safe-area-inset-bottom)); }
   .tab-panel.active{display:flex; animation:panelFadeIn .18s ease both;}
   #panelChats.active{display:flex;flex-direction:column;flex:1;min-height:0;position:relative;}
@@ -369,6 +381,18 @@
         <div class="addpage-footer"><button class="btn-primary-full" id="sendRequestBtn" disabled>Kirim Permintaan</button></div>
       </div>
     </div>
+  <div class="cprev-overlay" id="cprevOverlay">
+    <div class="cprev-card">
+      <div class="cprev-avatar" id="cprevAvatar">?</div>
+      <div class="cprev-uname" id="cprevUname">—</div>
+      <div class="cprev-sub">Kontak</div>
+      <div class="cprev-actions">
+        <button class="cprev-btn primary" id="cprevSendBtn"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg>Kirim Pesan</button>
+        <button class="cprev-btn secondary" id="cprevProfilBtn"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Lihat Profil</button>
+      </div>
+      <button class="cprev-cancel" id="cprevCancelBtn">Batal</button>
+    </div>
+  </div>
   <div class="tabbar">
     <div class="tabitem active" id="tabChats"><svg viewBox="0 0 24 24" fill="var(--ink)" stroke="none"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg><span class="tlabel">Chat</span></div>
     <div class="tabitem" id="tabStatus"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M4 4v5h5M20 20v-5h-5"/><path d="M4.5 9a8 8 0 0114-4.5M19.5 15a8 8 0 01-14 4.5"/></svg><span class="tlabel">Status</span></div>
@@ -472,7 +496,7 @@
     cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml(pMap[id])}"><div class="avatar" data-profuid="${escapeHtml(id)}" style="background:${colorFor(id)}">${escapeHtml(initials(pMap[id]))}</div><div class="uname">${escapeHtml(pMap[id])}</div></div>`).join('');
     if(cCount)cCount.textContent=oIds.length;
     document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
-    document.querySelectorAll('.contact-item .avatar').forEach(a=>a.addEventListener('click',e=>{e.stopPropagation();window.location.href=`profil.html?uid=${a.dataset.profuid}`;}));
+    document.querySelectorAll('.contact-item .avatar').forEach(a=>a.addEventListener('click',e=>{e.stopPropagation();openContactPreview(a.dataset.profuid,a.closest('.contact-item').dataset.uname);}));
   }
   function timeAgo(iso){
     const diffMin=Math.max(0,Math.round((Date.now()-new Date(iso).getTime())/60000));
@@ -744,6 +768,19 @@
   document.getElementById('drawerDataPenyimpanan').addEventListener('click',()=>window.location.href='data-penyimpanan.html');
   document.getElementById('drawerPrivasiKeamanan').addEventListener('click',()=>window.location.href='privasi-keamanan.html');
   document.getElementById('fabNewChat').addEventListener('click',()=>switchTab('kontak'));
+  let cprevUid=null,cprevUname=null;
+  function openContactPreview(uid,uname){
+    cprevUid=uid;cprevUname=uname;
+    const av=document.getElementById('cprevAvatar');
+    av.textContent=initials(uname);av.style.background=colorFor(uid);
+    document.getElementById('cprevUname').textContent=uname;
+    document.getElementById('cprevOverlay').classList.add('open');
+  }
+  function closeContactPreview(){document.getElementById('cprevOverlay').classList.remove('open');cprevUid=null;cprevUname=null;}
+  document.getElementById('cprevSendBtn').addEventListener('click',()=>{if(cprevUid)window.location.href=`chat.html?uid=${cprevUid}&uname=${encodeURIComponent(cprevUname)}`;});
+  document.getElementById('cprevProfilBtn').addEventListener('click',()=>{if(cprevUid)window.location.href=`profil.html?uid=${cprevUid}`;});
+  document.getElementById('cprevCancelBtn').addEventListener('click',closeContactPreview);
+  document.getElementById('cprevOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeContactPreview();});
   function openAddModal(){
     document.getElementById('searchMsg').textContent='';
     document.getElementById('foundCard').classList.remove('show');
