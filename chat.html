@@ -132,7 +132,7 @@
   .empty-state .es-title{ font-size:14px; font-weight:600; color:var(--ink); }
   .loading-spinner{ width:30px;height:30px; border:3px solid var(--border); border-top-color:#005c4b; border-radius:50%; animation:spin .75s linear infinite; }
   @keyframes spin{ to{ transform:rotate(360deg); } }
-  .input-bar{ display:flex; align-items:flex-end; gap:8px; padding:10px 10px calc(10px + env(safe-area-inset-bottom)); background:var(--card-bg); border-top:1px solid var(--border); flex-shrink:0; }
+  .input-bar{ display:flex; align-items:flex-end; gap:8px; padding:10px 10px calc(10px + env(safe-area-inset-bottom)); background:transparent; border-top:1px solid var(--border); flex-shrink:0; }
   .input-bar textarea{ flex:1; resize:none; border:1.5px solid var(--border); border-radius:22px; padding:11px 17px; font-size:14.5px; font-family:inherit; outline:none; max-height:100px; background:var(--bg); color:var(--ink); transition:border-color .15s ease; }
   .input-bar textarea::placeholder{ color:var(--muted); }
   .input-bar textarea:disabled{background:var(--border);color:var(--muted);}
