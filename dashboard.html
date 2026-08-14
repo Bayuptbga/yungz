@@ -652,7 +652,14 @@
   }
   let statusAutoRefresh=null;
   document.getElementById('tabChats').addEventListener('click',()=>switchTab('chats'));document.getElementById('tabStatus').addEventListener('click',()=>switchTab('status'));document.getElementById('tabKontak').addEventListener('click',()=>switchTab('kontak'));document.getElementById('tabNotif').addEventListener('click',()=>switchTab('notif'));
-  window.addEventListener('popstate',()=>{if(onNonChatTab){onNonChatTab=false;switchTab('chats',true);}});
+  window.addEventListener('popstate',(e)=>{
+    // Cek isi state history-nya: kalau memang ada tab non-chat yang tersimpan
+    // (misalnya balik dari profil.html ke dashboard saat tab Kontak aktif),
+    // kembalikan ke tab itu -- bukan selalu paksa ke tab Chat.
+    const stateTab=e.state&&e.state.tab;
+    if(stateTab){ onNonChatTab=true; switchTab(stateTab,true); }
+    else if(onNonChatTab){ onNonChatTab=false; switchTab('chats',true); }
+  });
 
   // ---- Pencarian di appbar: cari kontak/chat/status sesuai tab yang lagi aktif ----
   const searchPlaceholders={chats:'Cari chat...',kontak:'Cari kontak...',status:'Cari status...'};
