@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Private Chat - Kebijakan Privasi</title>
+<meta name="theme-color" content="#1b2a32">
+<style>
+  :root{
+    --bbm-blue-dark:#0b141a;
+    --bbm-blue:#1b2a32;
+    --bg:#121b22;
+    --card-bg:#1b2a32;
+    --ink:#e9edf0;
+    --muted:#8696a0;
+    --border:#2a3942;
+    --accent:#53bdeb;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink);
+    display:flex; justify-content:center; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ width:100%; max-width:720px; padding:0 0 60px; }
+  .appbar{ background:var(--bbm-blue); color:#fff; padding:22px 20px; position:sticky; top:0; }
+  .appbar h1{ margin:0; font-size:21px; font-weight:700; }
+  .appbar p{ margin:6px 0 0; font-size:12.5px; color:var(--muted); }
+  .content{ padding:22px 20px; }
+  .card{ background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:18px 20px; margin-bottom:16px; }
+  h2{ font-size:15px; margin:0 0 10px; color:var(--accent); }
+  p, li{ font-size:13.5px; line-height:1.7; color:var(--ink); }
+  ul{ margin:8px 0; padding-left:20px; }
+  .muted{ color:var(--muted); font-size:12.5px; }
+  a{ color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="appbar">
+    <h1>Kebijakan Privasi</h1>
+    <p>Private Chat — berlaku mulai 14 Agustus 2026</p>
+  </div>
+  <div class="content">
+
+    <div class="card">
+      <p>Private Chat ("Aplikasi") adalah aplikasi perpesanan yang mengutamakan privasi. Kebijakan ini menjelaskan data apa saja yang kami kumpulkan, bagaimana data tersebut digunakan, dan bagaimana kami melindunginya.</p>
+    </div>
+
+    <div class="card">
+      <h2>1. Data yang Kami Kumpulkan</h2>
+      <ul>
+        <li><b>Akun:</b> nama pengguna (username) dan kata sandi. Kami tidak mewajibkan nomor telepon atau email pribadi — sistem membuat alamat email internal otomatis hanya untuk keperluan autentikasi.</li>
+        <li><b>Kontak & PIN pencarian:</b> daftar kontak yang Anda tambahkan dan kode PIN pencarian pengguna.</li>
+        <li><b>Pesan:</b> pesan yang Anda kirim dan terima, terenkripsi end-to-end (lihat bagian 3).</li>
+        <li><b>Status:</b> teks status yang Anda bagikan, aktif selama 24 jam dan hanya terlihat oleh kontak yang sudah saling menerima.</li>
+        <li><b>Notifikasi push:</b> token perangkat untuk mengirim notifikasi, jika Anda mengaktifkan izin notifikasi.</li>
+        <li><b>Data teknis dasar:</b> status online/offline dan waktu aktivitas, untuk fitur presence dan centang terkirim/dibaca.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>2. Yang TIDAK Kami Kumpulkan</h2>
+      <p>Kami tidak meminta akses kamera, mikrofon, lokasi, atau galeri. Kami tidak menampilkan iklan dan tidak menjual atau membagikan data Anda kepada pihak ketiga untuk kepentingan pemasaran.</p>
+    </div>
+
+    <div class="card">
+      <h2>3. Enkripsi End-to-End</h2>
+      <p>Isi pesan dienkripsi end-to-end (ECDH P-256 + AES-GCM 256-bit) di perangkat Anda sebelum dikirim. Kunci privat enkripsi disimpan lokal di perangkat Anda, bukan di server kami, sehingga secara teknis kami tidak dapat membaca isi percakapan Anda.</p>
+    </div>
+
+    <div class="card">
+      <h2>4. Penyimpanan Data</h2>
+      <p>Data akun, kontak, dan metadata pesan disimpan pada infrastruktur database pihak ketiga (Supabase) yang kami gunakan sebagai penyedia backend. Kata sandi disimpan dalam bentuk terenkripsi (hashed), tidak dalam bentuk teks biasa.</p>
+    </div>
+
+    <div class="card">
+      <h2>5. Penghapusan Data</h2>
+      <p>Anda dapat menghapus riwayat chat dan kontak kapan saja langsung dari dalam Aplikasi. Untuk permintaan penghapusan akun secara permanen, silakan hubungi kami melalui kontak di bagian 7.</p>
+    </div>
+
+    <div class="card">
+      <h2>6. Anak-Anak</h2>
+      <p>Aplikasi ini tidak ditujukan untuk anak di bawah 13 tahun, dan kami tidak dengan sengaja mengumpulkan data dari anak di bawah usia tersebut.</p>
+    </div>
+
+    <div class="card">
+      <h2>7. Kontak</h2>
+      <p>Jika ada pertanyaan seputar kebijakan privasi ini atau ingin mengajukan penghapusan akun, silakan hubungi:</p>
+      <p><b>Email:</b> bayupotabuga@gmail.com</p>
+    </div>
+
+    <div class="card">
+      <h2>8. Perubahan Kebijakan</h2>
+      <p class="muted">Kebijakan ini dapat diperbarui sewaktu-waktu. Perubahan akan dipublikasikan di halaman ini beserta tanggal pembaruan.</p>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
