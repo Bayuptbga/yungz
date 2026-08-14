@@ -478,7 +478,7 @@
     const diffMin=Math.max(0,Math.round((Date.now()-new Date(iso).getTime())/60000));
     if(diffMin<1)return 'Baru saja';
     if(diffMin<60)return diffMin+' menit lalu';
-    const diffH=Math.round(diffMin/60);
+    const diffH=Math.floor(diffMin/60);
     if(diffH<24)return diffH+' jam lalu';
     return timeLabel(iso);
   }
@@ -644,7 +644,13 @@
     closeSearch();
     closeAddModal();
     if(name==='kontak')loadContacts();if(name==='notif'){loadNotifications();}if(name==='status')loadStatusTab();if(name==='chats')supabaseClient.auth.getSession().then(({data:{session}})=>{if(session)loadChats(session.user.id);});
+    // Auto-refresh tab Status tiap 1 menit selama tab ini aktif, biar status
+    // yang sudah lewat 24 jam otomatis hilang tanpa perlu reload manual.
+    // Interval dihentikan begitu pindah ke tab lain supaya tidak boros resource.
+    if(statusAutoRefresh){clearInterval(statusAutoRefresh);statusAutoRefresh=null;}
+    if(name==='status'){statusAutoRefresh=setInterval(()=>{if(activeTab==='status'&&!document.hidden)loadStatusTab(false);},60000);}
   }
+  let statusAutoRefresh=null;
   document.getElementById('tabChats').addEventListener('click',()=>switchTab('chats'));document.getElementById('tabStatus').addEventListener('click',()=>switchTab('status'));document.getElementById('tabKontak').addEventListener('click',()=>switchTab('kontak'));document.getElementById('tabNotif').addEventListener('click',()=>switchTab('notif'));
   window.addEventListener('popstate',()=>{if(onNonChatTab){onNonChatTab=false;switchTab('chats',true);}});
 
