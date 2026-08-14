@@ -145,12 +145,13 @@
       document.getElementById('statsRow').style.display='none';
       const msgBtn=document.getElementById('msgBtn');
       msgBtn.style.display='flex';
-      const {data:prof} = await supabaseClient.from('profiles').select('username').eq('id', viewUid).maybeSingle();
+      const {data:prof,error:profErr} = await supabaseClient.from('profiles').select('username, created_at').eq('id', viewUid).maybeSingle();
+      if(profErr){ console.error('Gagal memuat profil kontak:',profErr); }
       if(!prof){ document.getElementById('hUname').textContent='Pengguna tidak ditemukan'; document.getElementById('authGate').style.display='none'; return; }
       document.getElementById('hUname').textContent = prof.username;
       document.getElementById('hAvatar').textContent = initials(prof.username);
       document.getElementById('hAvatar').style.background = colorFor(viewUid);
-      document.getElementById('hJoined').style.display='none';
+      document.getElementById('hJoined').textContent = formatJoined(prof.created_at);
       msgBtn.addEventListener('click',()=>{window.location.href=`chat.html?uid=${viewUid}&uname=${encodeURIComponent(prof.username)}`;});
       document.getElementById('authGate').style.display = 'none';
       return;
