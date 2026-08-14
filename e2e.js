@@ -101,7 +101,10 @@ const E2E = (() => {
   }
 
   async function encryptMessage(sharedKey, plaintext) {
-    if (!sharedKey) return plaintext; // fallback, tidak seharusnya kejadian di alur normal
+    // PENTING: jangan pernah fallback ke plaintext di sini. Kalau sharedKey belum
+    // siap, pemanggil HARUS menangani ini sebagai error (jangan sampai pesan
+    // terkirim tanpa enkripsi tanpa disadari).
+    if (!sharedKey) throw new Error('E2E: sharedKey belum tersedia, pesan tidak dienkripsi/dikirim.');
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const enc = new TextEncoder().encode(plaintext);
     const ctBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, sharedKey, enc);
