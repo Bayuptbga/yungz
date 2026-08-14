@@ -89,6 +89,34 @@
   .confirm-ok:active{ background:#e14758; }
   .btn:active{ transform:scale(0.98); }
   .btn svg{ width:17px; height:17px; }
+
+  /* ---- Kartu info keamanan enkripsi end-to-end ---- */
+  .e2e-card{ display:flex; align-items:flex-start; gap:14px; background:linear-gradient(135deg,rgba(83,189,235,0.13),rgba(83,189,235,0.05)); border:1px solid rgba(83,189,235,0.28); border-radius:16px; padding:16px; margin-bottom:22px; cursor:pointer; transition:background-color .15s ease; }
+  .e2e-card:active{ background:rgba(83,189,235,0.16); }
+  .e2e-card-icon{ width:42px; height:42px; border-radius:50%; background:rgba(83,189,235,0.18); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .e2e-card-icon svg{ width:20px; height:20px; stroke:var(--accent); }
+  .e2e-card-body{ flex:1; min-width:0; }
+  .e2e-card-title{ font-size:14.5px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:6px; }
+  .e2e-card-title .e2e-badge{ width:15px; height:15px; border-radius:50%; background:var(--ok); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .e2e-card-title .e2e-badge svg{ width:9px; height:9px; stroke:#0b1a12; stroke-width:3.5; }
+  .e2e-card-desc{ font-size:12.5px; color:var(--muted); line-height:1.5; margin-top:5px; }
+  .e2e-card-link{ font-size:12.5px; font-weight:700; color:var(--accent); margin-top:9px; text-decoration:underline; }
+
+  /* ---- Popup "Pelajari selengkapnya" enkripsi E2E (konsisten dgn chat.html) ---- */
+  .e2e-info-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:flex-end; justify-content:center; z-index:220; opacity:0; pointer-events:none; transition:opacity .2s ease; }
+  .e2e-info-overlay.open{ opacity:1; pointer-events:auto; }
+  .e2e-info-sheet{ width:100%; max-width:420px; background:var(--card-bg); border:1px solid var(--border); border-top-left-radius:22px; border-top-right-radius:22px; padding:10px 24px calc(28px + env(safe-area-inset-bottom)); box-shadow:0 -10px 40px rgba(0,0,0,0.5); transform:translateY(16px); transition:transform .2s ease; text-align:center; }
+  .e2e-info-overlay.open .e2e-info-sheet{ transform:translateY(0); }
+  .e2e-info-grip{ width:36px; height:4px; border-radius:3px; background:var(--border); margin:0 auto 18px; }
+  .e2e-info-icon{ width:64px; height:64px; border-radius:18px; background:rgba(83,189,235,0.14); display:flex; align-items:center; justify-content:center; margin:0 auto 18px; }
+  .e2e-info-icon svg{ width:30px; height:30px; stroke:var(--accent); }
+  .e2e-info-sheet h3{ font-size:18px; font-weight:700; color:var(--ink); margin:0 0 12px; line-height:1.35; }
+  .e2e-info-sheet p{ font-size:13.5px; color:var(--muted); line-height:1.6; margin:0 0 14px; text-align:left; }
+  .e2e-info-sheet .e2e-info-points{ text-align:left; margin:0 0 22px; padding:0; list-style:none; }
+  .e2e-info-sheet .e2e-info-points li{ display:flex; gap:10px; align-items:flex-start; font-size:13px; color:var(--ink); line-height:1.5; margin-bottom:12px; }
+  .e2e-info-sheet .e2e-info-points li svg{ width:16px; height:16px; stroke:var(--accent); flex-shrink:0; margin-top:1px; }
+  .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(83,189,235,0.14); color:var(--accent); border:1px solid rgba(83,189,235,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .e2e-info-close-btn:active{ background:rgba(83,189,235,0.22); }
 </style>
 <script>
 // device-gate (inline, sebelumnya file terpisah)
@@ -153,6 +181,16 @@
       <div class="stat-card"><div class="st-num" id="stStatus">—</div><div class="st-label">Status Aktif</div></div>
     </div>
 
+    <div class="section-title">Keamanan</div>
+    <div class="e2e-card" id="e2eCard">
+      <div class="e2e-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
+      <div class="e2e-card-body">
+        <div class="e2e-card-title">Enkripsi end-to-end<span class="e2e-badge"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></div>
+        <div class="e2e-card-desc" id="e2eCardDesc">Pesanmu di Private Chat dilindungi enkripsi end-to-end.</div>
+        <div class="e2e-card-link">Pelajari Selengkapnya</div>
+      </div>
+    </div>
+
     <div id="ownOnlySection">
     <div class="section-title">Info Akun</div>
     <div class="card">
@@ -184,6 +222,21 @@
         <span>Hapus Kontak</span>
       </button>
     </div>
+  </div>
+</div>
+
+<div class="e2e-info-overlay" id="e2eInfoOverlay">
+  <div class="e2e-info-sheet">
+    <div class="e2e-info-grip"></div>
+    <div class="e2e-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
+    <h3>Enkripsi End-to-End</h3>
+    <p id="e2eInfoText">Semua pesan pribadi di Private Chat dilindungi enkripsi end-to-end secara otomatis.</p>
+    <ul class="e2e-info-points">
+      <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-4z"/></svg><span>Hanya kamu dan lawan bicaramu yang punya kunci untuk membuka pesan. Kunci itu tersimpan di perangkat masing-masing, tidak pernah dikirim ke server.</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M4.9 4.9l14.2 14.2"/></svg><span>Server Private Chat hanya meneruskan pesan yang sudah terenkripsi. Kami tidak bisa membaca isi obrolanmu, kapan pun.</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg><span>Kalau kode keamanan berubah (misalnya lawan bicara ganti HP atau pasang ulang aplikasi), kamu akan diberi tahu di dalam obrolan.</span></li>
+    </ul>
+    <button type="button" class="e2e-info-close-btn" id="e2eInfoCloseBtn">Mengerti</button>
   </div>
 </div>
 
@@ -249,6 +302,8 @@
       document.getElementById('hAvatar').textContent = initials(prof.username);
       document.getElementById('hAvatar').style.background = colorFor(viewUid);
       document.getElementById('hJoined').textContent = formatJoined(prof.created_at);
+      document.getElementById('e2eCardDesc').textContent = 'Pesan antara kamu dan '+prof.username+' dilindungi enkripsi end-to-end.';
+      document.getElementById('e2eInfoText').textContent = 'Semua pesan antara kamu dan '+prof.username+' dilindungi enkripsi end-to-end secara otomatis.';
       msgBtn.addEventListener('click',()=>{window.location.href=`chat.html?uid=${viewUid}&uname=${encodeURIComponent(prof.username)}`;});
       clearChatBtn.addEventListener('click',async()=>{
         const ok=await showConfirm('Hapus Untuk Semua Orang','Semua percakapan ini akan di hapus untuk semua orang','Hapus Permanen');
@@ -277,6 +332,8 @@
       document.getElementById('hAvatar').style.background = colorFor(myUid);
     }
     document.getElementById('hJoined').textContent = formatJoined(session.user.created_at);
+    document.getElementById('e2eCardDesc').textContent = 'Semua pesanmu di Private Chat dilindungi enkripsi end-to-end. Bahkan kami pun tidak bisa membacanya.';
+    document.getElementById('e2eInfoText').textContent = 'Semua pesan pribadi di Private Chat dilindungi enkripsi end-to-end secara otomatis, di setiap obrolan yang kamu punya.';
 
     const {data:cRows} = await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${myUid},addressee_id.eq.${myUid}`);
     document.getElementById('stKontak').textContent = (cRows||[]).length;
@@ -294,6 +351,16 @@
     try{ await navigator.clipboard.writeText(currentPin); btn.textContent='Tersalin ✓'; }
     catch(e){ btn.textContent='Gagal'; }
     setTimeout(()=>{ btn.textContent='Salin'; }, 1600);
+  });
+
+  document.getElementById('e2eCard').addEventListener('click', () => {
+    document.getElementById('e2eInfoOverlay').classList.add('open');
+  });
+  document.getElementById('e2eInfoCloseBtn').addEventListener('click', () => {
+    document.getElementById('e2eInfoOverlay').classList.remove('open');
+  });
+  document.getElementById('e2eInfoOverlay').addEventListener('click', (e) => {
+    if(e.target.id==='e2eInfoOverlay') document.getElementById('e2eInfoOverlay').classList.remove('open');
   });
 </script>
 </body>
