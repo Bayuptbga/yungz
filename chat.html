@@ -141,6 +141,25 @@
   .reply-bar .rb-name{ font-size:12.5px; font-weight:700; color:#53bdeb; }
   .reply-bar .rb-text{ font-size:12.5px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
   .reply-bar .rb-close{ cursor:pointer; padding:6px; color:var(--muted); flex-shrink:0; display:flex; }
+
+  /* ---- Swipe kanan buat balas ---- */
+  .bubble-row{ position:relative; }
+  .bubble-row .bubble{ transition:transform .18s ease; }
+  .bubble-row.no-anim .bubble{ transition:none; }
+  .swipe-reply-icon{ position:absolute; left:8px; top:50%; width:30px;height:30px;border-radius:50%; background:rgba(83,189,235,0.16); display:flex;align-items:center;justify-content:center; opacity:0; transform:translateY(-50%) scale(0.5); transition:opacity .15s ease, transform .15s ease; pointer-events:none; }
+  .swipe-reply-icon.show{ opacity:1; transform:translateY(-50%) scale(1); }
+  .swipe-reply-icon svg{ width:15px;height:15px; }
+
+  /* ---- Menu konteks (tekan-tahan bubble) ---- */
+  .bubble-ctx-backdrop{ position:fixed; inset:0; z-index:149; display:none; }
+  .bubble-ctx-backdrop.open{ display:block; }
+  .bubble-ctx-menu{ position:fixed; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; box-shadow:0 6px 24px rgba(0,0,0,0.5); min-width:190px; overflow:hidden; z-index:150; display:none; }
+  .bubble-ctx-menu.open{ display:block; }
+  .bubble-ctx-menu .item{ padding:13px 16px; font-size:14.5px; color:var(--ink); cursor:pointer; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border); }
+  .bubble-ctx-menu .item:last-child{ border-bottom:none; }
+  .bubble-ctx-menu .item:active{ background:var(--border); }
+  .bubble-ctx-menu .item.danger{ color:#f15c6d; }
+  .bubble-ctx-menu .item svg{ width:18px;height:18px; flex-shrink:0; }
   .empty-state{ margin:auto; text-align:center; color:var(--muted); font-size:13.5px; padding:32px 30px; display:flex; flex-direction:column; align-items:center; gap:12px; }
   .empty-state .es-icon{ width:54px;height:54px; border-radius:50%; background:var(--card-bg); display:flex;align-items:center;justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
   .empty-state .es-title{ font-size:14px; font-weight:600; color:var(--ink); }
@@ -335,6 +354,14 @@
     </div>
     <div class="rb-close" id="rbClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
   </div>
+
+  <div class="bubble-ctx-backdrop" id="bubbleCtxBackdrop"></div>
+  <div class="bubble-ctx-menu" id="bubbleCtxMenu">
+    <div class="item" id="ctxReply"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17l-5-5 5-5"/><path d="M4 12h10a5 5 0 015 5v1"/></svg><span>Balas</span></div>
+    <div class="item" id="ctxCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg><span>Salin</span></div>
+    <div class="item danger" id="ctxDelete" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg><span>Hapus</span></div>
+  </div>
+
   <div class="input-bar">
     <textarea id="msgInput" rows="1" placeholder="Ketik pesan..." disabled></textarea>
     <button class="send-btn" id="sendBtn" disabled><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
@@ -459,7 +486,7 @@
   }
   function appendBubble(m,sending){
     const mine=m.sender_id===currentUserId;const row=document.createElement('div');row.className='bubble-row '+(mine?'mine':'theirs')+(sending?' sending':'');row.dataset.id=m.id;
-    row.innerHTML=`<div class="bubble">${replyQuoteHTML(m.reply_to_id)}<div class="txt"></div><div class="meta"><span>${timeLabel(m.created_at)}</span>${mine?`<span class="tick">${tickSvg(m.delivered_at,m.read_at)}</span>`:''}</div></div>`;
+    row.innerHTML=`<div class="swipe-reply-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17l-5-5 5-5"/><path d="M4 12h10a5 5 0 015 5v1"/></svg></div><div class="bubble">${replyQuoteHTML(m.reply_to_id)}<div class="txt"></div><div class="meta"><span>${timeLabel(m.created_at)}</span>${mine?`<span class="tick">${tickSvg(m.delivered_at,m.read_at)}</span>`:''}</div></div>`;
     row.querySelector('.txt').textContent=normalizeText(m.content);msgArea.appendChild(row);
     if(m.id && !String(m.id).startsWith('temp-')) messagesById.set(m.id,{id:m.id,sender_id:m.sender_id,content:m.content});
     bindBubblePress(row,m);
@@ -478,19 +505,74 @@
   function cancelReply(){replyingTo=null;replyBar.classList.remove('show');}
   rbClose.addEventListener('click',cancelReply);
   function bindBubblePress(row,m){
-    let pressTimer=null,moved=false;
-    const clearTimer=()=>{if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}row.classList.remove('pressing');};
-    row.addEventListener('touchstart',()=>{
-      moved=false;row.classList.add('pressing');
-      pressTimer=setTimeout(()=>{startReply(m);row.classList.remove('pressing');},480);
-    },{passive:true});
-    row.addEventListener('touchmove',()=>{moved=true;clearTimer();},{passive:true});
-    row.addEventListener('touchend',clearTimer,{passive:true});
-    row.addEventListener('touchcancel',clearTimer,{passive:true});
-    // fallback buat testing di browser desktop (mouse)
-    row.addEventListener('mousedown',()=>{pressTimer=setTimeout(()=>startReply(m),480);});
-    row.addEventListener('mouseup',clearTimer);row.addEventListener('mouseleave',clearTimer);
+    const bubbleEl=row.querySelector('.bubble'),iconEl=row.querySelector('.swipe-reply-icon');
+    const SWIPE_THRESHOLD=58,SWIPE_MAX=78,LONGPRESS_MS=450,MOVE_TOLERANCE=8;
+    let startX=0,startY=0,dx=0,dir=null,pressTimer=null;
+    const clearPressTimer=()=>{if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}};
+    const resetSwipe=()=>{row.classList.remove('no-anim');bubbleEl.style.transform='';iconEl.classList.remove('show');};
+    function onStart(x,y){
+      startX=x;startY=y;dx=0;dir=null;row.classList.add('no-anim');
+      pressTimer=setTimeout(()=>{ pressTimer=null; if(dir===null){ if(navigator.vibrate)navigator.vibrate(30); resetSwipe(); openBubbleCtx(m,x,y); } },LONGPRESS_MS);
+    }
+    function onMove(x,y,ev){
+      const ddx=x-startX,ddy=y-startY;
+      if(dir===null){
+        if(Math.abs(ddx)>MOVE_TOLERANCE && Math.abs(ddx)>Math.abs(ddy)){dir='h';clearPressTimer();}
+        else if(Math.abs(ddy)>MOVE_TOLERANCE){dir='v';clearPressTimer();}
+      }
+      if(dir==='h'){
+        if(ev&&ev.cancelable)ev.preventDefault();
+        dx=Math.max(0,Math.min(ddx,SWIPE_MAX));
+        bubbleEl.style.transform=`translateX(${dx}px)`;
+        iconEl.classList.toggle('show',dx>18);
+      }
+    }
+    function onEnd(){
+      clearPressTimer();
+      row.classList.remove('no-anim');
+      if(dir==='h'&&dx>=SWIPE_THRESHOLD){ startReply(m); if(navigator.vibrate)navigator.vibrate(25); }
+      bubbleEl.style.transform='';iconEl.classList.remove('show');
+      dir=null;dx=0;
+    }
+    row.addEventListener('touchstart',(e)=>{const t=e.touches[0];onStart(t.clientX,t.clientY);},{passive:true});
+    row.addEventListener('touchmove',(e)=>{const t=e.touches[0];onMove(t.clientX,t.clientY,e);},{passive:false});
+    row.addEventListener('touchend',onEnd,{passive:true});
+    row.addEventListener('touchcancel',()=>{clearPressTimer();resetSwipe();dir=null;dx=0;},{passive:true});
+    // fallback mouse (testing desktop)
+    row.addEventListener('mousedown',(e)=>onStart(e.clientX,e.clientY));
+    row.addEventListener('mousemove',(e)=>{if(pressTimer!==null||dir==='h')onMove(e.clientX,e.clientY,e);});
+    row.addEventListener('mouseup',onEnd);row.addEventListener('mouseleave',()=>{clearPressTimer();resetSwipe();dir=null;dx=0;});
   }
+
+  // ---- Menu konteks (tekan-tahan): Balas / Salin / Hapus ----
+  const bubbleCtxMenu=document.getElementById('bubbleCtxMenu'),bubbleCtxBackdrop=document.getElementById('bubbleCtxBackdrop');
+  let ctxTargetMsg=null;
+  function openBubbleCtx(m,x,y){
+    if(!m||!m.id||String(m.id).startsWith('temp-'))return;
+    ctxTargetMsg=m;
+    document.getElementById('ctxDelete').style.display=(m.sender_id===currentUserId)?'flex':'none';
+    bubbleCtxMenu.classList.add('open');bubbleCtxBackdrop.classList.add('open');
+    requestAnimationFrame(()=>{
+      const menuW=bubbleCtxMenu.offsetWidth||190,menuH=bubbleCtxMenu.offsetHeight||150;
+      let left=Math.min(Math.max(10,x-menuW/2),window.innerWidth-menuW-10);
+      let top=Math.min(Math.max(10,y-menuH-14),window.innerHeight-menuH-10);
+      bubbleCtxMenu.style.left=left+'px';bubbleCtxMenu.style.top=top+'px';
+    });
+  }
+  function closeBubbleCtx(){bubbleCtxMenu.classList.remove('open');bubbleCtxBackdrop.classList.remove('open');ctxTargetMsg=null;}
+  bubbleCtxBackdrop.addEventListener('click',closeBubbleCtx);
+  document.getElementById('ctxReply').addEventListener('click',()=>{if(ctxTargetMsg)startReply(ctxTargetMsg);closeBubbleCtx();});
+  document.getElementById('ctxCopy').addEventListener('click',async()=>{
+    if(ctxTargetMsg){try{await navigator.clipboard.writeText(normalizeText(ctxTargetMsg.content));}catch(e){}}
+    closeBubbleCtx();
+  });
+  document.getElementById('ctxDelete').addEventListener('click',async()=>{
+    if(!ctxTargetMsg)return;const target=ctxTargetMsg;closeBubbleCtx();
+    const ok=await showConfirm('Hapus Pesan Ini?','Pesan ini akan dihapus untuk semua orang.','Hapus');
+    if(!ok)return;
+    const {error}=await supabaseClient.from('messages').delete().eq('id',target.id).eq('sender_id',currentUserId);
+    if(!error){const row=msgArea.querySelector(`.bubble-row[data-id="${target.id}"]`);if(row)row.remove();messagesById.delete(target.id);}
+  });
   // Ketuk kutipan di dalam bubble -> lompat & sorot pesan aslinya
   msgArea.addEventListener('click',(e)=>{
     const q=e.target.closest('.reply-quote');if(!q)return;
@@ -534,6 +616,10 @@
       const n=new Date().toISOString();if(document.visibilityState==='visible')await supabaseClient.from('messages').update({delivered_at:n,read_at:n}).eq('id',m.id);else await supabaseClient.from('messages').update({delivered_at:n}).eq('id',m.id).is('delivered_at',null);
     }).on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:`sender_id=eq.${currentUserId}`},(p)=>{
       const row=msgArea.querySelector(`.bubble-row[data-id="${p.new.id}"]`);if(row){const t=row.querySelector('.tick');if(t)t.innerHTML=tickSvg(p.new.delivered_at,p.new.read_at);}
+    }).on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},(p)=>{
+      const delId=p.old&&p.old.id;if(delId==null)return;
+      const row=msgArea.querySelector(`.bubble-row[data-id="${delId}"]`);if(row)row.remove();
+      messagesById.delete(delId);
     }).subscribe();
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')markIncomingAsRead();});
   }
