@@ -497,10 +497,13 @@
     
     let contentHTML = '';
     if (m.content === '[INVITE_CALL]') {
+      const isReal = m.id && !String(m.id).startsWith('temp-');
+      const cancelBtnHTML = (mine && isReal) ? `<button onclick="cancelCallInvite('${m.id}')" style="background:transparent; color:#e04c4c; border:1px solid #e04c4c; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">Batalkan</button>` : '';
       contentHTML = `
         <div style="background:rgba(83,189,235,0.1); padding:12px; border-radius:10px; text-align:center; border:1px solid #53bdeb; min-width:180px; margin-top:4px;">
           <div style="font-weight:bold; margin-bottom:10px; color:#53bdeb; font-size:14px;">📞 Panggilan Suara</div>
-          <button onclick="window.location.href='call.html?uid=${peerId}${(m.id&&!String(m.id).startsWith('temp-'))?'&msgid='+encodeURIComponent(m.id):''}'" style="background:#53bdeb; color:#062733; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%;">Masuk Panggilan</button>
+          <button onclick="window.location.href='call.html?uid=${peerId}${isReal?'&msgid='+encodeURIComponent(m.id):''}'" style="background:#53bdeb; color:#062733; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%;">Masuk Panggilan</button>
+          ${cancelBtnHTML}
         </div>`;
     } else {
       contentHTML = `<div class="txt"></div>`;
@@ -691,6 +694,20 @@
   }
 
   // ---- Fitur Undang Menelpon ----
+  // Batalkan undangan panggilan yang belum diangkat. Cuma pengirim (sender_id)
+  // yang bisa menghapus, sesuai kebijakan hapus pesan di app ini. Sisi lawan
+  // bicara ikut hilang otomatis lewat langganan realtime DELETE (lihat
+  // subscribeRealtime), jadi tidak perlu kirim sinyal terpisah.
+  async function cancelCallInvite(msgId){
+    if(!msgId) return;
+    const {error}=await supabaseClient.from('messages').delete().eq('id',msgId).eq('sender_id',currentUserId);
+    if(!error){
+      const row=msgArea.querySelector(`.bubble-row[data-id="${msgId}"]`);
+      if(row) row.remove();
+      messagesById.delete(msgId);
+    }
+  }
+
   document.getElementById('menuInviteCall').addEventListener('click', async (e) => {
     e.stopPropagation(); chatMenu.classList.remove('open');
     if(!myPublicKeyB64 || !peerPublicKeyB64) return;
