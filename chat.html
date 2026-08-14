@@ -607,6 +607,11 @@
   });
   document.getElementById('keyChangeInfoCloseBtn').addEventListener('click', () => {
     document.getElementById('keyChangeInfoOverlay').classList.remove('open');
+    // User sudah baca & mengerti peringatan -> reset flag & hilangkan banner dari tampilan.
+    // Tidak perlu "Bersihkan Obrolan" lagi cuma buat dismiss notice ini.
+    const keyChangeNoticeLS='e2e_keychange_notice_'+currentUserId+'_'+peerId;
+    localStorage.removeItem(keyChangeNoticeLS);
+    document.querySelectorAll('.keychange-notice').forEach(el => el.remove());
   });
   document.getElementById('keyChangeInfoOverlay').addEventListener('click', (e) => {
     if(e.target.id==='keyChangeInfoOverlay') document.getElementById('keyChangeInfoOverlay').classList.remove('open');
