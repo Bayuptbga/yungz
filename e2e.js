@@ -1,14 +1,27 @@
-// e2e.js — End-to-End Encryption untuk Private Chat
-// Skema: ECDH (P-256) per user untuk sepakat kunci rahasia bersama per pasangan chat,
-// lalu AES-GCM 256-bit buat enkripsi/dekripsi isi pesan.
-// Private key TIDAK PERNAH dikirim ke server dalam bentuk terbuka — hanya disimpan
-// di perangkat (localStorage). Server (Supabase) hanya pernah melihat ciphertext.
-// CATATAN: versi ini TIDAK punya fitur backup/restore kunci (mirip default WhatsApp).
-// Kalau device baru/localStorage kehapus, keypair baru dibuat otomatis dan riwayat
-// chat lama TIDAK BISA dibuka lagi di device itu. Ini trade-off yang disengaja.
+// e2e.js — End-to-End Encryption untuk Private Chat (skema v2: enkripsi per-penerima)
+//
+// RIWAYAT PERUBAHAN DARI SKEMA LAMA (v1):
+// Skema v1 pakai SATU shared key (ECDH antara private key A + public key B) untuk
+// SEMUA pesan di satu percakapan, dua arah sekaligus. Akibatnya: begitu salah satu
+// pihak ganti device (private key berubah), shared key ikut berubah -- dan LAWAN
+// BICARA YANG TIDAK GANTI DEVICE PUN IKUT KEHILANGAN AKSES ke seluruh riwayat chat
+// itu. Itu bukan trade-off yang wajar, itu bug.
+//
+// Skema v2: tiap pesan dienkripsi pakai kunci AES-256 acak sekali-pakai (K). K itu
+// "dibungkus" (wrap) DUA KALI secara terpisah -- satu pakai public key pengirim,
+// satu pakai public key penerima -- masing-masing lewat ECDH sekali pakai per pesan
+// (ephemeral key, gaya ECIES). Hasilnya:
+//  - Penerima selalu bisa buka pesan pakai private key MILIKNYA SENDIRI, sama sekali
+//    tidak tergantung apakah pengirim ganti device atau tidak.
+//  - Kalau SAYA yang ganti device, SAYA kehilangan akses ke pesan lama (baik yang
+//    saya kirim maupun yang saya terima) -- itu satu-satunya yang hilang. Lawan
+//    bicara tidak kepengaruh sama sekali.
+//
+// KOMPATIBILITAS: pesan lama format v1 (shared-key) masih bisa dibuka SELAMA public
+// key lawan bicara belum berubah sejak pesan itu dikirim (sama seperti batasan v1
+// sebelumnya) -- lihat cabang `e2e === 1` di decryptMessage().
 const E2E = (() => {
   const LS_PREFIX = 'e2e_priv_';
-  const sharedKeyCache = new Map(); // peerId -> CryptoKey (AES-GCM), cache per sesi halaman
 
   function b64FromBuf(buf) {
     const bytes = new Uint8Array(buf);
@@ -62,9 +75,9 @@ const E2E = (() => {
   // Return: { status:'ready'|'new', privateKey, publicKeyB64 }
   //  'ready' -> sudah ada kunci lokal, langsung dipakai.
   //  'new'   -> device baru (atau localStorage kosong); keypair BARU otomatis
-  //             dibuat & dipublikasikan. Riwayat chat lama TIDAK bisa dibuka lagi
-  //             di device ini (tidak ada mekanisme restore), sama seperti WhatsApp
-  //             kalau install ulang tanpa chat backup.
+  //             dibuat & dipublikasikan. Pesan lama yang ditujukan/dikirim pakai
+  //             kunci lama tidak bisa dibuka lagi DI DEVICE INI (lihat catatan di
+  //             atas) -- tapi lawan bicara tetap bisa baca riwayat mereka seperti biasa.
   async function ensureKeypair(userId) {
     if (hasLocalKey(userId)) {
       const kp = await loadLocalKeypair(userId);
@@ -74,66 +87,95 @@ const E2E = (() => {
     return { status: 'new', ...kp };
   }
 
-  // Turunkan AES-GCM key bersama dari private key kita + public key lawan bicara.
-  async function getSharedKey(privateKey, peerId, peerPublicKeyB64) {
-    if (!privateKey || !peerPublicKeyB64) return null;
-    if (sharedKeyCache.has(peerId)) return sharedKeyCache.get(peerId);
-    const peerPubKey = await crypto.subtle.importKey(
-      'raw', bufFromB64(peerPublicKeyB64), { name: 'ECDH', namedCurve: 'P-256' }, false, []
+  // ---- Primitif ECIES: turunkan kunci pembungkus AES-GCM dari (privateKey saya
+  // atau ephemeral, public key lawan). ----
+  async function deriveWrapKey(privateKey, otherPublicKeyB64) {
+    const otherPubKey = await crypto.subtle.importKey(
+      'raw', bufFromB64(otherPublicKeyB64), { name: 'ECDH', namedCurve: 'P-256' }, false, []
     );
-    const sharedKey = await crypto.subtle.deriveKey(
-      { name: 'ECDH', public: peerPubKey }, privateKey,
+    return crypto.subtle.deriveKey(
+      { name: 'ECDH', public: otherPubKey }, privateKey,
       { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
     );
-    sharedKeyCache.set(peerId, sharedKey);
-    return sharedKey;
   }
-
-  function clearSharedKeyCache() {
-    sharedKeyCache.clear();
-  }
-
-  // Buang shared key yang ke-cache untuk SATU peer saja (dipakai saat public key
-  // peer itu berubah di tengah sesi, misal dia baru login/reinstall di device lain).
-  // Panggilan getSharedKey() berikutnya akan hitung ulang pakai public key terbaru.
-  function invalidatePeer(peerId) {
-    sharedKeyCache.delete(peerId);
-  }
-
-  async function encryptMessage(sharedKey, plaintext) {
-    // PENTING: jangan pernah fallback ke plaintext di sini. Kalau sharedKey belum
-    // siap, pemanggil HARUS menangani ini sebagai error (jangan sampai pesan
-    // terkirim tanpa enkripsi tanpa disadari).
-    if (!sharedKey) throw new Error('E2E: sharedKey belum tersedia, pesan tidak dienkripsi/dikirim.');
+  async function wrapKeyBytes(wrapKey, rawKeyBuf) {
     const iv = crypto.getRandomValues(new Uint8Array(12));
-    const enc = new TextEncoder().encode(plaintext);
-    const ctBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, sharedKey, enc);
-    return JSON.stringify({ e2e: 1, iv: b64FromBuf(iv), ct: b64FromBuf(ctBuf) });
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, wrapKey, rawKeyBuf);
+    return { iv: b64FromBuf(iv), ct: b64FromBuf(ct) };
+  }
+  async function unwrapKeyBytes(wrapKey, wrapObj) {
+    const iv = new Uint8Array(bufFromB64(wrapObj.iv));
+    return crypto.subtle.decrypt({ name: 'AES-GCM', iv }, wrapKey, bufFromB64(wrapObj.ct));
   }
 
-  async function decryptMessage(sharedKey, payload) {
-    let obj;
-    try {
-      obj = JSON.parse(payload);
-    } catch (e) {
-      return payload; // bukan JSON -> pesan lama/plaintext, tampilkan apa adanya
+  // ---- Enkripsi ----
+  // TIDAK butuh private key SAYA sama sekali -- cuma butuh public key saya sendiri
+  // + public key penerima. Kunci pesan (K) dibungkus terpisah untuk masing-masing,
+  // pakai ephemeral ECDH key sekali pakai khusus pesan ini.
+  async function encryptMessage(myPublicKeyB64, peerPublicKeyB64, plaintext) {
+    if (!myPublicKeyB64 || !peerPublicKeyB64) {
+      // Sengaja throw, BUKAN fallback ke plaintext -- jangan sampai pesan
+      // terkirim tanpa enkripsi tanpa disadari pemanggil.
+      throw new Error('E2E: public key pengirim/penerima belum tersedia, pesan tidak dienkripsi/dikirim.');
     }
-    if (!obj || obj.e2e !== 1 || !obj.iv || !obj.ct) return payload; // bukan format e2e
-    if (!sharedKey) return '🔒 Pesan terenkripsi (kunci tidak tersedia di perangkat ini)';
+    const msgKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+    const rawMsgKey = await crypto.subtle.exportKey('raw', msgKey);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ctBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, msgKey, new TextEncoder().encode(plaintext));
+    const eph = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey', 'deriveBits']);
+    const ephPubRaw = await crypto.subtle.exportKey('raw', eph.publicKey);
+    const wrapForSenderKey = await deriveWrapKey(eph.privateKey, myPublicKeyB64);
+    const wrapForReceiverKey = await deriveWrapKey(eph.privateKey, peerPublicKeyB64);
+    const wrapSender = await wrapKeyBytes(wrapForSenderKey, rawMsgKey);
+    const wrapReceiver = await wrapKeyBytes(wrapForReceiverKey, rawMsgKey);
+    return JSON.stringify({
+      e2e: 2,
+      epk: b64FromBuf(ephPubRaw),
+      iv: b64FromBuf(iv),
+      ct: b64FromBuf(ctBuf),
+      wrapSender, wrapReceiver
+    });
+  }
+
+  // ---- Dekripsi ----
+  // Cuma butuh private key SAYA SENDIRI. `amISender` menentukan wrap mana (wrapSender
+  // / wrapReceiver) yang relevan buat saya di pesan ini. `legacyPeerPublicKeyB64`
+  // opsional, cuma dipakai untuk buka pesan lama format v1 (shared-key) -- kalau
+  // sejak pesan v1 itu dikirim salah satu pihak sudah ganti key, pesan v1 itu
+  // memang tidak akan bisa dibuka lagi (batas matematis skema lama, bukan bug baru).
+  async function decryptMessage(myPrivateKey, payload, amISender, legacyPeerPublicKeyB64) {
+    let obj;
+    try { obj = JSON.parse(payload); } catch (e) { return payload; } // bukan JSON -> pesan lama/plaintext, tampilkan apa adanya
+    if (!obj || !obj.e2e) return payload;
+    if (!myPrivateKey) return '🔒 Pesan terenkripsi (kunci tidak tersedia di perangkat ini)';
     try {
-      const iv = new Uint8Array(bufFromB64(obj.iv));
-      const ctBuf = bufFromB64(obj.ct);
-      const ptBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, sharedKey, ctBuf);
-      return new TextDecoder().decode(ptBuf);
+      if (obj.e2e === 2) {
+        const wrapObj = amISender ? obj.wrapSender : obj.wrapReceiver;
+        if (!wrapObj || !obj.epk) return '🔒 Pesan tidak bisa dibuka di perangkat ini';
+        const wrapKey = await deriveWrapKey(myPrivateKey, obj.epk);
+        const rawMsgKey = await unwrapKeyBytes(wrapKey, wrapObj);
+        const msgKey = await crypto.subtle.importKey('raw', rawMsgKey, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+        const iv = new Uint8Array(bufFromB64(obj.iv));
+        const ptBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, msgKey, bufFromB64(obj.ct));
+        return new TextDecoder().decode(ptBuf);
+      }
+      if (obj.e2e === 1) {
+        // Format lama (shared-key). Perlu public key lawan bicara SAAT INI; kalau
+        // sudah berubah sejak pesan ini dikirim, tetap tidak akan bisa dibuka.
+        if (!legacyPeerPublicKeyB64 || !obj.iv || !obj.ct) return '🔒 Pesan tidak bisa dibuka di perangkat ini';
+        const sharedKey = await deriveWrapKey(myPrivateKey, legacyPeerPublicKeyB64);
+        const iv = new Uint8Array(bufFromB64(obj.iv));
+        const ptBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, sharedKey, bufFromB64(obj.ct));
+        return new TextDecoder().decode(ptBuf);
+      }
+      return '🔒 Pesan tidak bisa dibuka di perangkat ini';
     } catch (e) {
-      // Format e2e valid tapi gagal didekripsi -> kunci di device ini tidak cocok
-      // (mis. pesan dikirim/diterima dari pairing kunci yang berbeda).
+      // Format e2e valid tapi gagal didekripsi -> kunci di device ini tidak cocok.
       return '🔒 Pesan tidak bisa dibuka di perangkat ini';
     }
   }
 
   return {
-    ensureKeypair, getSharedKey, encryptMessage, decryptMessage, clearSharedKeyCache,
-    invalidatePeer, hasLocalKey
+    ensureKeypair, encryptMessage, decryptMessage, hasLocalKey
   };
 })();
