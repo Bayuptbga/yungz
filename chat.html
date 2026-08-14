@@ -63,6 +63,8 @@
   .status-dot{ display:inline-block; width:8px;height:8px; border-radius:50%; margin-left:6px; background:#8696a0; vertical-align:middle; box-shadow:0 0 0 2px rgba(255,255,255,0.25); }
   .status-dot.online{ background:#2ecc71; }
   .e2e-lock{ width:26px;height:26px; border-radius:50%; background:rgba(83,189,235,0.16); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .call-btn{ cursor:pointer; width:34px;height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s ease; }
+  .call-btn:active{ background:rgba(255,255,255,0.16); }
   .appbar .menu-btn{ cursor:pointer; width:34px;height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s ease; position:relative; }
   .appbar .menu-btn:active{ background:rgba(255,255,255,0.16); }
   .chat-menu{ position:absolute; top:calc(100% + 6px); right:10px; background:var(--card-bg); border-radius:12px; box-shadow:0 6px 24px rgba(0,0,0,0.5); min-width:180px; overflow:hidden; z-index:50; display:none; }
@@ -108,6 +110,22 @@
   }
   .keychange-notice svg{width:14px;height:14px;flex-shrink:0;stroke:#f0b429;}
   .keychange-notice .e2e-learn{font-weight:700;color:#f0b429;text-decoration:underline;}
+
+  /* ---- Panggilan suara (WebRTC) ---- */
+  .call-overlay{ position:absolute; inset:0; z-index:260; background:linear-gradient(160deg,var(--bbm-blue-dark),var(--bbm-blue) 60%,var(--bbm-blue-light)); display:none; flex-direction:column; align-items:center; justify-content:space-between; padding:56px 24px calc(36px + env(safe-area-inset-bottom)); text-align:center; }
+  .call-overlay.open{ display:flex; }
+  .call-top{ display:flex; flex-direction:column; align-items:center; margin-top:24px; }
+  .call-avatar-big{ width:96px;height:96px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:32px; box-shadow:0 0 0 4px rgba(255,255,255,0.15); }
+  .call-status-name{ font-size:22px; font-weight:700; color:#fff; margin-top:22px; }
+  .call-status-sub{ font-size:14.5px; color:var(--ink-soft); margin-top:8px; letter-spacing:.3px; }
+  .call-status-sub.pulse{ animation: callPulse 1.4s ease-in-out infinite; }
+  @keyframes callPulse{ 0%,100%{opacity:.55;} 50%{opacity:1;} }
+  .call-actions{ display:none; gap:34px; align-items:center; justify-content:center; padding-bottom:6px; }
+  .call-btn-round{ width:58px;height:58px;border-radius:50%; display:flex;align-items:center;justify-content:center; cursor:pointer; border:none; flex-direction:column; gap:6px; }
+  .call-btn-round.accept{ background:#2ecc71; }
+  .call-btn-round.decline, .call-btn-round.end{ background:#e04c4c; }
+  .call-btn-round.mute{ background:rgba(255,255,255,0.15); }
+  .call-btn-round.mute.active{ background:#53bdeb; }
   .day-sep{
     align-self:center; position:sticky; top:6px; background:rgba(27,42,50,0.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
     color:var(--ink-soft); font-size:11px; font-weight:600; padding:5px 13px; border-radius:20px; margin:12px 0 10px; flex-shrink:0; box-shadow:0 1px 5px rgba(0,0,0,0.2); z-index:3;
@@ -307,6 +325,7 @@
     <div class="avatar" id="peerAvatar" style="cursor:pointer;">?</div>
     <div class="who" id="peerWho" style="cursor:pointer;"><div class="uname"><span id="peerUname">@—</span><span class="status-dot" id="statusDot"></span></div><div class="sub" id="peerSub">-</div></div>
     <div class="e2e-lock" id="e2eLock" title="Pesan di chat ini dienkripsi end-to-end"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
+    <div class="call-btn" id="callBtn" title="Telepon"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
     <div class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
       <div class="chat-menu" id="chatMenu">
         <div class="item danger" id="menuHapusPermanen">Bersihkan Obrolan (Semua Orang)</div><div class="item ping" id="menuPing">🔔 PING!!!</div>
@@ -337,6 +356,24 @@
       <button type="button" class="e2e-info-close-btn" id="keyChangeInfoCloseBtn">Mengerti</button>
     </div>
   </div>
+  <!-- Overlay panggilan suara (WebRTC) -->
+  <div class="call-overlay" id="callOverlay">
+    <div class="call-top">
+      <div class="call-avatar-big" id="callAvatarBig">?</div>
+      <div class="call-status-name" id="callStatusName">—</div>
+      <div class="call-status-sub" id="callStatusSub">Memanggil…</div>
+    </div>
+    <audio id="remoteAudio" autoplay playsinline></audio>
+    <div class="call-actions" id="callActionsIncoming">
+      <button class="call-btn-round decline" id="callDeclineBtn"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(135deg);"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></button>
+      <button class="call-btn-round accept" id="callAcceptBtn"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></button>
+    </div>
+    <div class="call-actions" id="callActionsOngoing">
+      <button class="call-btn-round mute" id="callMuteBtn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
+      <button class="call-btn-round end" id="callEndBtn"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(135deg);"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></button>
+    </div>
+  </div>
+
   <div class="confirm-overlay" id="confirmOverlay">
     <div class="confirm-box">
       <div class="confirm-title" id="confirmTitle">Konfirmasi</div>
@@ -438,7 +475,7 @@
       const showKeyChangeNotice = localStorage.getItem(keyChangeNoticeLS)==='1';
       peerAvatar.textContent=initials(peerUsername);peerAvatar.style.background=colorFor(peerId);peerUnameEl.textContent=peerUsername;
       updateInputAvailability();
-      await loadMessages(showKeyChangeNotice);await markIncomingAsRead();subscribeRealtime();subscribePresence();subscribePeerKeyChange();
+      await loadMessages(showKeyChangeNotice);await markIncomingAsRead();subscribeRealtime();subscribePresence();subscribePeerKeyChange();subscribeCallChannel();
     }catch(err){
       console.error('init error:',err);
       document.getElementById('authGate').style.display='none';
@@ -679,6 +716,133 @@
       ok.addEventListener('click',onOk);cancel.addEventListener('click',onCancel);ov.addEventListener('click',onOverlay);
     });
   }
+  // ================= FITUR TELEPON (Voice Call) =================
+  // WebRTC peer-to-peer untuk audio, signaling (tukar offer/answer/ICE) lewat
+  // Supabase Realtime Broadcast -- TIDAK lewat server sendiri, jadi aman buat
+  // Supabase free tier (cuma pesan kecil, bukan audio streaming).
+  // CATATAN percobaan tahap 1: panggilan cuma bisa diterima kalau kedua user
+  // SAMA-SAMA sedang membuka layar chat.html satu sama lain (karena listener
+  // signaling baru aktif setelah chat ini dibuka). Notifikasi panggilan masuk
+  // saat di dashboard/layar lain menyusul di tahap berikutnya.
+  let callChannel=null, pc=null, localStream=null, callState='idle'; // idle|calling|ringing|ongoing
+  let callTimerInterval=null, callSeconds=0, pendingOffer=null, muted=false;
+  const ICE_SERVERS=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];
+  const callOverlay=document.getElementById('callOverlay'), callAvatarBig=document.getElementById('callAvatarBig'), callStatusName=document.getElementById('callStatusName'), callStatusSub=document.getElementById('callStatusSub');
+  const callActionsIncoming=document.getElementById('callActionsIncoming'), callActionsOngoing=document.getElementById('callActionsOngoing');
+  const remoteAudioEl=document.getElementById('remoteAudio');
+  const callBtnEl=document.getElementById('callBtn'), callAcceptBtn=document.getElementById('callAcceptBtn'), callDeclineBtn=document.getElementById('callDeclineBtn'), callEndBtn=document.getElementById('callEndBtn'), callMuteBtn=document.getElementById('callMuteBtn');
+
+  function subscribeCallChannel(){
+    const chName='call_'+[currentUserId,peerId].sort().join('_');
+    callChannel=supabaseClient.channel(chName);
+    callChannel
+      .on('broadcast',{event:'call-offer'},({payload})=>{ if(payload.from!==currentUserId) handleIncomingOffer(payload); })
+      .on('broadcast',{event:'call-answer'},({payload})=>{ if(payload.from!==currentUserId) handleAnswer(payload); })
+      .on('broadcast',{event:'call-ice'},({payload})=>{ if(payload.from!==currentUserId) handleRemoteIce(payload); })
+      .on('broadcast',{event:'call-end'},({payload})=>{ if(payload.from!==currentUserId) handleRemoteEnd(); })
+      .subscribe();
+  }
+  function sendSignal(event,data){ if(callChannel) callChannel.send({type:'broadcast',event,payload:{from:currentUserId,...data}}); }
+
+  function createPeerConnection(){
+    const conn=new RTCPeerConnection({iceServers:ICE_SERVERS});
+    conn.onicecandidate=(e)=>{ if(e.candidate) sendSignal('call-ice',{candidate:e.candidate}); };
+    conn.ontrack=(e)=>{ remoteAudioEl.srcObject=e.streams[0]; };
+    return conn;
+  }
+
+  async function startCall(){
+    if(callState!=='idle'||!peerId) return;
+    let stream;
+    try{ stream=await navigator.mediaDevices.getUserMedia({audio:true}); }
+    catch(e){ alert('Tidak bisa mengakses mikrofon. Cek izin aplikasi di setelan HP.'); return; }
+    localStream=stream; callState='calling';
+    pc=createPeerConnection();
+    localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+    const offer=await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    sendSignal('call-offer',{sdp:offer});
+    showCallOverlay('calling');
+  }
+
+  function handleIncomingOffer(payload){
+    if(callState!=='idle'){ sendSignal('call-end',{reason:'busy'}); return; }
+    callState='ringing'; pendingOffer=payload.sdp;
+    showCallOverlay('ringing');
+    if(navigator.vibrate) navigator.vibrate([300,150,300,150,300]);
+  }
+
+  async function acceptCall(){
+    if(callState!=='ringing'||!pendingOffer) return;
+    let stream;
+    try{ stream=await navigator.mediaDevices.getUserMedia({audio:true}); }
+    catch(e){ alert('Tidak bisa mengakses mikrofon. Cek izin aplikasi di setelan HP.'); declineCall(); return; }
+    localStream=stream;
+    pc=createPeerConnection();
+    localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+    await pc.setRemoteDescription(new RTCSessionDescription(pendingOffer));
+    const answer=await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    sendSignal('call-answer',{sdp:answer});
+    pendingOffer=null; callState='ongoing';
+    showCallOverlay('ongoing'); startCallTimer();
+  }
+
+  function declineCall(){ sendSignal('call-end',{reason:'declined'}); pendingOffer=null; closeCall(); }
+
+  async function handleAnswer(payload){
+    if(callState!=='calling'||!pc) return;
+    await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+    callState='ongoing'; showCallOverlay('ongoing'); startCallTimer();
+  }
+
+  async function handleRemoteIce(payload){
+    if(!pc||!payload.candidate) return;
+    try{ await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); }catch(e){}
+  }
+
+  function handleRemoteEnd(){ closeCall(); }
+  function endCall(){ sendSignal('call-end',{reason:'ended'}); closeCall(); }
+
+  function closeCall(){
+    callState='idle'; stopCallTimer();
+    if(pc){ pc.close(); pc=null; }
+    if(localStream){ localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
+    remoteAudioEl.srcObject=null; muted=false; callMuteBtn.classList.remove('active');
+    hideCallOverlay();
+  }
+
+  function showCallOverlay(mode){
+    callAvatarBig.textContent=initials(peerUsername); callAvatarBig.style.background=colorFor(peerId);
+    callStatusName.textContent=peerUsername||'Pengguna';
+    callActionsIncoming.style.display='none'; callActionsOngoing.style.display='none';
+    if(mode==='calling'){ callStatusSub.textContent='Memanggil…'; callStatusSub.classList.add('pulse'); callActionsOngoing.style.display='flex'; callMuteBtn.style.display='none'; }
+    else if(mode==='ringing'){ callStatusSub.textContent='Panggilan masuk…'; callStatusSub.classList.add('pulse'); callActionsIncoming.style.display='flex'; }
+    else if(mode==='ongoing'){ callStatusSub.textContent='00:00'; callStatusSub.classList.remove('pulse'); callActionsOngoing.style.display='flex'; callMuteBtn.style.display='flex'; }
+    callOverlay.classList.add('open');
+  }
+  function hideCallOverlay(){ callOverlay.classList.remove('open'); }
+
+  function startCallTimer(){
+    callSeconds=0;
+    callTimerInterval=setInterval(()=>{ callSeconds++; const m=String(Math.floor(callSeconds/60)).padStart(2,'0'); const s=String(callSeconds%60).padStart(2,'0'); callStatusSub.textContent=m+':'+s; },1000);
+  }
+  function stopCallTimer(){ if(callTimerInterval){ clearInterval(callTimerInterval); callTimerInterval=null; } }
+
+  function toggleMute(){
+    if(!localStream) return;
+    muted=!muted;
+    localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
+    callMuteBtn.classList.toggle('active',muted);
+  }
+
+  callBtnEl.addEventListener('click',startCall);
+  callAcceptBtn.addEventListener('click',acceptCall);
+  callDeclineBtn.addEventListener('click',declineCall);
+  callEndBtn.addEventListener('click',endCall);
+  callMuteBtn.addEventListener('click',toggleMute);
+  window.addEventListener('pagehide',()=>{ if(callState!=='idle') sendSignal('call-end',{reason:'left'}); });
+
   msgInput.addEventListener('input',()=>{autoResize();sendBtn.disabled=msgInput.value.trim().length===0;});
   msgInput.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});sendBtn.addEventListener('click',sendMessage);
   const menuBtn=document.getElementById('menuBtn'),chatMenu=document.getElementById('chatMenu');
