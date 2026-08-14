@@ -146,6 +146,7 @@
   .bubble-row{ position:relative; }
   .bubble-row .bubble{ transition:transform .18s ease; }
   .bubble-row.no-anim .bubble{ transition:none; }
+  .bubble-row.locked .bubble{ font-style:italic; opacity:0.75; }
   .swipe-reply-icon{ position:absolute; left:8px; top:50%; width:30px;height:30px;border-radius:50%; background:rgba(83,189,235,0.16); display:flex;align-items:center;justify-content:center; opacity:0; transform:translateY(-50%) scale(0.5); transition:opacity .15s ease, transform .15s ease; pointer-events:none; }
   .swipe-reply-icon.show{ opacity:1; transform:translateY(-50%) scale(1); }
   .swipe-reply-icon svg{ width:15px;height:15px; }
@@ -387,6 +388,7 @@
   }
   function normalizeText(str){if(!str)return'';str=str.replace(/[\r\v\f\u2028\u2029]/g,'\n');const lines=str.split('\n').map(l=>l.replace(/[ \t]+$/,''));const out=[];let blankRun=0;for(const line of lines){if(line.trim()===''){blankRun++;if(blankRun<=1)out.push('');}else{blankRun=0;out.push(line);}}return out.join('\n').trim();}
   function timeLabel(iso){return new Date(iso).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});}
+  function isLockedContent(content){return typeof content==='string' && content.startsWith('🔒');}
   if(peerId){
     const goProfil=()=>window.location.href=`profil.html?uid=${peerId}`;
     document.getElementById('peerAvatar').addEventListener('click',goProfil);
@@ -485,9 +487,11 @@
     return `<div class="reply-quote" data-jump="${replyToId}"><div class="rq-name">${escapeHtml(who)}</div><div class="rq-text">${escapeHtml(normalizeText(q.content).slice(0,120))}</div></div>`;
   }
   function appendBubble(m,sending){
-    const mine=m.sender_id===currentUserId;const row=document.createElement('div');row.className='bubble-row '+(mine?'mine':'theirs')+(sending?' sending':'');row.dataset.id=m.id;
+    const mine=m.sender_id===currentUserId;const locked=isLockedContent(m.content);
+    const row=document.createElement('div');row.className='bubble-row '+(mine?'mine':'theirs')+(sending?' sending':'')+(locked?' locked':'');row.dataset.id=m.id;
     row.innerHTML=`<div class="swipe-reply-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17l-5-5 5-5"/><path d="M4 12h10a5 5 0 015 5v1"/></svg></div><div class="bubble">${replyQuoteHTML(m.reply_to_id)}<div class="txt"></div><div class="meta"><span>${timeLabel(m.created_at)}</span>${mine?`<span class="tick">${tickSvg(m.delivered_at,m.read_at)}</span>`:''}</div></div>`;
     row.querySelector('.txt').textContent=normalizeText(m.content);msgArea.appendChild(row);
+    if(locked)return; // pesan gagal didekripsi: tidak bisa dibalas/di-hold & tidak dijadikan cache kutipan
     if(m.id && !String(m.id).startsWith('temp-')) messagesById.set(m.id,{id:m.id,sender_id:m.sender_id,content:m.content});
     bindBubblePress(row,m);
   }
