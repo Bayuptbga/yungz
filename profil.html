@@ -320,7 +320,7 @@
         const {error}=await supabaseClient.from('messages').delete().or(`and(sender_id.eq.${myUid},receiver_id.eq.${viewUid}),and(sender_id.eq.${viewUid},receiver_id.eq.${myUid})`);
         if(error){alert('Gagal menghapus permanen. Coba lagi.');return;}
         await supabaseClient.from('chat_clears').delete().eq('user_id',myUid).eq('peer_id',viewUid);
-        alert('Obrolan berhasil dibersihkan.');
+        window.location.href=`chat.html?uid=${viewUid}&uname=${encodeURIComponent(prof.username)}`;
       });
       deleteContactBtn.addEventListener('click',async()=>{
         const ok=await showConfirm('Hapus Kontak Ini?','Menghapus kontak akan menghapus juga kontak anda dari teman ini.','Hapus');
