@@ -78,6 +78,11 @@
   .btn-small:active{ transform:scale(0.97); }
   .installed-badge{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ok); font-weight:600; }
   .installed-badge svg{ width:16px; height:16px; }
+
+  .danger-title{ color:var(--error) !important; }
+  .danger-note{ font-size:12.5px; color:var(--muted); line-height:1.6; margin-bottom:16px; }
+  .danger-note b{ color:var(--error); }
+  .btn-danger{ background:linear-gradient(135deg,#f15c6d,#c0392b); color:#fff; }
 </style>
 <script src="device-gate.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -104,6 +109,19 @@
         <div class="s-label">Versi</div>
         <div class="s-value" id="versionValue">1.0.0</div>
       </div>
+    </div>
+
+    <div class="section-title danger-title">Zona Berbahaya</div>
+    <div class="card">
+      <div class="danger-note">Menghapus akun akan menghapus <b>semua chat, kontak, status, dan data lainnya secara permanen</b>. Tindakan ini tidak bisa dibatalkan.</div>
+      <form id="deleteForm">
+        <div class="field">
+          <label>Konfirmasi Kata Sandi</label>
+          <div class="input-wrap"><input type="password" id="deletePassword" required autocomplete="current-password"><span class="toggle-pw" onclick="const p=document.getElementById('deletePassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
+        </div>
+        <div class="hint" id="deleteHint">Masukkan kata sandi untuk melanjutkan</div>
+        <button type="submit" class="btn btn-danger" id="deleteSubmitBtn"><span class="spinner"></span><span class="btn-label">Hapus Akun Saya</span></button>
+      </form>
     </div>
   </div>
 </div>
@@ -146,6 +164,42 @@
   });
   window.addEventListener('appinstalled', () => {
     installRow.style.display='none'; installedRow.style.display='flex';
+  });
+
+  // ---- Hapus Akun ----
+  // Alur: re-auth pakai kata sandi (memastikan yang minta hapus benar pemilik akun,
+  // bukan sesi yang ke-tinggal login di device orang lain) -> konfirmasi eksplisit
+  // (irreversible) -> panggil RPC delete_own_account() yang jalan di server dengan
+  // hak akses lebih tinggi (SECURITY DEFINER) untuk hapus semua data + akun auth-nya.
+  // Anon key di browser TIDAK PERNAH bisa hapus baris auth.users langsung -- itu
+  // sengaja dibatasi Supabase, makanya harus lewat fungsi database ini.
+  document.getElementById('deleteForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pw=document.getElementById('deletePassword').value,
+          b=document.getElementById('deleteSubmitBtn'), hint=document.getElementById('deleteHint');
+    if(!pw){ hint.textContent='Masukkan kata sandi.'; hint.className='hint err'; return; }
+    if(!currentUsername){ hint.textContent='Gagal memuat data akun, coba muat ulang halaman.'; hint.className='hint err'; return; }
+    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Memeriksa...';
+    const {error:reauthErr} = await supabaseClient.auth.signInWithPassword({email: usernameToEmail(currentUsername), password: pw});
+    if(reauthErr){
+      hint.textContent='Kata sandi salah.'; hint.className='hint err';
+      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Hapus Akun Saya';
+      return;
+    }
+    const confirmed=confirm('Yakin ingin menghapus akun secara permanen?\n\nSemua chat, kontak, dan status akan hilang dan TIDAK BISA dikembalikan.');
+    if(!confirmed){
+      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Hapus Akun Saya';
+      return;
+    }
+    b.querySelector('.btn-label').textContent='Menghapus...';
+    const {error:delErr} = await supabaseClient.rpc('delete_own_account');
+    if(delErr){
+      hint.textContent='Gagal menghapus akun: '+delErr.message; hint.className='hint err';
+      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Hapus Akun Saya';
+      return;
+    }
+    await supabaseClient.auth.signOut();
+    window.location.replace('index.html');
   });
 </script>
 </body>
