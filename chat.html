@@ -72,9 +72,6 @@
   .chat-menu .item:active{background:var(--border);}
   .chat-menu .item.danger{color:#f15c6d;}
   .chat-menu .item.ping{color:#e08a00;font-weight:600;}
-  .ptr-indicator{ display:flex; align-items:center; justify-content:center; height:0; overflow:hidden; flex-shrink:0; background:var(--bg); }
-  .ptr-spinner{ width:22px; height:22px; border-radius:50%; border:2.5px solid var(--border); border-top-color:var(--border); }
-  .ptr-indicator.loading .ptr-spinner{ border-top-color:#53bdeb; animation:authSpin .7s linear infinite; }
   .msg-area{
     flex:1; overflow-y:auto; overflow-x:hidden; padding:14px 12px 6px; display:flex; flex-direction:column; gap:2px;
     background-color:var(--bg); background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0); background-size:20px 20px; scroll-behavior:smooth;
@@ -279,7 +276,6 @@
       </div>
     </div>
   </div>
-  <div class="ptr-indicator" id="chatPtr"><div class="ptr-spinner"></div></div>
   <div class="msg-area" id="msgArea"><div class="empty-state"><div class="loading-spinner"></div><span>Memuat percakapan…</span></div></div>
 
   <!-- Popup "Pelajari selengkapnya" tentang enkripsi end-to-end, dipicu dari banner di atas area pesan -->
@@ -416,9 +412,11 @@
     const {data:rows,error}=await query;
     const banner=`<div class="e2e-banner" id="e2eBanner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Pesan terenkripsi secara end-to-end. Hanya orang di obrolan ini yang bisa membaca atau membagikannya. <span class="e2e-learn">Pelajari selengkapnya</span>.</span></div>`;
     const keyNotice=showKeyChangeNotice?keyChangeNoticeHTML(peerUsername):'';
-    if(error||!rows||rows.length===0){msgArea.innerHTML=banner+keyNotice+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`;return;}
+    if(error||!rows||rows.length===0){msgArea.innerHTML=banner+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8696a0" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`+keyNotice;return;}
     for(const m of rows){m.content=await E2E.decryptMessage(myPrivateKey,m.content,m.sender_id===currentUserId,peerPublicKeyB64);}
-    msgArea.innerHTML=banner+keyNotice;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});scrollToBottom();
+    msgArea.innerHTML=banner;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});
+    if(keyNotice)msgArea.insertAdjacentHTML('beforeend',keyNotice);
+    scrollToBottom();
   }
   function appendBubble(m,sending){
     const mine=m.sender_id===currentUserId;const row=document.createElement('div');row.className='bubble-row '+(mine?'mine':'theirs')+(sending?' sending':'');row.dataset.id=m.id;
@@ -530,37 +528,6 @@
   });
   history.pushState({page:'chat'},'',location.href);window.addEventListener('popstate',()=>{window.location.href='dashboard.html';});
 
-  // ---- Tarik untuk refresh (pull-to-refresh) di area pesan ----
-  // Dibutuhkan karena overscroll-behavior:none di body mematikan gesture native
-  // Chrome, dan di TWA (chrome-less, tanpa address bar/tombol reload) ini jadi
-  // satu-satunya cara user recover kalau init() gagal (mis. "Gagal memuat
-  // percakapan" karena koneksi sempat putus).
-  (function(){
-    const ind=document.getElementById('chatPtr');
-    const THRESHOLD=64,MAX=90;
-    let startY=0,pulling=false,dragging=false,refreshing=false;
-    msgArea.addEventListener('touchstart',e=>{
-      if(refreshing||e.touches.length!==1){pulling=false;return;}
-      if(msgArea.scrollTop>0){pulling=false;return;}
-      startY=e.touches[0].clientY;pulling=true;dragging=false;
-    },{passive:true});
-    msgArea.addEventListener('touchmove',e=>{
-      if(!pulling||refreshing)return;
-      const dy=e.touches[0].clientY-startY;
-      if(dy<=0||msgArea.scrollTop>0){pulling=false;dragging=false;ind.style.height='0px';return;}
-      dragging=true;e.preventDefault();
-      ind.style.height=Math.min(dy*0.5,MAX)+'px';
-    },{passive:false});
-    msgArea.addEventListener('touchend',()=>{
-      if(!pulling)return;pulling=false;
-      const dist=parseInt(ind.style.height||'0',10);
-      if(dragging&&dist>=THRESHOLD){
-        refreshing=true;ind.style.height='50px';ind.classList.add('loading');
-        location.reload();
-      }else{ind.style.height='0px';}
-      dragging=false;
-    },{passive:true});
-  })();
   if(typeof supabaseClient==='undefined'){
     msgArea.innerHTML=`<div class="empty-state"><div class="es-title">Gagal terhubung</div><span>app.js gagal dimuat (cek path file / koneksi internet / console browser).</span></div>`;
     console.error('supabaseClient belum terdefinisi — supabase-js CDN atau app.js gagal load.');
