@@ -127,6 +127,8 @@
   @media (prefers-reduced-motion:reduce){ .skel-avatar::after,.skel-line::after{animation:none;} }
   .chat-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
   .chat-item:active{ background:var(--border); }
+  .row-call-btn{ width:36px;height:36px;border-radius:50%; flex-shrink:0; display:flex;align-items:center;justify-content:center; background:var(--border); cursor:pointer; }
+  .row-call-btn:active{ background:#d8dbdd; }
   .avatar{ width:52px; height:52px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px; color:#fff; }
   .chat-main{ flex:1; min-width:0; }
   .chat-top{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
@@ -388,6 +390,7 @@
       <div class="cprev-sub">Kontak</div>
       <div class="cprev-actions">
         <button class="cprev-btn primary" id="cprevSendBtn"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg>Kirim Pesan</button>
+        <button class="cprev-btn secondary" id="cprevCallBtn"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>Telepon</button>
         <button class="cprev-btn secondary" id="cprevProfilBtn"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Lihat Profil</button>
       </div>
       <button class="cprev-cancel" id="cprevCancelBtn">Batal</button>
@@ -410,8 +413,9 @@
   function statusIconHTML(chat){if(!chat.mine)return'';return `<span class="status-icon" style="background:none;">${tickSvg(chat.deliveredAt,chat.readAt)}</span>`;}
   function render(chats){
     const list=document.getElementById('chatlist');if(!chats||chats.length===0){list.innerHTML=`<div class="panel-empty">Belum ada percakapan.</div>`;return;}
-    list.innerHTML=chats.map(chat=>`<div class="chat-item" data-uid="${escapeHtml(chat.uid)}" data-uname="${escapeHtml(chat.uname)}"><div class="avatar" style="background:${colorFor(chat.uid)}">${escapeHtml(initials(chat.uname))}</div><div class="chat-main"><div class="chat-top"><div class="chat-name" style="${chat.unread?'font-weight:700;':''}">${escapeHtml(chat.uname)}</div><div style="font-size:11.5px;color:var(--muted);">${escapeHtml(timeLabel(chat.time))}</div></div><div class="chat-bottom">${statusIconHTML(chat)}<div class="chat-msg" style="${chat.unread?'color:var(--ink);font-weight:600;':''}">${escapeHtml(chat.preview)}</div></div></div></div>`).join('');
+    list.innerHTML=chats.map(chat=>`<div class="chat-item" data-uid="${escapeHtml(chat.uid)}" data-uname="${escapeHtml(chat.uname)}"><div class="avatar" style="background:${colorFor(chat.uid)}">${escapeHtml(initials(chat.uname))}</div><div class="chat-main"><div class="chat-top"><div class="chat-name" style="${chat.unread?'font-weight:700;':''}">${escapeHtml(chat.uname)}</div><div style="font-size:11.5px;color:var(--muted);">${escapeHtml(timeLabel(chat.time))}</div></div><div class="chat-bottom">${statusIconHTML(chat)}<div class="chat-msg" style="${chat.unread?'color:var(--ink);font-weight:600;':''}">${escapeHtml(chat.preview)}</div></div></div><div class="row-call-btn" data-callto="${escapeHtml(chat.uid)}" data-calluname="${escapeHtml(chat.uname)}" title="Telepon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div></div>`).join('');
     document.querySelectorAll('.chat-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
+    document.querySelectorAll('.chat-item .row-call-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();window.location.href=`chat.html?uid=${b.dataset.callto}&uname=${encodeURIComponent(b.dataset.calluname)}&autocall=1`;}));
   }
   function skeletonRow(){return `<div class="skel-item"><div class="skel-avatar"></div><div class="skel-lines"><div class="skel-line w60"></div><div class="skel-line w40"></div></div></div>`;}
   function looksEncrypted(content){try{const o=JSON.parse(content);return !!(o&&(o.e2e===1||o.e2e===2));}catch(e){return false;}}
@@ -493,9 +497,10 @@
     if(!rows||rows.length===0){cList.innerHTML='<div class="panel-empty">Belum ada kontak.</div>';if(cCount)cCount.textContent='0';return;}
     const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
     const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
-    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml(pMap[id])}"><div class="avatar" data-profuid="${escapeHtml(id)}" style="background:${colorFor(id)}">${escapeHtml(initials(pMap[id]))}</div><div class="uname">${escapeHtml(pMap[id])}</div></div>`).join('');
+    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml(pMap[id])}"><div class="avatar" data-profuid="${escapeHtml(id)}" style="background:${colorFor(id)}">${escapeHtml(initials(pMap[id]))}</div><div class="uname" style="flex:1;">${escapeHtml(pMap[id])}</div><div class="row-call-btn" data-callto="${escapeHtml(id)}" data-calluname="${escapeHtml(pMap[id])}" title="Telepon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div></div>`).join('');
     if(cCount)cCount.textContent=oIds.length;
     document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
+    document.querySelectorAll('.contact-item .row-call-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();window.location.href=`chat.html?uid=${b.dataset.callto}&uname=${encodeURIComponent(b.dataset.calluname)}&autocall=1`;}));
     document.querySelectorAll('.contact-item .avatar').forEach(a=>a.addEventListener('click',e=>{e.stopPropagation();openContactPreview(a.dataset.profuid,a.closest('.contact-item').dataset.uname);}));
   }
   function timeAgo(iso){
@@ -778,6 +783,7 @@
   }
   function closeContactPreview(){document.getElementById('cprevOverlay').classList.remove('open');cprevUid=null;cprevUname=null;}
   document.getElementById('cprevSendBtn').addEventListener('click',()=>{if(cprevUid)window.location.href=`chat.html?uid=${cprevUid}&uname=${encodeURIComponent(cprevUname)}`;});
+  document.getElementById('cprevCallBtn').addEventListener('click',()=>{if(cprevUid)window.location.href=`chat.html?uid=${cprevUid}&uname=${encodeURIComponent(cprevUname)}&autocall=1`;});
   document.getElementById('cprevProfilBtn').addEventListener('click',()=>{if(cprevUid)window.location.href=`profil.html?uid=${cprevUid}`;});
   document.getElementById('cprevCancelBtn').addEventListener('click',closeContactPreview);
   document.getElementById('cprevOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeContactPreview();});
