@@ -311,7 +311,7 @@
     document.querySelectorAll('.chat-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
   }
   function skeletonRow(){return `<div class="skel-item"><div class="skel-avatar"></div><div class="skel-lines"><div class="skel-line w60"></div><div class="skel-line w40"></div></div></div>`;}
-  function looksEncrypted(content){try{const o=JSON.parse(content);return !!(o&&o.e2e===1);}catch(e){return false;}}
+  function looksEncrypted(content){try{const o=JSON.parse(content);return !!(o&&(o.e2e===1||o.e2e===2));}catch(e){return false;}}
   async function loadChats(userId){
     const list=document.getElementById('chatlist');list.innerHTML=skeletonRow().repeat(6);
     const {data:contactRows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
@@ -328,8 +328,8 @@
     const chats=await Promise.all(pIds.map(async pid=>{
       const m=lastByPartner.get(pid);const mine=m.sender_id===userId;const prof=pMap[pid]||{};
       let previewText=m.content;
-      if(myPrivateKey&&prof.public_key){
-        try{const sk=await E2E.getSharedKey(myPrivateKey,pid,prof.public_key);previewText=await E2E.decryptMessage(sk,m.content);}catch(e){}
+      if(myPrivateKey){
+        try{previewText=await E2E.decryptMessage(myPrivateKey,m.content,mine,prof.public_key);}catch(e){}
       }else if(looksEncrypted(m.content)){
         previewText='🔒 Pesan terenkripsi';
       }
