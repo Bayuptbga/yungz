@@ -692,6 +692,13 @@
   document.getElementById('searchOpenBtn').addEventListener('click',openSearch);
   document.getElementById('searchCloseBtn').addEventListener('click',closeSearch);
   document.getElementById('searchInput').addEventListener('input',(e)=>applySearchFilter(e.target.value));
+  // Klik di mana saja di luar kotak input (termasuk area kosong search bar / luar header)
+  // otomatis menutup search bar, tidak wajib klik panah kembali.
+  document.addEventListener('click',(e)=>{
+    if(!document.getElementById('searchBar').classList.contains('show'))return;
+    if(e.target.closest('#searchInput')||e.target.closest('#searchOpenBtn'))return;
+    closeSearch();
+  },true);
 
   // ---- Geser (swipe) kiri/kanan untuk pindah tab ----
   (function(){
