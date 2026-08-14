@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Private Chat - Panggilan</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1b2a32">
+<style>
+  :root{ --bg:#0b141a; --bbm-blue:#1b2a32; --accent:#53bdeb; --ink:#e9edf0; --ink-soft:#aab8c2;}
+  body { 
+    margin: 0; background: linear-gradient(160deg, var(--bg), var(--bbm-blue)); 
+    color: var(--ink); font-family: 'Inter', sans-serif;
+    height: 100vh; display: flex; flex-direction: column; justify-content: space-between;
+    align-items: center; padding: 60px 20px 40px; box-sizing: border-box; overflow: hidden;
+  }
+  .top-section { text-align: center; display:flex; flex-direction:column; align-items:center; }
+  .avatar-big { 
+    width: 110px; height: 110px; border-radius: 50%; background: #2a3942;
+    display: flex; align-items: center; justify-content: center; 
+    font-size: 36px; font-weight: bold; color: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,0.1);
+  }
+  .name { font-size: 24px; font-weight: 700; margin-top: 24px; }
+  .status { font-size: 15px; color: var(--ink-soft); margin-top: 8px; }
+  .status.pulse { animation: callPulse 1.4s infinite; }
+  @keyframes callPulse { 0%,100%{opacity:.5;} 50%{opacity:1;} }
+  
+  .actions { display: flex; gap: 30px; }
+  .btn-round { 
+    width: 64px; height: 64px; border-radius: 50%; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  }
+  .btn-round svg { width: 26px; height: 26px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .btn-end { background: #e04c4c; }
+  .btn-mute { background: rgba(255,255,255,0.15); }
+  .btn-mute.active { background: #53bdeb; }
+  .btn-start { background: #2ecc71; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+</head>
+<body>
+
+  <div class="top-section">
+    <div class="avatar-big" id="peerAvatar">?</div>
+    <div class="name" id="peerName">Menghubungkan...</div>
+    <div class="status pulse" id="callStatus">Menunggu koneksi...</div>
+  </div>
+
+  <audio id="remoteAudio" autoplay playsinline></audio>
+
+  <!-- Tombol Aksi -->
+  <div class="actions" id="actionWrap">
+    <button class="btn-round btn-start" id="startCallBtn" style="display:none;" title="Mulai Bicara">
+      <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+    </button>
+    <button class="btn-round btn-mute" id="muteBtn" style="display:none;" title="Bisukan Mikrofon">
+      <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </button>
+    <button class="btn-round btn-end" id="endBtn" title="Keluar">
+      <svg style="transform:rotate(135deg);" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+    </button>
+  </div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const peerId = params.get('uid');
+  let currentUserId = null;
+  let peerUsername = '';
+  
+  let callChannel = null, pc = null, localStream = null;
+  let callTimer = null, seconds = 0;
+  let muted = false;
+  
+  const ICE_SERVERS = [{urls:'stun:stun.l.google.com:19302'}, {urls:'stun:stun1.l.google.com:19302'}];
+  
+  const statusEl = document.getElementById('callStatus');
+  const remoteAudio = document.getElementById('remoteAudio');
+  const startCallBtn = document.getElementById('startCallBtn');
+  const muteBtn = document.getElementById('muteBtn');
+  const endBtn = document.getElementById('endBtn');
+
+  const colorPalette = ['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
+  function colorFor(id) { let h=0; for(let i=0;i<id.length;i++)h=id.charCodeAt(i)+((h<<5)-h); return colorPalette[Math.abs(h)%colorPalette.length]; }
+
+  async function init() {
+    if(!peerId) { window.location.href = 'dashboard.html'; return; }
+    const {data:{session}} = await supabaseClient.auth.getSession();
+    if(!session) { window.location.href = 'index.html'; return; }
+    
+    currentUserId = session.user.id;
+    
+    // Ambil info lawan bicara
+    const {data:prof} = await supabaseClient.from('profiles').select('username').eq('id', peerId).maybeSingle();
+    peerUsername = prof ? prof.username : 'Pengguna';
+    
+    document.getElementById('peerName').textContent = peerUsername;
+    document.getElementById('peerAvatar').textContent = peerUsername.slice(0,2).toUpperCase();
+    document.getElementById('peerAvatar').style.background = colorFor(peerId);
+    
+    setupSignaling();
+    startCallBtn.style.display = 'flex';
+    statusEl.textContent = 'Siap disambungkan...';
+    statusEl.classList.remove('pulse');
+  }
+
+  function setupSignaling() {
+    const chName = 'call_' + [currentUserId, peerId].sort().join('_');
+    callChannel = supabaseClient.channel(chName);
+    
+    callChannel
+      .on('broadcast', {event: 'signal'}, async ({payload}) => {
+        if(payload.from === currentUserId) return; // Abaikan pesan sendiri
+        
+        if (!pc) createPeerConnection();
+
+        if(payload.sdp) {
+          await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+          if(payload.sdp.type === 'offer') {
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            sendSignal({ sdp: answer });
+          }
+          startTimerUI();
+        } else if(payload.candidate) {
+          try { await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch(e){}
+        } else if(payload.leave) {
+          endCallProcess(true);
+        }
+      })
+      .subscribe();
+  }
+
+  function sendSignal(data) {
+    if(callChannel) callChannel.send({type: 'broadcast', event: 'signal', payload: {from: currentUserId, ...data}});
+  }
+
+  function createPeerConnection() {
+    pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    pc.onicecandidate = (e) => { if(e.candidate) sendSignal({ candidate: e.candidate }); };
+    pc.ontrack = (e) => { remoteAudio.srcObject = e.streams[0]; };
+    if(localStream) {
+      localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+    }
+  }
+
+  startCallBtn.addEventListener('click', async () => {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      startCallBtn.style.display = 'none';
+      muteBtn.style.display = 'flex';
+      statusEl.textContent = 'Menghubungkan...';
+      statusEl.classList.add('pulse');
+      
+      createPeerConnection();
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      sendSignal({ sdp: offer });
+    } catch (e) {
+      alert('Gagal mengakses mikrofon.');
+    }
+  });
+
+  function startTimerUI() {
+    statusEl.classList.remove('pulse');
+    if(!callTimer) {
+      seconds = 0;
+      callTimer = setInterval(() => {
+        seconds++;
+        const m = String(Math.floor(seconds/60)).padStart(2,'0');
+        const s = String(seconds%60).padStart(2,'0');
+        statusEl.textContent = `${m}:${s}`;
+      }, 1000);
+    }
+  }
+
+  function endCallProcess(remote = false) {
+    if(!remote) sendSignal({ leave: true });
+    if(pc) { pc.close(); pc = null; }
+    if(localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+    if(callTimer) { clearInterval(callTimer); callTimer = null; }
+    statusEl.textContent = remote ? 'Panggilan diakhiri.' : 'Panggilan selesai.';
+    statusEl.classList.remove('pulse');
+    setTimeout(() => {
+      window.location.href = `chat.html?uid=${peerId}&uname=${encodeURIComponent(peerUsername)}`;
+    }, 1500);
+  }
+
+  endBtn.addEventListener('click', () => endCallProcess(false));
+  
+  muteBtn.addEventListener('click', () => {
+    if(!localStream) return;
+    muted = !muted;
+    localStream.getAudioTracks().forEach(t => t.enabled = !muted);
+    muteBtn.classList.toggle('active', muted);
+  });
+
+  window.addEventListener('beforeunload', () => endCallProcess(false));
+
+  init();
+</script>
+</body>
+</html>
