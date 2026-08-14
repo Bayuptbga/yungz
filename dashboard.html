@@ -144,6 +144,7 @@
   .found-card button{ background:var(--bbm-blue); color:#fff;border:none;border-radius:8px; padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer; }
   .section-title{ padding:16px 16px 8px; font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; flex-shrink:0; display:flex; align-items:center; gap:8px; }
   .section-title::after{ content:''; flex:1; height:1px; background:var(--border); }
+  .count-badge{ background:var(--border); color:var(--muted); font-weight:700; font-size:11px; padding:2px 8px; border-radius:999px; text-transform:none; letter-spacing:normal; }
   .contact-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background-color .15s ease; }
   .contact-item:active{background:var(--border);}
   .contact-item .avatar{ width:48px;height:48px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:16px; }
@@ -307,7 +308,7 @@
   </div>
   <div class="tab-panel" id="panelKontak">
     <div class="fab" title="Tambah kontak" id="fabAddContact"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 20c0-4 3-7 7-7s7 3 7 7"/><path d="M17 8h5M19.5 5.5v5"/></svg></div>
-    <div class="section-title">Kontak Saya</div><div id="contactList"></div>
+    <div class="section-title">Kontak Saya<span id="contactCount" class="count-badge"></span></div><div id="contactList"></div>
   </div>
   <div class="tab-panel" id="panelNotif"><div id="notifList"></div></div>
     <div class="sheet-backdrop" id="addPanelWrap">
@@ -414,11 +415,13 @@
   async function loadContacts(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
     const cList=document.getElementById('contactList');cList.innerHTML=skeletonRow().repeat(4);
+    const cCount=document.getElementById('contactCount');if(cCount)cCount.textContent='';
     const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
-    if(!rows||rows.length===0){cList.innerHTML='<div class="panel-empty">Belum ada kontak.</div>';return;}
+    if(!rows||rows.length===0){cList.innerHTML='<div class="panel-empty">Belum ada kontak.</div>';if(cCount)cCount.textContent='0';return;}
     const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
     const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
     cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml(pMap[id])}"><div class="avatar" data-profuid="${escapeHtml(id)}" style="background:${colorFor(id)}">${escapeHtml(initials(pMap[id]))}</div><div class="uname">${escapeHtml(pMap[id])}</div></div>`).join('');
+    if(cCount)cCount.textContent=oIds.length;
     document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
     document.querySelectorAll('.contact-item .avatar').forEach(a=>a.addEventListener('click',e=>{e.stopPropagation();window.location.href=`profil.html?uid=${a.dataset.profuid}`;}));
   }
