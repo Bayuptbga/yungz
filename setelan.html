@@ -83,6 +83,19 @@
   .danger-note{ font-size:12.5px; color:var(--muted); line-height:1.6; margin-bottom:16px; }
   .danger-note b{ color:var(--error); }
   .btn-danger{ background:linear-gradient(135deg,#f15c6d,#c0392b); color:#fff; }
+
+  /* ---- Popup "Informasi Tentang Aplikasi Ini" ---- */
+  .e2e-info-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:flex-end; justify-content:center; z-index:320; opacity:0; pointer-events:none; transition:opacity .2s ease; }
+  .e2e-info-overlay.open{ opacity:1; pointer-events:auto; }
+  .e2e-info-sheet{ width:100%; max-width:420px; background:var(--card-bg); border:1px solid var(--border); border-top-left-radius:22px; border-top-right-radius:22px; padding:10px 24px calc(28px + env(safe-area-inset-bottom)); box-shadow:0 -10px 40px rgba(0,0,0,0.5); transform:translateY(16px); transition:transform .2s ease; text-align:center; }
+  .e2e-info-overlay.open .e2e-info-sheet{ transform:translateY(0); }
+  .e2e-info-grip{ width:36px; height:4px; border-radius:3px; background:var(--border); margin:0 auto 18px; }
+  .e2e-info-icon{ width:64px; height:64px; border-radius:18px; background:rgba(83,189,235,0.14); display:flex; align-items:center; justify-content:center; margin:0 auto 18px; }
+  .e2e-info-icon svg{ width:30px; height:30px; }
+  .e2e-info-sheet h3{ font-size:18px; font-weight:700; color:var(--ink); margin:0 0 12px; line-height:1.35; }
+  .e2e-info-sheet p{ font-size:13.5px; color:var(--ink-soft,var(--muted)); line-height:1.6; margin:0 0 22px; }
+  .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(83,189,235,0.14); color:#53bdeb; border:1px solid rgba(83,189,235,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .e2e-info-close-btn:active{ background:rgba(83,189,235,0.22); }
 </style>
 <script>
 // device-gate (inline, sebelumnya file terpisah)
@@ -132,10 +145,23 @@
 <div class="phone">
   <div id="authGate"><div class="spinner"></div></div>
   <div class="appbar">
-    <div class="back" onclick="location.href='dashboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <div class="back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
     <h1>Setelan</h1>
   </div>
   <div class="content">
+    <div class="section-title danger-title">Zona Berbahaya</div>
+    <div class="card">
+      <div class="danger-note">Menghapus akun akan menghapus <b>semua chat, kontak, status, dan data lainnya secara permanen</b>. Tindakan ini tidak bisa dibatalkan.</div>
+      <form id="deleteForm">
+        <div class="field">
+          <label>Konfirmasi Kata Sandi</label>
+          <div class="input-wrap"><input type="password" id="deletePassword" required autocomplete="current-password"><span class="toggle-pw" onclick="const p=document.getElementById('deletePassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
+        </div>
+        <div class="hint" id="deleteHint">Masukkan kata sandi untuk melanjutkan</div>
+        <button type="submit" class="btn btn-danger" id="deleteSubmitBtn"><span class="spinner"></span><span class="btn-label">Hapus Akun Saya</span></button>
+      </form>
+    </div>
+
     <div class="section-title">About</div>
     <div class="card">
       <div class="setting-row" id="installRow" style="display:none;">
@@ -149,26 +175,35 @@
         <div class="s-label">Versi</div>
         <div class="s-value" id="versionValue">1.0.0</div>
       </div>
+      <div class="setting-row" id="aboutInfoRow" style="cursor:pointer;">
+        <div class="s-label">Informasi Tentang Aplikasi Ini</div>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
     </div>
+  </div>
+</div>
 
-    <div class="section-title danger-title">Zona Berbahaya</div>
-    <div class="card">
-      <div class="danger-note">Menghapus akun akan menghapus <b>semua chat, kontak, status, dan data lainnya secara permanen</b>. Tindakan ini tidak bisa dibatalkan.</div>
-      <form id="deleteForm">
-        <div class="field">
-          <label>Konfirmasi Kata Sandi</label>
-          <div class="input-wrap"><input type="password" id="deletePassword" required autocomplete="current-password"><span class="toggle-pw" onclick="const p=document.getElementById('deletePassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
-        </div>
-        <div class="hint" id="deleteHint">Masukkan kata sandi untuk melanjutkan</div>
-        <button type="submit" class="btn btn-danger" id="deleteSubmitBtn"><span class="spinner"></span><span class="btn-label">Hapus Akun Saya</span></button>
-      </form>
-    </div>
+<!-- Popup "Informasi Tentang Aplikasi Ini" -->
+<div class="e2e-info-overlay" id="aboutInfoOverlay">
+  <div class="e2e-info-sheet">
+    <div class="e2e-info-grip"></div>
+    <div class="e2e-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="stroke:#53bdeb;"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg></div>
+    <h3>Tentang Private Chat</h3>
+    <p>Private Chat adalah aplikasi pesan pribadi dengan enkripsi end-to-end, dibuat supaya percakapanmu tetap hanya milikmu dan lawan bicaramu. Tidak ada iklan, tidak ada pelacakan isi pesan.</p>
+    <button type="button" class="e2e-info-close-btn" id="aboutInfoCloseBtn">Mengerti</button>
   </div>
 </div>
 <script>
   const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return(u||'?').slice(0,2).toUpperCase();}
+
+  function goBack(){
+    // Setelan.html bisa dibuka dari drawer dashboard ATAU dari tombol "Buka Setelan"
+    // di profil.html, jadi back harus kembali ke halaman asal, bukan selalu ke dashboard.
+    if(window.history.length>1){ window.history.back(); }
+    else { window.location.href='dashboard.html'; }
+  }
 
   let currentUsername=null;
   let currentUserId=null;
@@ -205,6 +240,12 @@
   window.addEventListener('appinstalled', () => {
     installRow.style.display='none'; installedRow.style.display='flex';
   });
+
+  // ---- Popup "Informasi Tentang Aplikasi Ini" ----
+  const aboutInfoOverlay=document.getElementById('aboutInfoOverlay');
+  document.getElementById('aboutInfoRow').addEventListener('click',()=>aboutInfoOverlay.classList.add('open'));
+  document.getElementById('aboutInfoCloseBtn').addEventListener('click',()=>aboutInfoOverlay.classList.remove('open'));
+  aboutInfoOverlay.addEventListener('click',(e)=>{ if(e.target===aboutInfoOverlay) aboutInfoOverlay.classList.remove('open'); });
 
   // ---- Hapus Akun ----
   // Alur: re-auth pakai kata sandi (memastikan yang minta hapus benar pemilik akun,
