@@ -135,13 +135,12 @@
   .add-row button{ padding:0 18px; background:var(--bbm-blue); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
   .add-row button:disabled{background:var(--border); color:var(--muted);}
   .search-msg{margin-top:10px;font-size:13px;} .search-msg.err{color:var(--error);} .search-msg.ok{color:var(--ok);}
-  .found-card{ display:none; margin-top:12px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:12px 14px; align-items:center; gap:12px; }
+  .found-card{ display:none; margin-top:16px; background:var(--bbm-blue-light); border:1px solid var(--border); border-radius:12px; padding:12px 14px; align-items:center; gap:12px; }
   .found-card.show{display:flex;}
-  .found-card .avatar{ width:44px;height:44px;border-radius:50%; background:var(--bbm-blue); color:#fff; display:flex;align-items:center;justify-content:center; font-weight:700;font-size:15px; }
+  .found-card .avatar{ width:44px;height:44px;border-radius:50%; background:var(--bbm-blue); color:#fff; display:flex;align-items:center;justify-content:center; font-weight:700;font-size:15px; flex-shrink:0; }
   .found-card .info{flex:1;min-width:0;}
   .found-card .info .uname{font-weight:600;font-size:15px; color:var(--ink);}
   .found-card .info .pin-label{font-size:11.5px;color:var(--muted);}
-  .found-card button{ background:var(--bbm-blue); color:#fff;border:none;border-radius:8px; padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer; }
   .section-title{ padding:16px 16px 8px; font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; flex-shrink:0; display:flex; align-items:center; gap:8px; }
   .section-title::after{ content:''; flex:1; height:1px; background:var(--border); }
   .count-badge{ background:var(--border); color:var(--muted); font-weight:700; font-size:11px; padding:2px 8px; border-radius:999px; text-transform:none; letter-spacing:normal; }
@@ -149,14 +148,23 @@
   .contact-item:active{background:var(--border);}
   .contact-item .avatar{ width:48px;height:48px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:16px; }
   .contact-item .uname{font-size:15.5px;font-weight:600; color:var(--ink);}
-  .sheet-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:150; opacity:0; pointer-events:none; transition:opacity .22s ease; display:flex; align-items:flex-end; justify-content:center; }
-  .sheet-backdrop.show{ opacity:1; pointer-events:auto; }
-  .sheet-box{ width:100%; max-width:420px; background:var(--card-bg); border:1px solid var(--border); border-bottom:none; border-radius:20px 20px 0 0; padding:10px 16px calc(20px + env(safe-area-inset-bottom)); box-shadow:0 -8px 30px rgba(0,0,0,0.4); transform:translateY(100%); transition:transform .25s cubic-bezier(.32,.72,0,1); will-change:transform; contain:content; }
-  .sheet-backdrop.show .sheet-box{ transform:translateY(0); }
-  .sheet-handle{ width:36px; height:4px; border-radius:2px; background:var(--border); margin:2px auto 16px; }
-  .sheet-box .ap-title{ font-size:16px; font-weight:700; color:var(--ink); margin-bottom:4px; }
-  .sheet-box .ap-sub{ font-size:12.5px; color:var(--muted); margin-bottom:16px; line-height:1.5; }
-  .sheet-box .found-card{ margin-top:12px; }
+  .addpage{ position:fixed; inset:0; background:var(--bg); z-index:150; display:flex; flex-direction:column; transform:translateY(100%); transition:transform .28s cubic-bezier(.32,.72,0,1); will-change:transform; }
+  .addpage.show{ transform:translateY(0); }
+  .addpage-header{ background:var(--bbm-blue); color:#fff; padding:calc(14px + env(safe-area-inset-top)) 16px 14px; display:flex; align-items:center; gap:18px; flex-shrink:0; }
+  .addpage-header .back-btn{ display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+  .addpage-header h2{ margin:0; font-size:19px; font-weight:600; }
+  .addpage-body{ flex:1; overflow-y:auto; padding:22px 18px; }
+  .field-label{ font-size:12px; color:#53bdeb; font-weight:700; text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px; }
+  .field-row{ display:flex; align-items:center; gap:8px; border:1.5px solid var(--border); border-radius:12px; padding:4px 4px 4px 14px; transition:border-color .15s ease; }
+  .field-row:focus-within{ border-color:#53bdeb; }
+  .field-row input{ flex:1; background:transparent; border:none; color:var(--ink); font-size:16px; padding:11px 0; font-family:'Courier New',monospace; letter-spacing:1px; outline:none; }
+  .field-row input::placeholder{ color:var(--muted); font-family:inherit; letter-spacing:normal; }
+  .field-search-btn{ width:38px; height:38px; border-radius:10px; background:var(--bbm-blue); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+  .field-search-btn:disabled{ background:var(--border); }
+  .field-hint{ font-size:12.5px; color:var(--muted); margin-top:10px; line-height:1.55; }
+  .addpage-footer{ flex-shrink:0; padding:14px 18px calc(16px + env(safe-area-inset-bottom)); border-top:1px solid var(--border); }
+  .btn-primary-full{ width:100%; background:#53bdeb; color:#04202c; border:none; border-radius:12px; padding:15px; font-size:15px; font-weight:700; cursor:pointer; transition:opacity .15s ease; }
+  .btn-primary-full:disabled{ background:var(--border); color:var(--muted); }
   .req-item, .notif-item{ display:flex; align-items:center; gap:13px; padding:13px 16px; border-bottom:1px solid var(--border); transition:background-color .3s ease, opacity .3s ease; }
   .req-item .avatar, .notif-item .avatar{ width:46px;height:46px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:15.5px; flex-shrink:0; box-shadow:0 0 0 2px var(--card-bg); }
   .req-item .info, .notif-item .info{flex:1;min-width:0;}
@@ -311,15 +319,22 @@
     <div class="section-title">Kontak Saya<span id="contactCount" class="count-badge"></span></div><div id="contactList"></div>
   </div>
   <div class="tab-panel" id="panelNotif"><div id="notifList"></div></div>
-    <div class="sheet-backdrop" id="addPanelWrap">
-      <div class="sheet-box">
-        <div class="sheet-handle"></div>
-        <div class="ap-title">Tambah Kontak</div>
-        <div class="ap-sub">Masukkan PIN 8 karakter milik teman kamu untuk mencarinya.</div>
-        <div class="add-row"><input type="text" id="pinInput" placeholder="Masukkan 8 karakter PIN" maxlength="8" autocapitalize="characters"><button id="searchBtn">Cari</button></div>
-        <div class="search-msg" id="searchMsg"></div>
-        <div class="found-card" id="foundCard"><div class="avatar" id="foundAvatar">?</div><div class="info"><div class="uname" id="foundUname">—</div><div class="pin-label">Ditemukan</div></div><button id="sendRequestBtn">Kirim Permintaan</button></div>
+    <div class="addpage" id="addPanelWrap">
+      <div class="addpage-header">
+        <div class="back-btn" id="addBackBtn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
+        <h2>Tambah Kontak</h2>
       </div>
+      <div class="addpage-body">
+        <div class="field-label">PIN Teman (8 karakter)</div>
+        <div class="field-row">
+          <input type="text" id="pinInput" placeholder="Contoh: 6NK6W7T6" maxlength="8" autocapitalize="characters">
+          <button class="field-search-btn" id="searchBtn" title="Cari"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
+        </div>
+        <div class="field-hint">Masukkan PIN 8 karakter milik teman kamu untuk mencarinya.</div>
+        <div class="search-msg" id="searchMsg"></div>
+        <div class="found-card" id="foundCard"><div class="avatar" id="foundAvatar">?</div><div class="info"><div class="uname" id="foundUname">—</div><div class="pin-label">Ditemukan</div></div></div>
+      </div>
+      <div class="addpage-footer"><button class="btn-primary-full" id="sendRequestBtn" disabled>Kirim Permintaan</button></div>
     </div>
   <div class="tabbar">
     <div class="tabitem active" id="tabChats"><svg viewBox="0 0 24 24" fill="var(--ink)" stroke="none"><path d="M4 4h16a2 2 0 012 2v9a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg><span class="tlabel">Chat</span></div>
@@ -383,25 +398,26 @@
     loadChats(session.user.id);markInboxDelivered(session.user.id);
   }
   let foundProfile=null;const searchBtn=document.getElementById('searchBtn'),searchMsg=document.getElementById('searchMsg'),foundCard=document.getElementById('foundCard');
+  const searchBtnIcon=searchBtn.innerHTML;
   searchBtn.addEventListener('click',async()=>{
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const pin=document.getElementById('pinInput').value.trim().toUpperCase();
-    searchMsg.textContent='';searchMsg.className='search-msg';foundCard.classList.remove('show');foundProfile=null;
+    const sendBtnEl=document.getElementById('sendRequestBtn');
+    searchMsg.textContent='';searchMsg.className='search-msg';foundCard.classList.remove('show');foundProfile=null;sendBtnEl.disabled=true;sendBtnEl.textContent='Kirim Permintaan';
     if(!/^[A-Za-z0-9]{8}$/.test(pin)){searchMsg.textContent='PIN 8 karakter (huruf/angka).';searchMsg.className='search-msg err';return;}
-    searchBtn.disabled=true;searchBtn.textContent='...';
+    searchBtn.disabled=true;searchBtn.innerHTML='...';
     const {data:rows,error}=await supabaseClient.rpc('search_profile_by_pin',{p_pin:pin});
-    searchBtn.disabled=false;searchBtn.textContent='Cari';
+    searchBtn.disabled=false;searchBtn.innerHTML=searchBtnIcon;
     if(error){searchMsg.textContent=error.message.includes('Terlalu banyak')?'Terlalu banyak percobaan, coba lagi nanti.':'Gagal mencari.';searchMsg.className='search-msg err';return;}
     const data=(rows&&rows.length>0)?rows[0]:null;
     if(!data){searchMsg.textContent='Tidak ditemukan.';searchMsg.className='search-msg err';return;}
     if(data.id===session.user.id){searchMsg.textContent='Ini PIN kamu.';searchMsg.className='search-msg err';return;}
     const {data:existing}=await supabaseClient.from('contacts').select('status').or(`and(requester_id.eq.${session.user.id},addressee_id.eq.${data.id}),and(requester_id.eq.${data.id},addressee_id.eq.${session.user.id})`).maybeSingle();
     foundProfile=data;document.getElementById('foundAvatar').textContent=initials(data.username);document.getElementById('foundAvatar').style.background=colorFor(data.id);document.getElementById('foundUname').textContent=data.username;
-    const sendBtnEl=document.getElementById('sendRequestBtn');
     if(existing){
       const label=existing.status==='accepted'?'Sudah berteman':existing.status==='pending'?'Permintaan masih menunggu':'Permintaan pernah ditolak';
-      sendBtnEl.style.display='none';foundCard.classList.add('show');searchMsg.textContent=label;searchMsg.className=existing.status==='accepted'?'search-msg ok':'search-msg err';return;
+      foundCard.classList.add('show');searchMsg.textContent=label;searchMsg.className=existing.status==='accepted'?'search-msg ok':'search-msg err';return;
     }
-    sendBtnEl.style.display='';sendBtnEl.disabled=false;sendBtnEl.textContent='Kirim';
+    sendBtnEl.disabled=false;
     foundCard.classList.add('show');searchMsg.textContent='Ditemukan!';searchMsg.className='search-msg ok';
   });
   document.getElementById('sendRequestBtn').addEventListener('click',async()=>{
@@ -679,6 +695,7 @@
     document.getElementById('searchMsg').textContent='';
     document.getElementById('foundCard').classList.remove('show');
     document.getElementById('pinInput').value='';
+    const sendBtnEl=document.getElementById('sendRequestBtn');sendBtnEl.disabled=true;sendBtnEl.textContent='Kirim Permintaan';
     document.getElementById('addPanelWrap').classList.add('show');
     document.getElementById('pinInput').focus();
   }
@@ -688,9 +705,7 @@
   document.getElementById('fabAddContact').addEventListener('click',()=>{
     document.getElementById('addPanelWrap').classList.contains('show') ? closeAddModal() : openAddModal();
   });
-  document.getElementById('addPanelWrap').addEventListener('click',(e)=>{
-    if(e.target===e.currentTarget) closeAddModal();
-  });
+  document.getElementById('addBackBtn').addEventListener('click',closeAddModal);
 </script>
 </body>
 </html>
