@@ -156,10 +156,10 @@
   .contact-action .ca-sub{ font-size:12px; color:var(--muted); margin-top:1px; }
   .contact-action .ca-chevron{ margin-left:auto; color:var(--muted); flex-shrink:0; transition:transform .25s ease; }
   .contact-action.open .ca-chevron{ transform:rotate(180deg); }
-  .add-panel-wrap{ display:grid; grid-template-rows:0fr; transition:grid-template-rows .25s ease; flex-shrink:0; }
+  .add-panel-wrap{ display:grid; grid-template-rows:0fr; transition:grid-template-rows .22s cubic-bezier(.4,0,.2,1); flex-shrink:0; will-change:grid-template-rows; contain:layout paint; }
   .add-panel-wrap.show{ grid-template-rows:1fr; }
   .add-panel-inner{ overflow:hidden; }
-  .add-panel{ margin:0 14px 14px; background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:16px; }
+  .add-panel{ margin:0 14px 14px; background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:16px; contain:content; }
   .add-panel .ap-title{ font-size:13.5px; font-weight:700; color:var(--ink); margin-bottom:3px; }
   .add-panel .ap-sub{ font-size:12px; color:var(--muted); margin-bottom:14px; line-height:1.5; }
   .add-panel .found-card{ margin-top:12px; }
