@@ -151,7 +151,7 @@ const E2E = (() => {
     try {
       if (obj.e2e === 2) {
         const wrapObj = amISender ? obj.wrapSender : obj.wrapReceiver;
-        if (!wrapObj || !obj.epk) return '🔒 Pesan tidak bisa dibuka di perangkat ini';
+        if (!wrapObj || !obj.epk) return '🔒 Pesan terkunci oleh enkripsi end-to-end';
         const wrapKey = await deriveWrapKey(myPrivateKey, obj.epk);
         const rawMsgKey = await unwrapKeyBytes(wrapKey, wrapObj);
         const msgKey = await crypto.subtle.importKey('raw', rawMsgKey, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
@@ -162,16 +162,16 @@ const E2E = (() => {
       if (obj.e2e === 1) {
         // Format lama (shared-key). Perlu public key lawan bicara SAAT INI; kalau
         // sudah berubah sejak pesan ini dikirim, tetap tidak akan bisa dibuka.
-        if (!legacyPeerPublicKeyB64 || !obj.iv || !obj.ct) return '🔒 Pesan tidak bisa dibuka di perangkat ini';
+        if (!legacyPeerPublicKeyB64 || !obj.iv || !obj.ct) return '🔒 Pesan terkunci oleh enkripsi end-to-end';
         const sharedKey = await deriveWrapKey(myPrivateKey, legacyPeerPublicKeyB64);
         const iv = new Uint8Array(bufFromB64(obj.iv));
         const ptBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, sharedKey, bufFromB64(obj.ct));
         return new TextDecoder().decode(ptBuf);
       }
-      return '🔒 Pesan tidak bisa dibuka di perangkat ini';
+      return '🔒 Pesan terkunci oleh enkripsi end-to-end';
     } catch (e) {
       // Format e2e valid tapi gagal didekripsi -> kunci di device ini tidak cocok.
-      return '🔒 Pesan tidak bisa dibuka di perangkat ini';
+      return '🔒 Pesan terkunci oleh enkripsi end-to-end';
     }
   }
 
