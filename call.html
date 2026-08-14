@@ -5,126 +5,183 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Private Chat - Panggilan</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1b2a32">
+<meta name="theme-color" content="#0b141a">
 <style>
-  :root{ --bg:#0b141a; --bbm-blue:#1b2a32; --accent:#53bdeb; --ink:#e9edf0; --ink-soft:#aab8c2;}
-  body { 
-    margin: 0; background: linear-gradient(160deg, var(--bg), var(--bbm-blue)); 
-    color: var(--ink); font-family: 'Inter', sans-serif;
-    height: 100vh; display: flex; flex-direction: column; justify-content: space-between;
-    align-items: center; padding: 60px 20px 40px; box-sizing: border-box; overflow: hidden;
+  :root{
+    --bg:#0b141a; --bbm-blue:#1b2a32; --accent:#53bdeb; --accent-soft:rgba(83,189,235,.16);
+    --ink:#e9edf0; --ink-soft:#8aa0ac; --danger:#e04c4c; --ok:#2ecc71;
   }
-  .top-section { text-align: center; display:flex; flex-direction:column; align-items:center; }
-  .avatar-big { 
-    width: 110px; height: 110px; border-radius: 50%; background: #2a3942;
-    display: flex; align-items: center; justify-content: center; 
-    font-size: 36px; font-weight: bold; color: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,0.1);
+  *{box-sizing:border-box;}
+  body {
+    margin: 0; background: radial-gradient(120% 90% at 50% -10%, #16323d 0%, var(--bg) 55%, #060b0e 100%);
+    color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    height: 100vh; height: 100dvh; display: flex; flex-direction: column; justify-content: space-between;
+    align-items: center; padding: calc(48px + env(safe-area-inset-top)) 24px calc(36px + env(safe-area-inset-bottom));
+    box-sizing: border-box; overflow: hidden; position: relative;
   }
-  .name { font-size: 24px; font-weight: 700; margin-top: 24px; }
-  .status { font-size: 15px; color: var(--ink-soft); margin-top: 8px; }
+  .bg-orb{position:absolute; width:340px; height:340px; border-radius:50%; background:radial-gradient(circle, rgba(83,189,235,.18), transparent 70%); top:-120px; left:50%; transform:translateX(-50%); pointer-events:none; filter:blur(10px);}
+
+  .top-section { text-align: center; display:flex; flex-direction:column; align-items:center; position:relative; z-index:1; }
+  .encrypt-chip{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft); background:rgba(255,255,255,0.06); padding:6px 12px; border-radius:20px; margin-bottom:26px; }
+  .encrypt-chip svg{width:13px;height:13px;stroke:var(--ink-soft);}
+
+  .avatar-ring{ position:relative; width:132px; height:132px; display:flex; align-items:center; justify-content:center; }
+  .avatar-ring::before{
+    content:''; position:absolute; inset:0; border-radius:50%;
+    border:2px solid var(--accent); opacity:0; transform:scale(1);
+  }
+  .avatar-ring.pulsing::before{ animation: ringPulse 1.8s ease-out infinite; opacity:1; }
+  .avatar-ring.connected::before{ opacity:.55; animation:none; box-shadow:0 0 0 2px var(--ok) inset; border-color:var(--ok); }
+  @keyframes ringPulse { 0%{ transform:scale(0.86); opacity:.9; } 100%{ transform:scale(1.35); opacity:0; } }
+
+  .avatar-big {
+    width: 108px; height: 108px; border-radius: 50%; background: #2a3942;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 34px; font-weight: 700; color: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,0.08), 0 12px 30px rgba(0,0,0,0.35);
+    letter-spacing: .5px;
+  }
+  .name { font-size: 23px; font-weight: 700; margin-top: 22px; letter-spacing:.2px; }
+  .status { font-size: 14.5px; color: var(--ink-soft); margin-top: 8px; min-height: 18px; font-variant-numeric: tabular-nums; }
   .status.pulse { animation: callPulse 1.4s infinite; }
-  @keyframes callPulse { 0%,100%{opacity:.5;} 50%{opacity:1;} }
-  
-  .actions { display: flex; gap: 30px; }
-  .btn-round { 
-    width: 64px; height: 64px; border-radius: 50%; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  .status.err { color: #f18a8a; }
+  @keyframes callPulse { 0%,100%{opacity:.55;} 50%{opacity:1;} }
+
+  .hint{ font-size:12.5px; color:var(--ink-soft); margin-top:6px; opacity:.8; max-width:240px; }
+
+  .actions { display: flex; gap: 26px; position:relative; z-index:1; align-items:flex-end; }
+  .btn-wrap{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .btn-label{ font-size:11.5px; color:var(--ink-soft); }
+  .btn-round {
+    width: 62px; height: 62px; border-radius: 50%; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
   }
-  .btn-round svg { width: 26px; height: 26px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .btn-end { background: #e04c4c; }
-  .btn-mute { background: rgba(255,255,255,0.15); }
-  .btn-mute.active { background: #53bdeb; }
-  .btn-start { background: #2ecc71; }
+  .btn-round:active{ transform: scale(0.92); }
+  .btn-round svg { width: 25px; height: 25px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .btn-end { background: var(--danger); box-shadow:0 6px 20px rgba(224,76,76,.4); }
+  .btn-mute { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.14); }
+  .btn-mute.active { background: var(--accent); box-shadow:0 6px 20px rgba(83,189,235,.35); }
+  .btn-mute.active svg{ stroke:#062733; }
+  .btn-start { background: var(--ok); box-shadow:0 6px 20px rgba(46,204,113,.4); }
+  .btn-start.disabled{ opacity:.5; pointer-events:none; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js"></script>
 </head>
 <body>
 
+  <div class="bg-orb"></div>
+
   <div class="top-section">
-    <div class="avatar-big" id="peerAvatar">?</div>
+    <div class="encrypt-chip">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+      <span>Panggilan terenkripsi end-to-end</span>
+    </div>
+    <div class="avatar-ring pulsing" id="avatarRing">
+      <div class="avatar-big" id="peerAvatar">?</div>
+    </div>
     <div class="name" id="peerName">Menghubungkan...</div>
-    <div class="status pulse" id="callStatus">Menunggu koneksi...</div>
+    <div class="status pulse" id="callStatus">Memuat...</div>
+    <div class="hint" id="callHint"></div>
   </div>
 
   <audio id="remoteAudio" autoplay playsinline></audio>
 
   <!-- Tombol Aksi -->
   <div class="actions" id="actionWrap">
-    <button class="btn-round btn-start" id="startCallBtn" style="display:none;" title="Mulai Bicara">
-      <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-    </button>
-    <button class="btn-round btn-mute" id="muteBtn" style="display:none;" title="Bisukan Mikrofon">
-      <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-    </button>
-    <button class="btn-round btn-end" id="endBtn" title="Keluar">
-      <svg style="transform:rotate(135deg);" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-    </button>
+    <div class="btn-wrap" id="startWrap" style="display:none;">
+      <button class="btn-round btn-start" id="startCallBtn" title="Panggil">
+        <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+      </button>
+      <div class="btn-label">Panggil</div>
+    </div>
+    <div class="btn-wrap" id="muteWrap" style="display:none;">
+      <button class="btn-round btn-mute" id="muteBtn" title="Bisukan Mikrofon">
+        <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      </button>
+      <div class="btn-label" id="muteLabel">Bisukan</div>
+    </div>
+    <div class="btn-wrap">
+      <button class="btn-round btn-end" id="endBtn" title="Keluar">
+        <svg style="transform:rotate(135deg);" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+      </button>
+      <div class="btn-label">Tutup</div>
+    </div>
   </div>
 
 <script>
   const params = new URLSearchParams(window.location.search);
   const peerId = params.get('uid');
+  const inviteMsgId = params.get('msgid') || null; // id pesan "[INVITE_CALL]" di chat, dihapus saat panggilan berakhir
   let currentUserId = null;
   let peerUsername = '';
-  
+
   let callChannel = null, pc = null, localStream = null;
   let callTimer = null, seconds = 0;
   let muted = false;
-  
+  let callActive = false;      // true setelah offer/answer terkirim -> cegah kirim offer dobel (glare)
+  let inviteHandled = false;   // pastikan penghapusan pesan undangan cuma diproses sekali
+  let pendingCandidates = [];  // ICE candidate yang datang sebelum remoteDescription siap
+
   const ICE_SERVERS = [{urls:'stun:stun.l.google.com:19302'}, {urls:'stun:stun1.l.google.com:19302'}];
-  
+
+  const avatarRing = document.getElementById('avatarRing');
   const statusEl = document.getElementById('callStatus');
+  const hintEl = document.getElementById('callHint');
   const remoteAudio = document.getElementById('remoteAudio');
+  const startWrap = document.getElementById('startWrap');
   const startCallBtn = document.getElementById('startCallBtn');
+  const muteWrap = document.getElementById('muteWrap');
   const muteBtn = document.getElementById('muteBtn');
+  const muteLabel = document.getElementById('muteLabel');
   const endBtn = document.getElementById('endBtn');
 
   const colorPalette = ['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id) { let h=0; for(let i=0;i<id.length;i++)h=id.charCodeAt(i)+((h<<5)-h); return colorPalette[Math.abs(h)%colorPalette.length]; }
 
+  function setStatus(text, {pulse=false, err=false} = {}) {
+    statusEl.textContent = text;
+    statusEl.classList.toggle('pulse', pulse);
+    statusEl.classList.toggle('err', err);
+  }
+
   async function init() {
     if(!peerId) { window.location.href = 'dashboard.html'; return; }
     const {data:{session}} = await supabaseClient.auth.getSession();
     if(!session) { window.location.href = 'index.html'; return; }
-    
+
     currentUserId = session.user.id;
-    
+
     // Ambil info lawan bicara
     const {data:prof} = await supabaseClient.from('profiles').select('username').eq('id', peerId).maybeSingle();
     peerUsername = prof ? prof.username : 'Pengguna';
-    
+
     document.getElementById('peerName').textContent = peerUsername;
     document.getElementById('peerAvatar').textContent = peerUsername.slice(0,2).toUpperCase();
     document.getElementById('peerAvatar').style.background = colorFor(peerId);
-    
+
     setupSignaling();
-    startCallBtn.style.display = 'flex';
-    statusEl.textContent = 'Siap disambungkan...';
-    statusEl.classList.remove('pulse');
+    startWrap.style.display = 'flex';
+    setStatus('Siap disambungkan...');
+    hintEl.textContent = 'Tekan tombol hijau untuk memulai panggilan';
   }
 
   function setupSignaling() {
     const chName = 'call_' + [currentUserId, peerId].sort().join('_');
     callChannel = supabaseClient.channel(chName);
-    
+
     callChannel
       .on('broadcast', {event: 'signal'}, async ({payload}) => {
         if(payload.from === currentUserId) return; // Abaikan pesan sendiri
-        
-        if (!pc) createPeerConnection();
 
         if(payload.sdp) {
-          await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-          if(payload.sdp.type === 'offer') {
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            sendSignal({ sdp: answer });
-          }
-          startTimerUI();
+          await handleIncomingSdp(payload.sdp);
         } else if(payload.candidate) {
-          try { await pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch(e){}
+          await handleIncomingCandidate(payload.candidate);
+        } else if(payload.noMic) {
+          setStatus('Lawan bicara tidak bisa mengaktifkan mikrofon.', {err:true});
         } else if(payload.leave) {
+          if(payload.deleteInvite) tryDeleteInviteMessage(payload.deleteInvite);
           endCallProcess(true);
         }
       })
@@ -139,60 +196,148 @@
     pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
     pc.onicecandidate = (e) => { if(e.candidate) sendSignal({ candidate: e.candidate }); };
     pc.ontrack = (e) => { remoteAudio.srcObject = e.streams[0]; };
+    pc.onconnectionstatechange = () => {
+      if(pc && (pc.connectionState === 'failed' || pc.connectionState === 'disconnected')) {
+        setStatus('Koneksi terputus...', {err:true, pulse:true});
+      }
+    };
     if(localStream) {
       localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
     }
   }
 
+  // Minta akses mikrofon sekali saja dan simpan streamnya.
+  async function ensureLocalStream() {
+    if(localStream) return localStream;
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    return localStream;
+  }
+
+  // BUG LAMA: saat menerima offer, peer connection dibuat sebelum mikrofon
+  // diaktifkan, jadi track audio penerima tidak pernah ditambahkan -> suara
+  // cuma jalan satu arah. Sekarang mikrofon dipastikan aktif dulu SEBELUM
+  // peer connection dibuat / answer dibuat.
+  async function handleIncomingSdp(sdp) {
+    if(sdp.type === 'offer') {
+      try {
+        await ensureLocalStream();
+      } catch (e) {
+        setStatus('Gagal mengakses mikrofon.', {err:true});
+        sendSignal({ noMic: true });
+        return;
+      }
+      // Sudah menerima offer -> jangan biarkan user juga menekan tombol panggil
+      // sendiri (mencegah dua offer terkirim bersamaan / "glare").
+      startWrap.style.display = 'none';
+      muteWrap.style.display = 'flex';
+      hintEl.textContent = '';
+    }
+
+    if(!pc) createPeerConnection();
+    await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+    await flushPendingCandidates();
+
+    if(sdp.type === 'offer') {
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      sendSignal({ sdp: answer });
+    }
+
+    callActive = true;
+    startTimerUI();
+    avatarRing.classList.add('connected');
+    avatarRing.classList.remove('pulsing');
+  }
+
+  async function handleIncomingCandidate(candidate) {
+    if(pc && pc.remoteDescription && pc.remoteDescription.type) {
+      try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch(e) {}
+    } else {
+      // remoteDescription belum siap -> simpan dulu, pasang setelah siap
+      pendingCandidates.push(candidate);
+    }
+  }
+
+  async function flushPendingCandidates() {
+    const queued = pendingCandidates;
+    pendingCandidates = [];
+    for(const c of queued) {
+      try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e) {}
+    }
+  }
+
   startCallBtn.addEventListener('click', async () => {
+    if(callActive) return; // cegah klik dobel / kirim offer setelah offer lain masuk
     try {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      startCallBtn.style.display = 'none';
-      muteBtn.style.display = 'flex';
-      statusEl.textContent = 'Menghubungkan...';
-      statusEl.classList.add('pulse');
-      
+      await ensureLocalStream();
+      callActive = true;
+      startWrap.style.display = 'none';
+      muteWrap.style.display = 'flex';
+      setStatus('Menghubungi...', {pulse:true});
+      hintEl.textContent = '';
+
       createPeerConnection();
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       sendSignal({ sdp: offer });
     } catch (e) {
-      alert('Gagal mengakses mikrofon.');
+      callActive = false;
+      setStatus('Gagal mengakses mikrofon.', {err:true});
     }
   });
 
   function startTimerUI() {
-    statusEl.classList.remove('pulse');
+    setStatus('00:00');
     if(!callTimer) {
       seconds = 0;
       callTimer = setInterval(() => {
         seconds++;
         const m = String(Math.floor(seconds/60)).padStart(2,'0');
         const s = String(seconds%60).padStart(2,'0');
-        statusEl.textContent = `${m}:${s}`;
+        setStatus(`${m}:${s}`);
       }, 1000);
     }
   }
 
+  // Hapus pesan undangan "[INVITE_CALL]" di chat setelah panggilan berakhir.
+  // Kebijakan hapus pesan di app ini cuma mengizinkan SENDER menghapus
+  // pesannya sendiri, jadi kita coba hapus di device ini (berhasil kalau
+  // device ini pengirim aslinya) DAN kirim sinyal ke lawan bicara supaya
+  // device dia juga mencoba (berhasil kalau dia pengirim aslinya). Salah satu
+  // pasti berhasil, dan berkat langganan realtime di chat.html, bubble-nya
+  // otomatis hilang di kedua sisi.
+  async function tryDeleteInviteMessage(msgId) {
+    if(!msgId || inviteHandled) return;
+    inviteHandled = true;
+    try {
+      await supabaseClient.from('messages').delete().eq('id', msgId).eq('sender_id', currentUserId);
+    } catch(e) { /* abaikan: memang bukan giliran device ini yang menghapus */ }
+  }
+
   function endCallProcess(remote = false) {
-    if(!remote) sendSignal({ leave: true });
+    if(!remote) sendSignal({ leave: true, deleteInvite: inviteMsgId });
+    if(inviteMsgId) tryDeleteInviteMessage(inviteMsgId);
+
     if(pc) { pc.close(); pc = null; }
     if(localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
     if(callTimer) { clearInterval(callTimer); callTimer = null; }
-    statusEl.textContent = remote ? 'Panggilan diakhiri.' : 'Panggilan selesai.';
-    statusEl.classList.remove('pulse');
+    pendingCandidates = [];
+    avatarRing.classList.remove('pulsing','connected');
+    setStatus(remote ? 'Panggilan diakhiri.' : 'Panggilan selesai.');
+    hintEl.textContent = '';
     setTimeout(() => {
       window.location.href = `chat.html?uid=${peerId}&uname=${encodeURIComponent(peerUsername)}`;
-    }, 1500);
+    }, 1200);
   }
 
   endBtn.addEventListener('click', () => endCallProcess(false));
-  
+
   muteBtn.addEventListener('click', () => {
     if(!localStream) return;
     muted = !muted;
     localStream.getAudioTracks().forEach(t => t.enabled = !muted);
     muteBtn.classList.toggle('active', muted);
+    muteLabel.textContent = muted ? 'Bersuara' : 'Bisukan';
   });
 
   window.addEventListener('beforeunload', () => endCallProcess(false));
