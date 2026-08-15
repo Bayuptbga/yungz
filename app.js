@@ -18,6 +18,33 @@ const SUPABASE_ANON_KEY = 'sb_publishable_LcTHxYsZJsvZWkdsdQWfoQ_JsV7ahbT';
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/* ===== Update Service Worker dengan aman (anti "nyangkut versi lama") =====
+   Kalau SW baru ambil alih kontrol tab yang sedang kebuka (karena sw.js
+   pakai skipWaiting + clients.claim), HTML/JS yang sudah dimuat di memori
+   browser masih versi lama. Ini bisa bikin app terasa error/rusak sampai
+   user refresh manual. Jadi begitu SW baru ambil alih, kita reload sekali
+   secara otomatis biar semuanya balik sinkron dengan versi terbaru. */
+if ('serviceWorker' in navigator) {
+  let swRefreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (swRefreshing) return;
+    swRefreshing = true;
+    window.location.reload();
+  });
+
+  // Jangan cuma andalkan pengecekan pasif browser (bisa ~24 jam sekali).
+  // Paksa cek update tiap kali app dibuka / kembali aktif (penting untuk
+  // TWA yang sering resume dari background, bukan cold start baru).
+  navigator.serviceWorker.ready.then((reg) => {
+    reg.update().catch(() => {});
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        reg.update().catch(() => {});
+      }
+    });
+  }).catch(() => {});
+}
+
 // Karena Supabase Auth butuh format email, username diubah jadi
 // "username@bbmchat.app" di belakang layar. User tidak pernah melihat ini.
 // (Domain .local ditolak Supabase karena dianggap TLD tidak valid.)

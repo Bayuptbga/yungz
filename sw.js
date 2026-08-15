@@ -1,5 +1,13 @@
 // Service Worker - Baku Chat
-const CACHE_NAME = 'private-chat-v4';
+//
+// ==== VERSIONING OTOMATIS ====
+// VERSION di bawah ini diisi OTOMATIS oleh GitHub Actions setiap deploy
+// (lihat .github/workflows/deploy.yml). Jangan edit manual di sini —
+// kalau kamu jalankan file ini langsung tanpa lewat Actions, __VERSION__
+// tidak akan tergantikan, tapi itu tidak masalah karena tetap unik per commit
+// selama workflow yang jalan.
+const VERSION = '__VERSION__';
+const CACHE_NAME = `private-chat-${VERSION}`;
 
 // Aset yang nyaris tidak pernah berubah (ikon, font) -> lebih cocok cache-first
 // biar loading-nya cepat, tidak perlu nunggu network tiap kali.
@@ -22,11 +30,11 @@ const APP_SHELL = [
   './akses-ditolak',
   './akses-ditolak.html',
   './manifest.json',
-  './device-gate.js',
-  './app.js',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/apple-touch-icon.png'
+  './device-gate.js?v=__VERSION__',
+  './app.js?v=__VERSION__',
+  './icons/icon-192.png?v=3',
+  './icons/icon-512.png?v=3',
+  './icons/apple-touch-icon.png?v=3'
 ];
 
 // Install: cache app shell.

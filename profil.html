@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<script src="device-gate.js"></script>
+<script src="device-gate.js?v=__VERSION__"></script>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -152,7 +152,7 @@
   .crop-hint{ text-align:center; color:rgba(255,255,255,0.55); font-size:12px; padding:0 24px 4px; flex-shrink:0; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=1"></script>
+<script src="app.js?v=__VERSION__"></script>
 </head>
 <body>
 <div class="phone">
@@ -172,6 +172,9 @@
       <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
       <div class="h-uname" id="hUname">—</div>
       <div id="avatarHint" style="font-size:11.5px; color:var(--muted); min-height:14px; margin-top:2px;"></div>
+      <div id="avatarRemoveRow" style="display:none; margin-top:2px;">
+        <span style="font-size:11.5px; color:var(--accent); font-weight:700; cursor:pointer;" id="avatarRemoveBtn">Hapus Foto</span>
+      </div>
       <div class="h-joined" id="hJoined">Bergabung —</div>
     </div>
 
@@ -369,6 +372,7 @@
       setAvatar(document.getElementById('hAvatar'), myUid, prof.username, currentAvatarUrl);
     }
     document.getElementById('avatarEditBadge').style.display = 'flex';
+    updateAvatarRemoveRow();
     document.getElementById('hJoined').textContent = formatJoined(session.user.created_at);
     document.getElementById('e2eCardDesc').textContent = 'Semua pesanmu di Baku Chat dilindungi enkripsi end-to-end. Bahkan kami pun tidak bisa membacanya.';
     document.getElementById('e2eInfoText').textContent = 'Semua pesan pribadi di Baku Chat dilindungi enkripsi end-to-end secara otomatis, di setiap obrolan yang kamu punya.';
@@ -385,8 +389,21 @@
 
   // ---- Foto Profil: resize di client lalu upload ke Supabase Storage (bucket "avatars"),
   // kolom profiles.avatar_url hanya menyimpan URL publiknya. Hanya untuk profil sendiri. ----
-  const avatarFileInput=document.getElementById('avatarFileInput'), avatarEditBadge=document.getElementById('avatarEditBadge'), avatarHint=document.getElementById('avatarHint');
+  const avatarFileInput=document.getElementById('avatarFileInput'), avatarEditBadge=document.getElementById('avatarEditBadge'), avatarHint=document.getElementById('avatarHint'),
+        avatarRemoveRow=document.getElementById('avatarRemoveRow'), avatarRemoveBtn=document.getElementById('avatarRemoveBtn');
   avatarEditBadge.addEventListener('click', ()=>avatarFileInput.click());
+  function updateAvatarRemoveRow(){ avatarRemoveRow.style.display = currentAvatarUrl ? 'block' : 'none'; }
+  avatarRemoveBtn.addEventListener('click', async ()=>{
+    if(!currentUserId) return;
+    if(!confirm('Hapus foto profil?')) return;
+    await supabaseClient.storage.from('avatars').remove([currentUserId + '.jpg']);
+    const {error}=await supabaseClient.from('profiles').update({avatar_url:null}).eq('id', currentUserId);
+    if(error){ avatarHint.textContent='Gagal menghapus foto: '+error.message; avatarHint.style.color='var(--error)'; return; }
+    currentAvatarUrl=null;
+    setAvatar(document.getElementById('hAvatar'), currentUserId, currentUsername, currentAvatarUrl);
+    updateAvatarRemoveRow();
+    avatarHint.textContent='Foto profil dihapus.'; avatarHint.style.color='var(--ok)';
+  });
 
   // ---- Crop foto: layar penuh ala WhatsApp. Foto bisa digeser (drag/pan) dan
   // diperbesar (pinch dua jari, scroll wheel, atau slider), area lingkaran di tengah
@@ -538,6 +555,7 @@
       if(error){ avatarHint.textContent='Gagal menyimpan foto: '+error.message; avatarHint.style.color='var(--error)'; return; }
       currentAvatarUrl=publicUrl;
       setAvatar(document.getElementById('hAvatar'), currentUserId, currentUsername, currentAvatarUrl);
+      updateAvatarRemoveRow();
       avatarHint.textContent='Foto profil diperbarui.'; avatarHint.style.color='var(--ok)';
     }catch(err){
       avatarHint.textContent='Gagal memproses foto.'; avatarHint.style.color='var(--error)';
