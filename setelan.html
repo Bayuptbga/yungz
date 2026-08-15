@@ -291,10 +291,18 @@
   applyView(currentViewFromHash());
 
   function goBack(){
-    // Di dalam sub-halaman (privasi/data) -> kembali ke menu utama Setelan.
-    if(currentViewFromHash() !== 'main'){ switchView('main'); return; }
-    // Di menu utama -> kembali ke halaman asal (drawer dashboard ATAU tombol
-    // "Buka Setelan" di profil.html), bukan selalu ke dashboard.
+    // Selalu mundur lewat history browser yang sesungguhnya (bukan cuma reset
+    // hash ke ''), supaya urutannya benar untuk kedua kasus:
+    // 1) Dibuka langsung dari drawer dashboard ke sub-halaman (mis. #data):
+    //    history-nya [..., dashboard, setelan#data] -> back = balik ke dashboard.
+    // 2) Dibuka dari menu utama Setelan lalu klik ke sub-halaman:
+    //    switchView() di atas sudah nambah entry baru saat itu, jadi history-nya
+    //    [..., dashboard, setelan(main), setelan#privasi] -> back = balik ke
+    //    menu utama Setelan dulu (hashchange event yang urus tampilannya),
+    //    baru back sekali lagi = balik ke dashboard.
+    // Reset hash manual (location.hash='') TIDAK dipakai lagi karena itu malah
+    // NAMBAH entry history baru alih-alih mundur, sehingga tombol back jadi
+    // "mantul" dan terasa stuck di halaman Setelan.
     if(window.history.length>1){ window.history.back(); }
     else { window.location.href='dashboard.html'; }
   }
