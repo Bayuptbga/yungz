@@ -286,14 +286,22 @@
   .status-card .sc-delete:active{ background:var(--border); }
   .status-card .sc-divider{border-top:1px solid var(--border);}
   .status-card .sc-content{padding:2px 14px 15px; font-size:14px; color:var(--ink); line-height:1.55; word-break:break-word; white-space:pre-wrap;}
-  .status-card .sc-reactions{ display:flex; align-items:stretch; }
-  .status-card .rx-btn{ flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:10px 4px; cursor:pointer; color:var(--muted); font-size:12.5px; font-weight:700; user-select:none; transition:background-color .15s ease, color .15s ease; border-right:1px solid var(--border); }
-  .status-card .rx-btn:last-child{ border-right:none; }
-  .status-card .rx-btn .rx-emoji{ font-size:16px; line-height:1; transition:transform .15s ease; }
-  .status-card .rx-btn:active .rx-emoji{ transform:scale(1.25); }
-  .status-card .rx-btn:active{ background:var(--border); }
-  .status-card .rx-btn.active{ color:#22d8e6; }
-  .status-card .rx-count{ font-size:12px; font-weight:700; }
+  .status-card .sc-reactions{ display:flex; align-items:center; justify-content:space-between; padding:6px 6px 6px 14px; gap:8px; }
+  .status-card .rx-summary{ display:flex; align-items:center; gap:6px; min-width:0; color:var(--muted); font-size:12.5px; }
+  .status-card .rx-summary.empty{ color:var(--muted); }
+  .status-card .rx-summary-emojis{ font-size:14px; letter-spacing:-2px; }
+  .status-card .rx-summary-count{ font-weight:700; letter-spacing:0; }
+  .status-card .rx-summary-empty{ font-size:12px; }
+  .status-card .rx-toggle{ display:flex; align-items:center; gap:6px; padding:8px 14px; border-radius:999px; cursor:pointer; color:var(--muted); font-size:12.5px; font-weight:700; user-select:none; touch-action:manipulation; transition:background-color .15s ease, color .15s ease; flex-shrink:0; }
+  .status-card .rx-toggle:active{ background:var(--border); }
+  .status-card .rx-toggle.active{ color:#22d8e6; }
+  .status-card .rx-toggle-emoji{ font-size:16px; line-height:1; display:flex; align-items:center; transition:transform .15s ease; }
+  .status-card .rx-toggle:active .rx-toggle-emoji{ transform:scale(1.2); }
+  .rx-picker{ position:fixed; display:flex; gap:4px; background:var(--card-bg); border:1px solid var(--border); border-radius:999px; padding:6px; box-shadow:0 8px 24px rgba(0,0,0,0.5); z-index:80; opacity:0; pointer-events:none; transform:translateY(6px) scale(.9); transition:opacity .15s ease, transform .15s ease; }
+  .rx-picker.open{ opacity:1; pointer-events:auto; transform:translateY(0) scale(1); }
+  .rx-picker-item{ width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; cursor:pointer; transition:transform .12s ease, background-color .12s ease; }
+  .rx-picker-item:active{ transform:scale(1.3); }
+  .rx-picker-item.active{ background:rgba(34,216,230,0.18); }
   .status-composer{ margin:14px 16px 0; background:var(--card-bg); border:1px solid var(--border); border-radius:16px; padding:13px 14px 10px; flex-shrink:0; box-shadow:0 2px 10px rgba(0,0,0,0.25); }
   .composer-top{ display:flex; align-items:center; gap:12px; }
   .composer-avatar{ width:38px;height:38px;border-radius:50%; display:flex;align-items:center;justify-content:center; font-weight:700;font-size:14px;color:#fff; background:var(--border); flex-shrink:0; }
@@ -342,9 +350,6 @@
       </div>
       <div class="composer-bottom">
         <div class="composer-icons">
-          <div class="composer-icon" id="emojiBtn" title="Emoji">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-          </div>
           <div class="composer-icon" id="photoBtn" title="Foto">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 15l-5-5-4 4-3-3-6 6"/></svg>
           </div>
@@ -384,6 +389,12 @@
         <div class="addpage-footer"><button class="btn-primary-full" id="sendRequestBtn" disabled>Kirim Permintaan</button></div>
       </div>
     </div>
+  <div class="rx-picker" id="rxPicker">
+    <div class="rx-picker-item" data-type="like">👍</div>
+    <div class="rx-picker-item" data-type="love">❤️</div>
+    <div class="rx-picker-item" data-type="laugh">😂</div>
+    <div class="rx-picker-item" data-type="angry">😡</div>
+  </div>
   <div class="cprev-overlay" id="cprevOverlay">
     <div class="cprev-card">
       <div class="cprev-top"><div class="cprev-avatar" id="cprevBanner">?</div></div>
@@ -536,8 +547,7 @@ function timeAgo(iso){
     if(diffH<24)return diffH+' jam lalu';
     return timeLabel(iso);
   }
-  const myStatusInput=document.getElementById('myStatusInput'),postStatusBtn=document.getElementById('postStatusBtn'),myStatusMsg=document.getElementById('myStatusMsg'),emojiBtn=document.getElementById('emojiBtn'),photoBtn=document.getElementById('photoBtn');
-  emojiBtn.addEventListener('click',()=>{myStatusInput.value+='😊';myStatusInput.focus();});
+  const myStatusInput=document.getElementById('myStatusInput'),postStatusBtn=document.getElementById('postStatusBtn'),myStatusMsg=document.getElementById('myStatusMsg'),photoBtn=document.getElementById('photoBtn');
   photoBtn.addEventListener('click',()=>{myStatusMsg.textContent='Fitur unggah foto belum tersedia.';myStatusMsg.className='search-msg err';});
   document.getElementById('myStatusTitle').addEventListener('click',()=>{
     myStatusCollapsed=!myStatusCollapsed;
@@ -557,15 +567,22 @@ function timeAgo(iso){
     myStatusInput.value='';
     await loadStatusTab(false);
   });
-  const REACTIONS=[{type:'like',emoji:'👍'},{type:'love',emoji:'❤️'},{type:'laugh',emoji:'😂'},{type:'angry',emoji:'😡'}];
+  const RX_TYPES=['like','love','laugh','angry'];
+  const RX_EMOJI={like:'👍',love:'❤️',laugh:'😂',angry:'😡'};
+  const RX_LIKE_ICON=`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 22h-3a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/></svg>`;
+  function rxToggleIconHTML(type){ return type ? RX_EMOJI[type] : RX_LIKE_ICON; }
+  function reactionSummaryHTML(counts){
+    const entries=RX_TYPES.map(t=>({t,c:counts[t]||0})).filter(e=>e.c>0).sort((a,b)=>b.c-a.c);
+    if(entries.length===0)return '';
+    const total=entries.reduce((s,e)=>s+e.c,0);
+    const icons=entries.slice(0,3).map(e=>RX_EMOJI[e.t]).join('');
+    return `<span class="rx-summary-emojis">${icons}</span><span class="rx-summary-count">${total}</span>`;
+  }
   function statusCardHTML(s,reactionCountMap,myReactionMap,pMap,myId){
     const counts=reactionCountMap[s.id]||{},myReaction=myReactionMap[s.id]||null,isMine=s.user_id===myId;
     const sProf=pMap[s.user_id]||{};if(!isMine)contactAvatarMap[s.user_id]=sProf.avatar_url||null;
-    const rxHTML=REACTIONS.map(r=>{
-      const c=counts[r.type]||0,active=myReaction===r.type;
-      return `<div class="rx-btn${active?' active':''}" data-id="${escapeHtml(s.id)}" data-type="${r.type}" onclick="toggleReaction(this)"><span class="rx-emoji">${r.emoji}</span><span class="rx-count">${c>0?c:''}</span></div>`;
-    }).join('');
-    return `<div class="status-card" data-sid="${escapeHtml(s.id)}" data-uid="${escapeHtml(s.user_id)}" data-uname="${escapeHtml(sProf.username||'Pengguna')}">
+    const summary=reactionSummaryHTML(counts);
+    return `<div class="status-card" data-sid="${escapeHtml(s.id)}" data-uid="${escapeHtml(s.user_id)}" data-uname="${escapeHtml(sProf.username||'Pengguna')}" data-counts='${JSON.stringify(counts)}'>
       <div class="sc-head">
         <div class="sc-avatar-wrap${isMine?'':' ring'}"><div class="sc-avatar" style="${avatarStyle(s.user_id,sProf.avatar_url)}${isMine?'':'cursor:pointer;'}">${avatarInner(sProf.username,sProf.avatar_url)}</div></div>
         <div class="sc-head-info">
@@ -577,7 +594,13 @@ function timeAgo(iso){
       <div class="sc-divider"></div>
       <div class="sc-content">${escapeHtml(s.content)}</div>
       <div class="sc-divider"></div>
-      <div class="sc-reactions">${rxHTML}</div>
+      <div class="sc-reactions">
+        <div class="rx-summary${summary?'':' empty'}">${summary||'<span class="rx-summary-empty">Beri reaksi pertama</span>'}</div>
+        <div class="rx-toggle${myReaction?' active':''}" data-id="${escapeHtml(s.id)}" data-current="${myReaction||''}">
+          <span class="rx-toggle-emoji">${rxToggleIconHTML(myReaction)}</span>
+          <span class="rx-toggle-label">${myReaction?'Bereaksi':'Suka'}</span>
+        </div>
+      </div>
     </div>`;
   }
   async function loadStatusTab(showSkeleton=true){
@@ -680,41 +703,97 @@ function timeAgo(iso){
     if(error){el.style.pointerEvents='';alert('Gagal menghapus status.');return;}
     if(card){card.style.transition='opacity .25s ease';card.style.opacity='0';setTimeout(()=>card.remove(),250);}
   };
-  // Reaksi: 1 user cuma boleh punya 1 jenis reaksi aktif per status.
-  // Klik tombol yang sedang aktif -> batalkan reaksi (delete row).
-  // Klik tombol jenis lain -> ganti reaksi (upsert, replace row lama).
-  window.toggleReaction=async(el)=>{
+  // ---- Reaksi status: tap cepat tombol = toggle Suka; tekan-tahan = buka popup pilih emoji ----
+  // 1 user cuma boleh punya 1 jenis reaksi aktif per status (upsert menggantikan reaksi lama).
+  async function applyReactionChange(btn, newType){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
-    const statusId=el.dataset.id,type=el.dataset.type;
-    const card=el.closest('.status-card');if(!card||!statusId||card.dataset.busy==='1')return;
+    const statusId=btn.dataset.id, card=btn.closest('.status-card');
+    if(!card||!statusId||card.dataset.busy==='1')return;
     card.dataset.busy='1';
-    const btns=[...card.querySelectorAll('.rx-btn')];
-    const prevActiveBtn=btns.find(b=>b.classList.contains('active'));
-    const prevType=prevActiveBtn?prevActiveBtn.dataset.type:null;
-    const readCount=b=>parseInt(b.querySelector('.rx-count').textContent||'0',10)||0;
-    const setCount=(b,n)=>{ b.querySelector('.rx-count').textContent = n>0 ? n : ''; };
-    // Optimistic update UI dulu
-    const snapshot=btns.map(b=>({el:b,active:b.classList.contains('active'),count:readCount(b)}));
-    if(prevType===type){
-      // batalkan reaksi yang sama
-      el.classList.remove('active');setCount(el,Math.max(0,readCount(el)-1));
-    }else{
-      if(prevActiveBtn){prevActiveBtn.classList.remove('active');setCount(prevActiveBtn,Math.max(0,readCount(prevActiveBtn)-1));}
-      el.classList.add('active');setCount(el,readCount(el)+1);
-    }
+    const summaryEl=card.querySelector('.rx-summary');
+    const prevCountsJSON=card.dataset.counts||'{}';
+    const prevBtnClass=btn.className, prevCurrent=btn.dataset.current||'', prevEmojiHTML=btn.querySelector('.rx-toggle-emoji').innerHTML, prevLabel=btn.querySelector('.rx-toggle-label').textContent;
+    const prevSummaryHTML=summaryEl.innerHTML, prevSummaryClass=summaryEl.className;
+    // Optimistic update
+    const counts=JSON.parse(prevCountsJSON);
+    if(prevCurrent)counts[prevCurrent]=Math.max(0,(counts[prevCurrent]||0)-1);
+    if(newType)counts[newType]=(counts[newType]||0)+1;
+    card.dataset.counts=JSON.stringify(counts);
+    const newSummary=reactionSummaryHTML(counts);
+    summaryEl.innerHTML=newSummary||'<span class="rx-summary-empty">Beri reaksi pertama</span>';
+    summaryEl.classList.toggle('empty',!newSummary);
+    btn.classList.toggle('active',!!newType);
+    btn.dataset.current=newType||'';
+    btn.querySelector('.rx-toggle-emoji').innerHTML=rxToggleIconHTML(newType);
+    btn.querySelector('.rx-toggle-label').textContent=newType?'Bereaksi':'Suka';
     let error;
-    if(prevType===type){
+    if(!newType){
       ({error}=await supabaseClient.from('status_likes').delete().eq('status_id',statusId).eq('user_id',session.user.id));
     }else{
-      ({error}=await supabaseClient.from('status_likes').upsert({status_id:statusId,user_id:session.user.id,reaction:type},{onConflict:'status_id,user_id'}));
+      ({error}=await supabaseClient.from('status_likes').upsert({status_id:statusId,user_id:session.user.id,reaction:newType},{onConflict:'status_id,user_id'}));
     }
     if(error){
-      // rollback kalau gagal
-      snapshot.forEach(s=>{ s.el.classList.toggle('active',s.active); setCount(s.el,s.count); });
+      card.dataset.counts=prevCountsJSON;
+      btn.className=prevBtnClass;btn.dataset.current=prevCurrent;
+      btn.querySelector('.rx-toggle-emoji').innerHTML=prevEmojiHTML;btn.querySelector('.rx-toggle-label').textContent=prevLabel;
+      summaryEl.innerHTML=prevSummaryHTML;summaryEl.className=prevSummaryClass;
       alert('Gagal mengirim reaksi, coba lagi.');
     }
     card.dataset.busy='0';
-  };
+  }
+  (function(){
+    const picker=document.getElementById('rxPicker');
+    const LONG_PRESS_MS=380, MOVE_CANCEL_PX=12;
+    let pressTimer=null,longPressFired=false,pressBtn=null,startX=0,startY=0;
+    function openPicker(btn){
+      const rect=btn.getBoundingClientRect();
+      const pw=picker.offsetWidth||184,ph=picker.offsetHeight||52;
+      let left=rect.left+rect.width/2-pw/2;
+      left=Math.max(8,Math.min(left,window.innerWidth-8-pw));
+      let top=rect.top-ph-10;
+      if(top<8)top=rect.bottom+10;
+      picker.style.left=left+'px';picker.style.top=top+'px';
+      picker.dataset.id=btn.dataset.id;
+      const current=btn.dataset.current||'';
+      picker.querySelectorAll('.rx-picker-item').forEach(it=>it.classList.toggle('active',it.dataset.type===current));
+      picker.classList.add('open');
+    }
+    function closePicker(){picker.classList.remove('open');}
+    function cancelPress(){if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}pressBtn=null;}
+    document.addEventListener('pointerdown',e=>{
+      const btn=e.target.closest('.rx-toggle');
+      if(!btn||e.pointerType==='mouse'&&e.button!==0)return;
+      pressBtn=btn;longPressFired=false;startX=e.clientX;startY=e.clientY;
+      pressTimer=setTimeout(()=>{longPressFired=true;openPicker(btn);},LONG_PRESS_MS);
+    });
+    document.addEventListener('pointermove',e=>{
+      if(!pressTimer)return;
+      if(Math.abs(e.clientX-startX)>MOVE_CANCEL_PX||Math.abs(e.clientY-startY)>MOVE_CANCEL_PX)cancelPress();
+    });
+    document.addEventListener('pointerup',e=>{
+      const wasTimerActive=!!pressTimer;
+      cancelPress();
+      const btn=e.target.closest('.rx-toggle');
+      if(btn&&wasTimerActive&&!longPressFired){
+        const current=btn.dataset.current||null;
+        applyReactionChange(btn,current?null:'like');
+      }
+    });
+    document.addEventListener('pointercancel',cancelPress);
+    picker.querySelectorAll('.rx-picker-item').forEach(item=>{
+      item.addEventListener('click',()=>{
+        const statusId=picker.dataset.id,type=item.dataset.type;
+        closePicker();
+        const btn=document.querySelector(`.rx-toggle[data-id="${CSS.escape(statusId)}"]`);
+        if(!btn)return;
+        const current=btn.dataset.current||null;
+        applyReactionChange(btn,current===type?null:type);
+      });
+    });
+    document.addEventListener('click',e=>{
+      if(picker.classList.contains('open')&&!e.target.closest('.rx-picker')&&!e.target.closest('.rx-toggle'))closePicker();
+    });
+  })();
   window.respondReq=async(id,st,btn)=>{
     const item=btn.closest('.req-item');item.querySelectorAll('button').forEach(b=>b.disabled=true);
     await supabaseClient.from('contacts').update({status:st,seen_by_requester:false}).eq('id',id);
