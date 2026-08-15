@@ -71,7 +71,6 @@
   .chat-menu .item:last-child{border-bottom:none;}
   .chat-menu .item:active{background:var(--border);}
   .chat-menu .item.danger{color:#f15c6d;}
-  .chat-menu .item.call-invite{color:#22d8e6;font-weight:600;}
   .chat-menu .item.ping{color:#e08a00;font-weight:600;}
   .ptr-indicator{ display:flex; align-items:center; justify-content:center; height:0; overflow:hidden; flex-shrink:0; background:var(--bg); }
   .ptr-spinner{ width:22px; height:22px; border-radius:50%; border:2.5px solid var(--border); border-top-color:var(--border); }
@@ -311,7 +310,6 @@
     <div class="e2e-lock" id="e2eLock" title="Pesan di chat ini dienkripsi end-to-end"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#22d8e6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
     <div class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
       <div class="chat-menu" id="chatMenu">
-        <div class="item call-invite" id="menuInviteCall">📞 Undang Menelpon</div>
         <div class="item danger" id="menuHapusPermanen">Bersihkan Obrolan (Semua Orang)</div>
         <div class="item ping" id="menuPing">🔔 PING!!!</div>
       </div>
@@ -492,18 +490,13 @@
     return `<div class="reply-quote" data-jump="${replyToId}"><div class="rq-name">${escapeHtml(who)}</div><div class="rq-text">${escapeHtml(normalizeText(q.content).slice(0,120))}</div></div>`;
   }
   function inviteContentHTML(m, mine) {
-    const isReal = m.id && !String(m.id).startsWith('temp-');
     if (m.content === '[CALL_REJECTED]') {
       return `<div class="invite-card" style="background:rgba(224,76,76,0.08); padding:12px; border-radius:10px; text-align:center; border:1px solid #e04c4c; min-width:180px; margin-top:4px;">
           <div style="font-weight:bold; color:#e04c4c; font-size:14px;">📞 Panggilan ditolak</div>
         </div>`;
     }
-    const cancelBtnHTML = (mine && isReal) ? `<button onclick="cancelCallInvite('${m.id}')" style="background:transparent; color:#e04c4c; border:1px solid #e04c4c; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">Batalkan</button>` : '';
-    const rejectBtnHTML = (!mine && isReal) ? `<button onclick="rejectCallInvite('${m.id}')" style="background:transparent; color:#e04c4c; border:1px solid #e04c4c; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">Tolak</button>` : '';
-    return `<div class="invite-card" style="background:rgba(34,216,230,0.1); padding:12px; border-radius:10px; text-align:center; border:1px solid #22d8e6; min-width:180px; margin-top:4px;">
-          <div style="font-weight:bold; margin-bottom:10px; color:#22d8e6; font-size:14px;">📞 Panggilan Suara</div>
-          <button onclick="window.location.href='call.html?uid=${peerId}${isReal?'&msgid='+encodeURIComponent(m.id):''}'" style="background:#22d8e6; color:#062733; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%;">Masuk Panggilan</button>
-          ${cancelBtnHTML}${rejectBtnHTML}
+    return `<div class="invite-card" style="background:rgba(255,255,255,0.05); padding:12px; border-radius:10px; text-align:center; border:1px solid #3a5570; min-width:180px; margin-top:4px;">
+          <div style="font-weight:bold; color:#9db9cc; font-size:14px;">📞 Fitur panggilan sudah tidak tersedia</div>
         </div>`;
   }
 
@@ -712,59 +705,6 @@
       ok.addEventListener('click',onOk);cancel.addEventListener('click',onCancel);ov.addEventListener('click',onOverlay);
     });
   }
-
-  // ---- Fitur Undang Menelpon ----
-  // Batalkan undangan panggilan yang belum diangkat. Cuma pengirim (sender_id)
-  // yang bisa menghapus, sesuai kebijakan hapus pesan di app ini. Sisi lawan
-  // bicara ikut hilang otomatis lewat langganan realtime DELETE (lihat
-  // subscribeRealtime), jadi tidak perlu kirim sinyal terpisah.
-  async function cancelCallInvite(msgId){
-    if(!msgId) return;
-    const {error}=await supabaseClient.from('messages').delete().eq('id',msgId).eq('sender_id',currentUserId);
-    if(!error){
-      const row=msgArea.querySelector(`.bubble-row[data-id="${msgId}"]`);
-      if(row) row.remove();
-      messagesById.delete(msgId);
-    }
-  }
-
-  // Tolak undangan panggilan masuk. Bubble diubah jadi status "Panggilan ditolak"
-  // (bukan dihapus), dengan cara meng-update kolom content pesan yang sama, tetap
-  // dienkripsi end-to-end dengan pasangan kunci sender/receiver aslinya sehingga
-  // kedua sisi tetap bisa mendekripsinya. Perubahan tampil ke pengirim lewat
-  // langganan realtime UPDATE yang sudah ada.
-  async function rejectCallInvite(msgId){
-    if(!msgId || !myPublicKeyB64 || !peerPublicKeyB64) return;
-    const rejected='[CALL_REJECTED]';
-    const encrypted=await E2E.encryptMessage(peerPublicKeyB64,myPublicKeyB64,rejected);
-    const {error}=await supabaseClient.from('messages').update({content:encrypted}).eq('id',msgId).eq('receiver_id',currentUserId);
-    if(!error){
-      const row=msgArea.querySelector(`.bubble-row[data-id="${msgId}"]`);
-      if(row){const card=row.querySelector('.invite-card');if(card)card.outerHTML=inviteContentHTML({id:msgId,content:rejected},false);}
-      messagesById.set(msgId,{id:msgId,sender_id:peerId,content:rejected});
-    }
-  }
-
-  document.getElementById('menuInviteCall').addEventListener('click', async (e) => {
-    e.stopPropagation(); chatMenu.classList.remove('open');
-    if(!myPublicKeyB64 || !peerPublicKeyB64) return;
-    
-    const text = '[INVITE_CALL]';
-    if(msgArea.querySelector('.empty-state')) msgArea.innerHTML='';
-    const tempId='temp-'+Date.now();
-    
-    appendBubble({id:tempId,sender_id:currentUserId,content:text,created_at:new Date().toISOString(),reply_to_id:null},true);
-    scrollToBottom();
-    
-    const encrypted = await E2E.encryptMessage(myPublicKeyB64, peerPublicKeyB64, text);
-    const {data, error} = await supabaseClient.from('messages').insert({sender_id:currentUserId, receiver_id:peerId, content:encrypted, reply_to_id:null}).select().single();
-    
-    const tempRow = msgArea.querySelector(`[data-id="${tempId}"]`);
-    if(error){ if(tempRow){tempRow.classList.add('send-failed');tempRow.classList.remove('sending');} return; }
-    if(tempRow) tempRow.remove();
-    data.content = text;
-    appendBubble(data);
-  });
 
   msgInput.addEventListener('input',()=>{autoResize();sendBtn.disabled=msgInput.value.trim().length===0;});
   msgInput.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});sendBtn.addEventListener('click',sendMessage);
