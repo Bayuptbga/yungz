@@ -269,27 +269,35 @@
   .status-item .content.has-status{color:var(--ink);}
   .my-status .content{color:var(--muted);}
   .my-status-editor{padding:0 16px 16px; background:var(--card-bg); border-bottom:8px solid var(--bg);}
-  .status-card{ background:var(--card-bg); border-radius:10px; margin:10px 12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.35); }
-  .status-card .sc-head{ display:flex; align-items:center; gap:12px; padding:13px 14px; }
-  .status-card .sc-avatar{ width:42px;height:42px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:14px; flex-shrink:0; }
+  .status-card{ background:var(--card-bg); border-radius:14px; margin:10px 12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 2px 10px rgba(0,0,0,0.25); }
+  .status-card .sc-head{ display:flex; align-items:center; gap:12px; padding:14px 14px 12px; }
+  .sc-avatar-wrap{ width:44px; height:44px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .sc-avatar-wrap.ring{ background:linear-gradient(135deg,#22d8e6,#2a7de1); padding:2px; }
+  .status-card .sc-avatar{ width:100%;height:100%;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:14px; flex-shrink:0; box-shadow:0 0 0 2px var(--card-bg); }
+  .sc-avatar-wrap:not(.ring) .sc-avatar{ box-shadow:none; }
   .status-card .sc-head-info{flex:1;min-width:0;}
-  .status-card .sc-uname{font-size:14.5px;font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .status-card .sc-tag{font-size:12px; color:var(--muted); margin-top:1px;}
-  .status-card .sc-time{font-size:11.5px; color:var(--muted); white-space:nowrap; flex-shrink:0; margin-left:8px;}
-  .status-card .sc-delete{ display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; margin-left:4px; cursor:pointer; flex-shrink:0; }
+  .status-card .sc-uname{font-size:14.5px;font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:6px;}
+  .sc-badge{ font-size:10px; font-weight:700; color:var(--bbm-blue-dark); background:#22d8e6; border-radius:5px; padding:1.5px 6px; letter-spacing:.3px; flex-shrink:0; }
+  .status-card .sc-meta{font-size:12px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .status-card .sc-meta .sc-dot{margin:0 5px;}
+  .status-card .sc-delete{ display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; margin-left:4px; cursor:pointer; flex-shrink:0; transition:background-color .15s ease; }
   .status-card .sc-delete:active{ background:var(--border); }
   .status-card .sc-divider{border-top:1px solid var(--border);}
-  .status-card .sc-content{padding:13px 14px; font-size:13.5px; color:var(--ink); line-height:1.5; word-break:break-word; white-space:pre-wrap;}
-  .status-card .sc-like{ display:flex; align-items:center; justify-content:center; gap:7px; padding:11px; cursor:pointer; color:var(--muted); font-size:13px; font-weight:600; user-select:none; }
-  .status-card .sc-like svg{width:18px;height:18px; flex-shrink:0;}
+  .status-card .sc-content{padding:2px 14px 15px; font-size:14px; color:var(--ink); line-height:1.55; word-break:break-word; white-space:pre-wrap;}
+  .status-card .sc-like{ display:flex; align-items:center; justify-content:center; gap:7px; padding:11px; cursor:pointer; color:var(--muted); font-size:13px; font-weight:600; user-select:none; transition:background-color .15s ease, color .15s ease; }
+  .status-card .sc-like svg{width:18px;height:18px; flex-shrink:0; transition:transform .15s ease;}
+  .status-card .sc-like:active svg{transform:scale(1.15);}
   .status-card .sc-like.liked{color:#22d8e6;}
   .status-card .sc-like.liked svg{fill:#22d8e6;}
   .status-card .sc-like:active{background:var(--border);}
   .status-card .like-count{font-size:12.5px;font-weight:700;}
-  .composer-box{ display:flex; align-items:center; gap:6px; margin:14px 16px 0; background:var(--card-bg); border:1px solid var(--border); border-radius:26px; padding:6px 6px 6px 18px; flex-shrink:0; }
-  .composer-input{ flex:1; min-width:0; background:transparent; border:none; outline:none; color:var(--ink); font-size:14.5px; font-family:inherit; padding:9px 0; }
+  .status-composer{ margin:14px 16px 0; background:var(--card-bg); border:1px solid var(--border); border-radius:16px; padding:13px 14px 10px; flex-shrink:0; box-shadow:0 2px 10px rgba(0,0,0,0.25); }
+  .composer-top{ display:flex; align-items:center; gap:12px; }
+  .composer-avatar{ width:38px;height:38px;border-radius:50%; display:flex;align-items:center;justify-content:center; font-weight:700;font-size:14px;color:#fff; background:var(--border); flex-shrink:0; }
+  .composer-input{ flex:1; min-width:0; background:transparent; border:none; outline:none; color:var(--ink); font-size:14.5px; font-family:inherit; padding:8px 0; }
   .composer-input::placeholder{ color:var(--muted); }
-  .composer-icons{ display:flex; align-items:center; gap:3px; flex-shrink:0; }
+  .composer-bottom{ display:flex; align-items:center; justify-content:space-between; margin-top:6px; padding-top:8px; border-top:1px solid var(--border); }
+  .composer-icons{ display:flex; align-items:center; gap:2px; flex-shrink:0; }
   .composer-icon{ width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background-color .15s ease; }
   .composer-icon:active{ background:var(--border); }
   .composer-icon.send{ background:var(--bbm-blue); }
@@ -324,14 +332,19 @@
   <div class="tab-panel active" id="panelChats"><div class="chatlist" id="chatlist"></div><div class="fab" title="Chat baru" id="fabNewChat"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg></div></div>
   <div class="tab-panel" id="panelStatus">
     <div class="ptr-indicator" id="statusPtr"><div class="ptr-spinner"></div></div>
-    <div class="composer-box">
-      <input type="text" id="myStatusInput" class="composer-input" placeholder="Apa yang Anda pikirkan?" maxlength="200">
-      <div class="composer-icons">
-        <div class="composer-icon" id="emojiBtn" title="Emoji">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-        </div>
-        <div class="composer-icon" id="photoBtn" title="Foto">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 15l-5-5-4 4-3-3-6 6"/></svg>
+    <div class="status-composer">
+      <div class="composer-top">
+        <div class="composer-avatar" id="composerAvatar">?</div>
+        <input type="text" id="myStatusInput" class="composer-input" placeholder="Apa yang Anda pikirkan?" maxlength="200">
+      </div>
+      <div class="composer-bottom">
+        <div class="composer-icons">
+          <div class="composer-icon" id="emojiBtn" title="Emoji">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+          </div>
+          <div class="composer-icon" id="photoBtn" title="Foto">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 15l-5-5-4 4-3-3-6 6"/></svg>
+          </div>
         </div>
         <div class="composer-icon send" id="postStatusBtn" title="Kirim">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -417,8 +430,10 @@
   function statusIconHTML(chat){if(!chat.mine)return'';return `<span class="status-icon" style="background:none;">${tickSvg(chat.deliveredAt,chat.readAt)}</span>`;}
   function render(chats){
     const list=document.getElementById('chatlist');if(!chats||chats.length===0){list.innerHTML=`<div class="panel-empty">Belum ada percakapan.</div>`;return;}
+    chats.forEach(chat=>{contactAvatarMap[chat.uid]=chat.avatarUrl||null;});
     list.innerHTML=chats.map(chat=>`<div class="chat-item" data-uid="${escapeHtml(chat.uid)}" data-uname="${escapeHtml(chat.uname)}"><div class="avatar" style="${avatarStyle(chat.uid,chat.avatarUrl)}">${avatarInner(chat.uname,chat.avatarUrl)}</div><div class="chat-main"><div class="chat-top"><div class="chat-name" style="${chat.unread?'font-weight:700;':''}">${escapeHtml(chat.uname)}</div><div style="font-size:11.5px;color:var(--muted);">${escapeHtml(timeLabel(chat.time))}</div></div><div class="chat-bottom">${statusIconHTML(chat)}<div class="chat-msg" style="${chat.unread?'color:var(--ink);font-weight:600;':''}">${escapeHtml(chat.preview)}</div></div></div></div>`).join('');
     document.querySelectorAll('.chat-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
+    document.querySelectorAll('.chat-item .avatar').forEach(a=>a.addEventListener('click',e=>{e.stopPropagation();const item=a.closest('.chat-item');openContactPreview(item.dataset.uid,item.dataset.uname);}));
   }
   function skeletonRow(){return `<div class="skel-item"><div class="skel-avatar"></div><div class="skel-lines"><div class="skel-line w60"></div><div class="skel-line w40"></div></div></div>`;}
   function looksEncrypted(content){try{const o=JSON.parse(content);return !!(o&&(o.e2e===1||o.e2e===2));}catch(e){return false;}}
@@ -455,7 +470,7 @@
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session){window.location.replace('index.html');return;}
     const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, pin, avatar_url').eq('id',session.user.id).maybeSingle();
     if(profErr){console.error('Gagal memuat profil:',profErr);}
-    if(prof){currentUserPin=prof.pin;document.getElementById('drawerUname').textContent=prof.username;document.getElementById('drawerPin').textContent='PIN: '+prof.pin;applyAvatarEl(document.getElementById('drawerAvatar'),session.user.id,prof.username,prof.avatar_url);}
+    if(prof){currentUserPin=prof.pin;document.getElementById('drawerUname').textContent=prof.username;document.getElementById('drawerPin').textContent='PIN: '+prof.pin;applyAvatarEl(document.getElementById('drawerAvatar'),session.user.id,prof.username,prof.avatar_url);applyAvatarEl(document.getElementById('composerAvatar'),session.user.id,prof.username,prof.avatar_url);}
     initPushNotifications(session.user.id);trackOnlinePresence(session.user.id);
     const {count:pCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('addressee_id',session.user.id).eq('status','pending');
     const {count:uCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('requester_id',session.user.id).in('status',['accepted','declined']).eq('seen_by_requester',false);
@@ -507,6 +522,14 @@
     document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
     document.querySelectorAll('.contact-item .avatar').forEach(a=>a.addEventListener('click',e=>{e.stopPropagation();openContactPreview(a.dataset.profuid,a.closest('.contact-item').dataset.uname);}));
   }
+  function timeLeftLabel(expiresIso){
+    const diff=new Date(expiresIso).getTime()-Date.now();
+    if(diff<=0)return 'Kedaluwarsa';
+    const h=Math.floor(diff/3600000);
+    if(h>=1)return h+'j lagi';
+    const m=Math.max(1,Math.floor(diff/60000));
+    return m+'m lagi';
+  }
   function timeAgo(iso){
     const diffMin=Math.max(0,Math.round((Date.now()-new Date(iso).getTime())/60000));
     if(diffMin<1)return 'Baru saja';
@@ -545,18 +568,18 @@
     (likeRows||[]).forEach(l=>{likeCountMap[l.status_id]=(likeCountMap[l.status_id]||0)+1;if(l.user_id===session.user.id)myLikedSet.add(l.status_id);});
     sList.innerHTML=sRows.map(s=>{
       const count=likeCountMap[s.id]||0,liked=myLikedSet.has(s.id),isMine=s.user_id===session.user.id;
-      return `<div class="status-card" data-sid="${escapeHtml(s.id)}">
+      const sProf=pMap[s.user_id]||{};if(!isMine)contactAvatarMap[s.user_id]=sProf.avatar_url||null;
+      return `<div class="status-card" data-sid="${escapeHtml(s.id)}" data-uid="${escapeHtml(s.user_id)}" data-uname="${escapeHtml(sProf.username||'Pengguna')}">
       <div class="sc-head">
-        <div class="sc-avatar" style="${avatarStyle(s.user_id,(pMap[s.user_id]||{}).avatar_url)}">${avatarInner((pMap[s.user_id]||{}).username,(pMap[s.user_id]||{}).avatar_url)}</div>
+        <div class="sc-avatar-wrap${isMine?'':' ring'}"><div class="sc-avatar" style="${avatarStyle(s.user_id,sProf.avatar_url)}${isMine?'':'cursor:pointer;'}">${avatarInner(sProf.username,sProf.avatar_url)}</div></div>
         <div class="sc-head-info">
-          <div class="sc-uname">${escapeHtml((pMap[s.user_id]||{}).username||'Pengguna')}</div>
-          <div class="sc-tag">Status Baru</div>
+          <div class="sc-uname">${escapeHtml(sProf.username||'Pengguna')}${isMine?'<span class="sc-badge">Kamu</span>':''}</div>
+          <div class="sc-meta">${escapeHtml(timeAgo(s.created_at))}<span class="sc-dot">·</span>${escapeHtml(timeLeftLabel(s.expires_at))}</div>
         </div>
-        <div class="sc-time">${escapeHtml(timeAgo(s.created_at))}</div>
         ${isMine?`<div class="sc-delete" data-id="${escapeHtml(s.id)}" onclick="deleteStatus(this)" title="Hapus status"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></div>`:''}
       </div>
       <div class="sc-divider"></div>
-      <div class="sc-content">&quot;${escapeHtml(s.content)}&quot;</div>
+      <div class="sc-content">${escapeHtml(s.content)}</div>
       <div class="sc-divider"></div>
       <div class="sc-like${liked?' liked':''}" data-id="${escapeHtml(s.id)}" onclick="toggleLike(this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 22h-3a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/></svg>
@@ -564,6 +587,11 @@
       </div>
     </div>`;
     }).join('');
+    document.querySelectorAll('#statusList .status-card .sc-avatar').forEach(a=>{
+      const card=a.closest('.status-card');
+      if(!card.dataset.uid||card.dataset.uid===session.user.id)return;
+      a.addEventListener('click',e=>{e.stopPropagation();openContactPreview(card.dataset.uid,card.dataset.uname);});
+    });
   }
   async function loadNotifications(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const nl=document.getElementById('notifList');nl.innerHTML=skeletonRow().repeat(4);
