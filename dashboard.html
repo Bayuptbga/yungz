@@ -165,8 +165,9 @@
   .cprev-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:70; padding:24px; }
   .cprev-overlay.open{ opacity:1; pointer-events:auto; }
   .cprev-card{ background:var(--card-bg); border-radius:16px; width:100%; max-width:290px; text-align:center; border:1px solid var(--border); overflow:hidden; }
-  .cprev-banner{ width:100%; height:150px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:42px; }
-  .cprev-body{ padding:20px 22px 14px; }
+  .cprev-top{ width:100%; padding:30px 20px 18px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--bbm-blue),var(--bbm-blue-dark)); }
+  .cprev-avatar{ width:92px; height:92px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:32px; box-shadow:0 6px 18px rgba(0,0,0,0.35); flex-shrink:0; }
+  .cprev-body{ padding:18px 22px 14px; }
   .cprev-uname{ font-size:17px; font-weight:700; color:var(--ink); word-break:break-word; }
   .cprev-sub{ font-size:12.5px; color:var(--muted); margin-top:3px; margin-bottom:20px; }
   .cprev-actions{ display:flex; flex-direction:column; gap:8px; }
@@ -368,7 +369,7 @@
     </div>
   <div class="cprev-overlay" id="cprevOverlay">
     <div class="cprev-card">
-      <div class="cprev-banner" id="cprevBanner">?</div>
+      <div class="cprev-top"><div class="cprev-avatar" id="cprevBanner">?</div></div>
       <div class="cprev-body">
         <div class="cprev-uname" id="cprevUname">—</div>
         <div class="cprev-sub">Kontak</div>
