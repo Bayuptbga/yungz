@@ -124,6 +124,24 @@
   .e2e-info-sheet p{ font-size:13.5px; color:var(--ink-soft,var(--muted)); line-height:1.6; margin:0 0 22px; }
   .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(34,216,230,0.14); color:#22d8e6; border:1px solid rgba(34,216,230,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
   .e2e-info-close-btn:active{ background:rgba(34,216,230,0.22); }
+
+  /* ---- Modal crop foto profil ---- */
+  .crop-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:340; opacity:0; pointer-events:none; transition:opacity .18s ease; padding:24px; }
+  .crop-overlay.open{ opacity:1; pointer-events:auto; }
+  .crop-box{ background:var(--card-bg); border:1px solid var(--border); border-radius:18px; width:100%; max-width:340px; padding:20px; box-shadow:0 10px 40px rgba(0,0,0,0.5); transform:scale(0.96); transition:transform .18s ease; }
+  .crop-overlay.open .crop-box{ transform:scale(1); }
+  .crop-title{ font-size:16px; font-weight:700; color:var(--ink); margin-bottom:14px; text-align:center; }
+  .crop-stage-wrap{ position:relative; width:280px; height:280px; margin:0 auto; border-radius:14px; overflow:hidden; background:#000; touch-action:none; }
+  .crop-stage-wrap canvas{ display:block; width:280px; height:280px; }
+  .crop-mask{ position:absolute; inset:0; pointer-events:none; box-shadow:0 0 0 2000px rgba(0,0,0,0.55); border-radius:50%; margin:14px; }
+  .crop-zoom-row{ display:flex; align-items:center; gap:10px; margin-top:18px; }
+  .crop-zoom-row svg{ width:16px; height:16px; stroke:var(--muted); flex-shrink:0; }
+  .crop-zoom-row input[type=range]{ flex:1; accent-color:#22d8e6; }
+  .crop-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+  .crop-actions button{ border:none; border-radius:10px; padding:10px 16px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .crop-cancel{ background:var(--border); color:var(--ink); }
+  .crop-ok{ background:#22d8e6; color:#062733; }
+  .crop-ok:disabled{ opacity:0.5; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js?v=1"></script>
@@ -249,6 +267,25 @@
     <button type="button" class="e2e-info-close-btn" id="aboutInfoCloseBtn">Mengerti</button>
   </div>
 </div>
+
+<div class="crop-overlay" id="cropOverlay">
+  <div class="crop-box">
+    <div class="crop-title">Sesuaikan Foto</div>
+    <div class="crop-stage-wrap" id="cropStageWrap">
+      <canvas id="cropCanvas" width="280" height="280"></canvas>
+      <div class="crop-mask"></div>
+    </div>
+    <div class="crop-zoom-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M8 11h6"/></svg>
+      <input type="range" id="cropZoomSlider" min="0" max="100" value="0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+    </div>
+    <div class="crop-actions">
+      <button class="crop-cancel" id="cropCancelBtn" type="button">Batal</button>
+      <button class="crop-ok" id="cropOkBtn" type="button">Pakai Foto</button>
+    </div>
+  </div>
+</div>
 <script>
   const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
@@ -274,51 +311,112 @@
 
   avatarEditBadge.addEventListener('click', ()=>avatarFileInput.click());
 
-  // Resize + compress di canvas, hasilnya Blob JPEG (bukan base64) supaya bisa di-upload ke Storage.
-  function resizeImageToBlob(file, maxSize, quality){
-    return new Promise((resolve, reject)=>{
-      const reader=new FileReader();
-      reader.onload=(e)=>{
-        const img=new Image();
-        img.onload=()=>{
-          let w=img.width, h=img.height;
-          if(w>h){ if(w>maxSize){ h=Math.round(h*maxSize/w); w=maxSize; } }
-          else { if(h>maxSize){ w=Math.round(w*maxSize/h); h=maxSize; } }
-          const canvas=document.createElement('canvas');
-          canvas.width=w; canvas.height=h;
-          canvas.getContext('2d').drawImage(img,0,0,w,h);
-          canvas.toBlob(blob=>{ blob?resolve(blob):reject(new Error('Gagal memproses gambar')); }, 'image/jpeg', quality);
-        };
-        img.onerror=()=>reject(new Error('Gagal memuat gambar'));
-        img.src=e.target.result;
-      };
-      reader.onerror=()=>reject(new Error('Gagal membaca file'));
-      reader.readAsDataURL(file);
+  // ---- Crop foto: user bisa geser & zoom sebelum foto diupload ----
+  const CROP_STAGE=280, CROP_OUTPUT=300;
+  const cropOverlay=document.getElementById('cropOverlay'), cropCanvas=document.getElementById('cropCanvas'),
+        cropCtx=cropCanvas.getContext('2d'), cropZoomSlider=document.getElementById('cropZoomSlider'),
+        cropOkBtn=document.getElementById('cropOkBtn'), cropCancelBtn=document.getElementById('cropCancelBtn'),
+        cropStageWrap=document.getElementById('cropStageWrap');
+  let cropImg=null, cropObjectUrl=null, cropMinScale=1, cropScale=1, cropOffX=0, cropOffY=0, cropDragging=false, cropDragStart=null;
+
+  function cropClamp(){
+    const dw=cropImg.width*cropScale, dh=cropImg.height*cropScale;
+    const maxX=Math.max(0,(dw-CROP_STAGE)/2), maxY=Math.max(0,(dh-CROP_STAGE)/2);
+    cropOffX=Math.max(-maxX,Math.min(maxX,cropOffX));
+    cropOffY=Math.max(-maxY,Math.min(maxY,cropOffY));
+  }
+  function drawCrop(){
+    cropClamp();
+    const dw=cropImg.width*cropScale, dh=cropImg.height*cropScale;
+    const dx=(CROP_STAGE-dw)/2+cropOffX, dy=(CROP_STAGE-dh)/2+cropOffY;
+    cropCtx.clearRect(0,0,CROP_STAGE,CROP_STAGE);
+    cropCtx.drawImage(cropImg,dx,dy,dw,dh);
+  }
+  function openCropper(file){
+    cropObjectUrl=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{
+      cropImg=img;
+      cropMinScale=Math.max(CROP_STAGE/img.width, CROP_STAGE/img.height);
+      cropScale=cropMinScale; cropOffX=0; cropOffY=0;
+      cropZoomSlider.value=0;
+      drawCrop();
+      cropOverlay.classList.add('open');
+    };
+    img.onerror=()=>{ avatarHint.textContent='Gagal memuat gambar.'; avatarHint.className='hint err'; URL.revokeObjectURL(cropObjectUrl); };
+    img.src=cropObjectUrl;
+  }
+  function closeCropper(){
+    cropOverlay.classList.remove('open');
+    if(cropObjectUrl){ URL.revokeObjectURL(cropObjectUrl); cropObjectUrl=null; }
+    cropImg=null;
+  }
+  cropZoomSlider.addEventListener('input', ()=>{
+    const t=cropZoomSlider.value/100;
+    cropScale=cropMinScale*(1+2*t);
+    drawCrop();
+  });
+  cropStageWrap.addEventListener('pointerdown',(e)=>{
+    if(!cropImg)return;
+    cropDragging=true; cropStageWrap.setPointerCapture(e.pointerId);
+    cropDragStart={x:e.clientX,y:e.clientY,offX:cropOffX,offY:cropOffY};
+  });
+  cropStageWrap.addEventListener('pointermove',(e)=>{
+    if(!cropDragging||!cropImg)return;
+    cropOffX=cropDragStart.offX+(e.clientX-cropDragStart.x);
+    cropOffY=cropDragStart.offY+(e.clientY-cropDragStart.y);
+    drawCrop();
+  });
+  function cropPointerEnd(){ cropDragging=false; }
+  cropStageWrap.addEventListener('pointerup',cropPointerEnd);
+  cropStageWrap.addEventListener('pointercancel',cropPointerEnd);
+  cropCancelBtn.addEventListener('click', ()=>{ closeCropper(); avatarFileInput.value=''; });
+  cropOverlay.addEventListener('click',(e)=>{ if(e.target.id==='cropOverlay'){ closeCropper(); avatarFileInput.value=''; } });
+
+  function cropToBlob(){
+    return new Promise((resolve,reject)=>{
+      const ratio=CROP_OUTPUT/CROP_STAGE;
+      const dw=cropImg.width*cropScale*ratio, dh=cropImg.height*cropScale*ratio;
+      const dx=(CROP_OUTPUT-dw)/2+cropOffX*ratio, dy=(CROP_OUTPUT-dh)/2+cropOffY*ratio;
+      const outCanvas=document.createElement('canvas');
+      outCanvas.width=CROP_OUTPUT; outCanvas.height=CROP_OUTPUT;
+      const outCtx=outCanvas.getContext('2d');
+      outCtx.drawImage(cropImg,dx,dy,dw,dh);
+      outCanvas.toBlob(blob=>{ blob?resolve(blob):reject(new Error('Gagal memproses gambar')); }, 'image/jpeg', 0.85);
     });
   }
 
-  avatarFileInput.addEventListener('change', async ()=>{
-    const file=avatarFileInput.files[0];
-    avatarFileInput.value='';
-    if(!file) return;
-    if(!file.type.startsWith('image/')){ avatarHint.textContent='File harus berupa gambar.'; avatarHint.className='hint err'; return; }
+  cropOkBtn.addEventListener('click', async ()=>{
+    if(!cropImg || !currentUserId) return;
+    cropOkBtn.disabled=true;
     avatarHint.textContent='Mengunggah foto...'; avatarHint.className='hint';
     try{
-      const blob = await resizeImageToBlob(file, 300, 0.75);
-      const path = currentUserId + '.jpg';
-      const {error:upErr} = await supabaseClient.storage.from('avatars').upload(path, blob, {contentType:'image/jpeg', upsert:true});
+      const blob=await cropToBlob();
+      closeCropper();
+      const path=currentUserId+'.jpg';
+      const {error:upErr}=await supabaseClient.storage.from('avatars').upload(path, blob, {contentType:'image/jpeg', upsert:true});
       if(upErr){ avatarHint.textContent='Gagal mengunggah foto: '+upErr.message; avatarHint.className='hint err'; return; }
-      const {data:urlData} = supabaseClient.storage.from('avatars').getPublicUrl(path);
-      // Tambah query ?v=timestamp supaya browser tidak menampilkan foto lama dari cache.
-      const publicUrl = urlData.publicUrl + '?v=' + Date.now();
-      const {error} = await supabaseClient.from('profiles').update({avatar_url:publicUrl}).eq('id', currentUserId);
+      const {data:urlData}=supabaseClient.storage.from('avatars').getPublicUrl(path);
+      const publicUrl=urlData.publicUrl+'?v='+Date.now();
+      const {error}=await supabaseClient.from('profiles').update({avatar_url:publicUrl}).eq('id', currentUserId);
       if(error){ avatarHint.textContent='Gagal menyimpan foto: '+error.message; avatarHint.className='hint err'; return; }
       currentAvatarUrl=publicUrl;
       renderAvatarPreview();
       avatarHint.textContent='Foto profil berhasil diperbarui.'; avatarHint.className='hint ok';
     }catch(err){
       avatarHint.textContent='Gagal memproses foto.'; avatarHint.className='hint err';
+    }finally{
+      cropOkBtn.disabled=false;
+      avatarFileInput.value='';
     }
+  });
+
+  avatarFileInput.addEventListener('change', ()=>{
+    const file=avatarFileInput.files[0];
+    if(!file) return;
+    if(!file.type.startsWith('image/')){ avatarHint.textContent='File harus berupa gambar.'; avatarHint.className='hint err'; avatarFileInput.value=''; return; }
+    avatarHint.textContent='';
+    openCropper(file);
   });
 
   avatarRemoveBtn.addEventListener('click', async ()=>{
