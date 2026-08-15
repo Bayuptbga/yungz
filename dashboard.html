@@ -279,7 +279,6 @@
   .status-card .sc-uname{font-size:14.5px;font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:6px;}
   .sc-badge{ font-size:10px; font-weight:700; color:var(--bbm-blue-dark); background:#22d8e6; border-radius:5px; padding:1.5px 6px; letter-spacing:.3px; flex-shrink:0; }
   .status-card .sc-meta{font-size:12px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .status-card .sc-meta .sc-dot{margin:0 5px;}
   .status-card .sc-delete{ display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; margin-left:4px; cursor:pointer; flex-shrink:0; transition:background-color .15s ease; }
   .status-card .sc-delete:active{ background:var(--border); }
   .status-card .sc-divider{border-top:1px solid var(--border);}
@@ -352,7 +351,9 @@
       </div>
     </div>
     <div class="search-msg" id="myStatusMsg"></div>
-    <div class="section-title">Pembaruan Terkini</div>
+    <div class="section-title" id="myStatusTitle" style="display:none;">Status Saya</div>
+    <div id="myStatusPinned"></div>
+    <div class="section-title">Pembaruan Kontak</div>
     <div id="statusList"></div>
   </div>
   <div class="tab-panel" id="panelKontak">
@@ -522,15 +523,7 @@
     document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
     document.querySelectorAll('.contact-item .avatar').forEach(a=>a.addEventListener('click',e=>{e.stopPropagation();openContactPreview(a.dataset.profuid,a.closest('.contact-item').dataset.uname);}));
   }
-  function timeLeftLabel(expiresIso){
-    const diff=new Date(expiresIso).getTime()-Date.now();
-    if(diff<=0)return 'Kedaluwarsa';
-    const h=Math.floor(diff/3600000);
-    if(h>=1)return h+'j lagi';
-    const m=Math.max(1,Math.floor(diff/60000));
-    return m+'m lagi';
-  }
-  function timeAgo(iso){
+function timeAgo(iso){
     const diffMin=Math.max(0,Math.round((Date.now()-new Date(iso).getTime())/60000));
     if(diffMin<1)return 'Baru saja';
     if(diffMin<60)return diffMin+' menit lalu';
@@ -554,27 +547,15 @@
     myStatusInput.value='';
     await loadStatusTab(false);
   });
-  async function loadStatusTab(showSkeleton=true){
-    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
-    const sList=document.getElementById('statusList');if(showSkeleton)sList.innerHTML=skeletonRow().repeat(3);
-    const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
-    const oIds=(rows||[]).map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
-    const allIds=[session.user.id,...oIds];
-    const {data:sRows}=await supabaseClient.from('statuses').select('id, user_id, content, created_at, expires_at').in('user_id',allIds).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
-    if(!sRows||sRows.length===0){sList.innerHTML='<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada pembaruan status.</div>';return;}
-    const uIds=sRows.map(s=>s.user_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',uIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p);
-    const sIds=sRows.map(s=>s.id);const {data:likeRows}=await supabaseClient.from('status_likes').select('status_id, user_id').in('status_id',sIds);
-    const likeCountMap={},myLikedSet=new Set();
-    (likeRows||[]).forEach(l=>{likeCountMap[l.status_id]=(likeCountMap[l.status_id]||0)+1;if(l.user_id===session.user.id)myLikedSet.add(l.status_id);});
-    sList.innerHTML=sRows.map(s=>{
-      const count=likeCountMap[s.id]||0,liked=myLikedSet.has(s.id),isMine=s.user_id===session.user.id;
-      const sProf=pMap[s.user_id]||{};if(!isMine)contactAvatarMap[s.user_id]=sProf.avatar_url||null;
-      return `<div class="status-card" data-sid="${escapeHtml(s.id)}" data-uid="${escapeHtml(s.user_id)}" data-uname="${escapeHtml(sProf.username||'Pengguna')}">
+  function statusCardHTML(s,likeCountMap,myLikedSet,pMap,myId){
+    const count=likeCountMap[s.id]||0,liked=myLikedSet.has(s.id),isMine=s.user_id===myId;
+    const sProf=pMap[s.user_id]||{};if(!isMine)contactAvatarMap[s.user_id]=sProf.avatar_url||null;
+    return `<div class="status-card" data-sid="${escapeHtml(s.id)}" data-uid="${escapeHtml(s.user_id)}" data-uname="${escapeHtml(sProf.username||'Pengguna')}">
       <div class="sc-head">
         <div class="sc-avatar-wrap${isMine?'':' ring'}"><div class="sc-avatar" style="${avatarStyle(s.user_id,sProf.avatar_url)}${isMine?'':'cursor:pointer;'}">${avatarInner(sProf.username,sProf.avatar_url)}</div></div>
         <div class="sc-head-info">
           <div class="sc-uname">${escapeHtml(sProf.username||'Pengguna')}${isMine?'<span class="sc-badge">Kamu</span>':''}</div>
-          <div class="sc-meta">${escapeHtml(timeAgo(s.created_at))}<span class="sc-dot">·</span>${escapeHtml(timeLeftLabel(s.expires_at))}</div>
+          <div class="sc-meta">${escapeHtml(timeAgo(s.created_at))}</div>
         </div>
         ${isMine?`<div class="sc-delete" data-id="${escapeHtml(s.id)}" onclick="deleteStatus(this)" title="Hapus status"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></div>`:''}
       </div>
@@ -586,7 +567,31 @@
         <span class="like-count">${count>0?count:''}</span>
       </div>
     </div>`;
-    }).join('');
+  }
+  async function loadStatusTab(showSkeleton=true){
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
+    const sList=document.getElementById('statusList');if(showSkeleton)sList.innerHTML=skeletonRow().repeat(3);
+    const pinnedWrap=document.getElementById('myStatusPinned'),pinnedTitle=document.getElementById('myStatusTitle');
+    const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
+    const oIds=(rows||[]).map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
+    const allIds=[session.user.id,...oIds];
+    const {data:sRows}=await supabaseClient.from('statuses').select('id, user_id, content, created_at, expires_at').in('user_id',allIds).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
+    if(!sRows||sRows.length===0){pinnedTitle.style.display='none';pinnedWrap.style.display='none';pinnedWrap.innerHTML='';sList.innerHTML='<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada pembaruan status.</div>';return;}
+    const uIds=sRows.map(s=>s.user_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',uIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p);
+    const sIds=sRows.map(s=>s.id);const {data:likeRows}=await supabaseClient.from('status_likes').select('status_id, user_id').in('status_id',sIds);
+    const likeCountMap={},myLikedSet=new Set();
+    (likeRows||[]).forEach(l=>{likeCountMap[l.status_id]=(likeCountMap[l.status_id]||0)+1;if(l.user_id===session.user.id)myLikedSet.add(l.status_id);});
+    const mineRows=sRows.filter(s=>s.user_id===session.user.id);
+    const otherRows=sRows.filter(s=>s.user_id!==session.user.id);
+    if(mineRows.length>0){
+      pinnedTitle.style.display='';pinnedWrap.style.display='';
+      pinnedWrap.innerHTML=mineRows.map(s=>statusCardHTML(s,likeCountMap,myLikedSet,pMap,session.user.id)).join('');
+    }else{
+      pinnedTitle.style.display='none';pinnedWrap.style.display='none';pinnedWrap.innerHTML='';
+    }
+    sList.innerHTML=otherRows.length>0
+      ? otherRows.map(s=>statusCardHTML(s,likeCountMap,myLikedSet,pMap,session.user.id)).join('')
+      : '<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada pembaruan dari kontak.</div>';
     document.querySelectorAll('#statusList .status-card .sc-avatar').forEach(a=>{
       const card=a.closest('.status-card');
       if(!card.dataset.uid||card.dataset.uid===session.user.id)return;
@@ -748,7 +753,7 @@
       listSel='#contactList .contact-item';
       matchFn=(el)=>(el.dataset.uname||'').toLowerCase().includes(q);
     }else if(activeTab==='status'){
-      listSel='#statusList .status-card';
+      listSel='#myStatusPinned .status-card, #statusList .status-card';
       matchFn=(el)=>{
         const uname=(el.querySelector('.sc-uname')?.textContent||'').toLowerCase();
         const content=(el.querySelector('.sc-content')?.textContent||'').toLowerCase();
