@@ -370,7 +370,7 @@
   </div>
 
   <div class="input-bar">
-    <textarea id="msgInput" rows="1" placeholder="Ketik pesan..." disabled></textarea>
+    <textarea id="msgInput" rows="1" placeholder="Ketik pesan..." enterkeyhint="send" disabled></textarea>
     <button class="send-btn" id="sendBtn" disabled><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
   </div>
 </div>
@@ -710,7 +710,13 @@
   }
 
   msgInput.addEventListener('input',()=>{autoResize();sendBtn.disabled=msgInput.value.trim().length===0;});
-  msgInput.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});sendBtn.addEventListener('click',sendMessage);
+  msgInput.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
+  // Fallback untuk virtual keyboard Android (Gboard, Samsung Keyboard, dll): banyak keyboard
+  // tidak mengirim event 'keydown' Enter yang bisa di-preventDefault dengan andal, melainkan
+  // langsung memicu 'beforeinput' dengan inputType 'insertLineBreak'. Tangkap di sini juga
+  // supaya Enter tetap mengirim pesan, bukan bikin baris baru, di HP mana pun.
+  msgInput.addEventListener('beforeinput',(e)=>{if(e.inputType==='insertLineBreak'){e.preventDefault();sendMessage();}});
+  sendBtn.addEventListener('click',sendMessage);
   const menuBtn=document.getElementById('menuBtn'),chatMenu=document.getElementById('chatMenu');
   menuBtn.addEventListener('click',(e)=>{e.stopPropagation();chatMenu.classList.toggle('open');});document.addEventListener('click',()=>{chatMenu.classList.remove('open');});
   document.getElementById('menuHapusPermanen').addEventListener('click',async(e)=>{
