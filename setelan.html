@@ -128,11 +128,11 @@
   /* ---- Modal crop foto profil ---- */
   .crop-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:340; opacity:0; pointer-events:none; transition:opacity .18s ease; padding:24px; }
   .crop-overlay.open{ opacity:1; pointer-events:auto; }
-  .crop-box{ background:var(--card-bg); border:1px solid var(--border); border-radius:18px; width:100%; max-width:340px; padding:20px; box-shadow:0 10px 40px rgba(0,0,0,0.5); transform:scale(0.96); transition:transform .18s ease; }
+  .crop-box{ background:var(--card-bg); border:1px solid var(--border); border-radius:18px; width:100%; max-width:380px; padding:20px; box-shadow:0 10px 40px rgba(0,0,0,0.5); transform:scale(0.96); transition:transform .18s ease; }
   .crop-overlay.open .crop-box{ transform:scale(1); }
   .crop-title{ font-size:16px; font-weight:700; color:var(--ink); margin-bottom:14px; text-align:center; }
-  .crop-stage-wrap{ position:relative; width:280px; height:280px; margin:0 auto; border-radius:10px; overflow:hidden; background:#000; touch-action:none; }
-  .crop-stage-wrap canvas{ display:block; width:280px; height:280px; }
+  .crop-stage-wrap{ position:relative; width:320px; height:320px; margin:0 auto; border-radius:10px; overflow:hidden; background:#000; touch-action:none; }
+  .crop-stage-wrap canvas{ display:block; width:320px; height:320px; }
   .crop-box-sel{ position:absolute; box-shadow:0 0 0 2000px rgba(0,0,0,0.55); border:1.5px solid #fff; box-sizing:border-box; cursor:move; touch-action:none; }
   .crop-box-sel .grid-line{ position:absolute; background:rgba(255,255,255,0.45); pointer-events:none; }
   .crop-box-sel .grid-line.v1{ left:33.333%; top:0; bottom:0; width:1px; }
@@ -280,7 +280,7 @@
   <div class="crop-box">
     <div class="crop-title">Sesuaikan Foto</div>
     <div class="crop-stage-wrap" id="cropStageWrap">
-      <canvas id="cropCanvas" width="280" height="280"></canvas>
+      <canvas id="cropCanvas" width="320" height="320"></canvas>
       <div class="crop-box-sel" id="cropBoxSel">
         <div class="grid-line v1"></div><div class="grid-line v2"></div>
         <div class="grid-line h1"></div><div class="grid-line h2"></div>
@@ -323,7 +323,7 @@
 
   // ---- Crop foto: kotak seleksi bisa ditarik dari sudutnya (resize) dan digeser (drag),
   // mirip alat crop screenshot Android. Foto ditampilkan utuh, area di luar kotak digelapkan. ----
-  const CROP_STAGE=280, CROP_OUTPUT=300, CROP_MIN=50;
+  const CROP_STAGE=320, CROP_OUTPUT=300, CROP_MIN=60;
   const cropOverlay=document.getElementById('cropOverlay'), cropCanvas=document.getElementById('cropCanvas'),
         cropCtx=cropCanvas.getContext('2d'), cropOkBtn=document.getElementById('cropOkBtn'),
         cropCancelBtn=document.getElementById('cropCancelBtn'), cropStageWrap=document.getElementById('cropStageWrap'),
