@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+<script src="device-gate.js"></script>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -116,47 +117,6 @@
   .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(34,216,230,0.14); color:#22d8e6; border:1px solid rgba(34,216,230,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
   .e2e-info-close-btn:active{ background:rgba(34,216,230,0.22); }
 </style>
-<script>
-// device-gate (inline, sebelumnya file terpisah)
-// Blokir akses dari desktop dan dari Chrome/browser biasa yang belum "install" app.
-// CATATAN: ini gating UX, BUKAN kontrol keamanan sejati. User-Agent dan display-mode
-// bisa dipalsukan oleh siapa pun yang cukup paham (DevTools device toolbar, dsb).
-// Jangan andalkan ini sebagai satu-satunya lapisan proteksi.
-//
-// ==== SAKLAR ON/OFF ====
-// 1) Saklar utama (permanen, berlaku di semua halaman yang load file ini):
-//    ganti DEVICE_GATE_ENABLED di bawah ke false untuk mematikan gate sepenuhnya.
-// 2) Saklar sementara (buat testing di browser sendiri, tanpa ubah kode/deploy ulang):
-//    buka console lalu jalankan salah satu dari:
-//      localStorage.setItem('device_gate_disabled', '1')   // matikan gate di browser ini
-//      localStorage.removeItem('device_gate_disabled')     // nyalakan lagi
-(function () {
-  var DEVICE_GATE_ENABLED = true;
-
-  if (!DEVICE_GATE_ENABLED) return;
-  try {
-    if (localStorage.getItem('device_gate_disabled') === '1') return;
-  } catch (e) { /* localStorage diblokir (mis. private mode) -> lanjut gate seperti biasa */ }
-
-  function isMobileUA() {
-    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  }
-
-  function isInstalledApp() {
-    // TWA (Android app wrapper dari PWABuilder) selalu kirim referrer ini
-    if (document.referrer && document.referrer.startsWith('android-app://')) return true;
-    // PWA yang di-"Add to Home Screen" lalu dibuka standalone (Android/desktop Chrome)
-    if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
-    // iOS: PWA yang di-"Add to Home Screen"
-    if (window.navigator.standalone === true) return true;
-    return false;
-  }
-
-  if (!isMobileUA() || !isInstalledApp()) {
-    location.replace('akses-ditolak');
-  }
-})();
-</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js?v=1"></script>
 </head>

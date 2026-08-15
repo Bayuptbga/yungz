@@ -22,6 +22,7 @@ const APP_SHELL = [
   './akses-ditolak',
   './akses-ditolak.html',
   './manifest.json',
+  './device-gate.js',
   './app.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
