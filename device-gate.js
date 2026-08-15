@@ -27,8 +27,8 @@
 
   // Saklar fitur tambahan -- masing-masing bisa dimatikan sendiri kalau bikin masalah,
   // tanpa perlu mematikan gate secara keseluruhan.
-  var STRICT_REFERRER_CHECK = true;   // true = referrer TWA harus persis dari TWA_PACKAGE_NAME
-  var BLOCK_AUTOMATION = true;        // true = block browser automation/headless
+  var STRICT_REFERRER_CHECK = false;   // true = referrer TWA harus persis dari TWA_PACKAGE_NAME
+  var BLOCK_AUTOMATION = false;        // true = block browser automation/headless
 
   // Package name APK TWA (dari PWABuilder). Dipakai kalau STRICT_REFERRER_CHECK aktif.
   var TWA_PACKAGE_NAME = 'com.bakuchat.id';
