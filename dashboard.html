@@ -401,13 +401,21 @@
   let currentUserPin=null,myPrivateKey=null;const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return(u||'?').slice(0,2).toUpperCase();}
+  // Helper foto profil: dipakai di template string (avatarStyle/avatarInner) dan di DOM langsung (applyAvatarEl).
+  function avatarStyle(id,avatarUrl){return avatarUrl?`background:url(${avatarUrl}) center/cover no-repeat;`:`background:${colorFor(id)};`;}
+  function avatarInner(username,avatarUrl){return avatarUrl?'':escapeHtml(initials(username));}
+  function applyAvatarEl(el,id,username,avatarUrl){
+    if(avatarUrl){el.style.background=`url(${avatarUrl}) center/cover no-repeat`;el.textContent='';}
+    else{el.style.background=colorFor(id);el.textContent=initials(username);}
+  }
+  const contactAvatarMap={};
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
   function timeLabel(iso){const d=new Date(iso),t=new Date();if(d.toDateString()===t.toDateString())return d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});}
   function tickSvg(del,read){if(read)return `<svg viewBox="0 0 20 15" width="15" height="11" fill="none" stroke="#22d8e6" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;if(del)return `<svg viewBox="0 0 20 15" width="15" height="11" fill="none" stroke="#7ea0b7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;return `<svg viewBox="0 0 16 15" width="12" height="11" fill="none" stroke="#7ea0b7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L14 3"/></svg>`;}
   function statusIconHTML(chat){if(!chat.mine)return'';return `<span class="status-icon" style="background:none;">${tickSvg(chat.deliveredAt,chat.readAt)}</span>`;}
   function render(chats){
     const list=document.getElementById('chatlist');if(!chats||chats.length===0){list.innerHTML=`<div class="panel-empty">Belum ada percakapan.</div>`;return;}
-    list.innerHTML=chats.map(chat=>`<div class="chat-item" data-uid="${escapeHtml(chat.uid)}" data-uname="${escapeHtml(chat.uname)}"><div class="avatar" style="background:${colorFor(chat.uid)}">${escapeHtml(initials(chat.uname))}</div><div class="chat-main"><div class="chat-top"><div class="chat-name" style="${chat.unread?'font-weight:700;':''}">${escapeHtml(chat.uname)}</div><div style="font-size:11.5px;color:var(--muted);">${escapeHtml(timeLabel(chat.time))}</div></div><div class="chat-bottom">${statusIconHTML(chat)}<div class="chat-msg" style="${chat.unread?'color:var(--ink);font-weight:600;':''}">${escapeHtml(chat.preview)}</div></div></div></div>`).join('');
+    list.innerHTML=chats.map(chat=>`<div class="chat-item" data-uid="${escapeHtml(chat.uid)}" data-uname="${escapeHtml(chat.uname)}"><div class="avatar" style="${avatarStyle(chat.uid,chat.avatarUrl)}">${avatarInner(chat.uname,chat.avatarUrl)}</div><div class="chat-main"><div class="chat-top"><div class="chat-name" style="${chat.unread?'font-weight:700;':''}">${escapeHtml(chat.uname)}</div><div style="font-size:11.5px;color:var(--muted);">${escapeHtml(timeLabel(chat.time))}</div></div><div class="chat-bottom">${statusIconHTML(chat)}<div class="chat-msg" style="${chat.unread?'color:var(--ink);font-weight:600;':''}">${escapeHtml(chat.preview)}</div></div></div></div>`).join('');
     document.querySelectorAll('.chat-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
   }
   function skeletonRow(){return `<div class="skel-item"><div class="skel-avatar"></div><div class="skel-lines"><div class="skel-line w60"></div><div class="skel-line w40"></div></div></div>`;}
@@ -423,7 +431,7 @@
     const lastByPartner=new Map();
     (msgRows||[]).forEach(m=>{const p=m.sender_id===userId?m.receiver_id:m.sender_id;if(!acceptedIds.has(p))return;const cutoff=clearedMap.get(p);if(cutoff&&m.created_at<=cutoff)return;if(!lastByPartner.has(p))lastByPartner.set(p,m);});
     if(lastByPartner.size===0){render([]);return;}
-    const pIds=[...lastByPartner.keys()];const {data:profilesData}=await supabaseClient.from('profiles').select('id, username, public_key').in('id',pIds);
+    const pIds=[...lastByPartner.keys()];const {data:profilesData}=await supabaseClient.from('profiles').select('id, username, public_key, avatar_url').in('id',pIds);
     const pMap={};(profilesData||[]).forEach(p=>pMap[p.id]=p);
     const chats=await Promise.all(pIds.map(async pid=>{
       const m=lastByPartner.get(pid);const mine=m.sender_id===userId;const prof=pMap[pid]||{};
@@ -435,7 +443,7 @@
       }
       if(previewText==='[INVITE_CALL]') previewText='📞 Panggilan suara';
       if(previewText==='[CALL_REJECTED]') previewText='📞 Panggilan ditolak';
-      return {uid:pid,uname:prof.username||'Pengguna',preview:(mine?'Kamu: ':'')+previewText,time:m.created_at,mine,deliveredAt:m.delivered_at,readAt:m.read_at,unread:!mine&&!m.read_at};
+      return {uid:pid,uname:prof.username||'Pengguna',avatarUrl:prof.avatar_url||null,preview:(mine?'Kamu: ':'')+previewText,time:m.created_at,mine,deliveredAt:m.delivered_at,readAt:m.read_at,unread:!mine&&!m.read_at};
     }));
     render(chats);
   }
@@ -443,9 +451,9 @@
   let presenceTracked=false;function trackOnlinePresence(userId){if(presenceTracked)return;presenceTracked=true;supabaseClient.channel('online-users',{config:{presence:{key:userId}}}).subscribe(async(s)=>{if(s==='SUBSCRIBED')await supabaseClient.channel('online-users').track({online_at:new Date().toISOString()});});}
   async function refreshNotifBadge(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session){window.location.replace('index.html');return;}
-    const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, pin').eq('id',session.user.id).maybeSingle();
+    const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, pin, avatar_url').eq('id',session.user.id).maybeSingle();
     if(profErr){console.error('Gagal memuat profil:',profErr);}
-    if(prof){currentUserPin=prof.pin;document.getElementById('drawerUname').textContent=prof.username;document.getElementById('drawerPin').textContent='PIN: '+prof.pin;document.getElementById('drawerAvatar').textContent=initials(prof.username);document.getElementById('drawerAvatar').style.background=colorFor(session.user.id);}
+    if(prof){currentUserPin=prof.pin;document.getElementById('drawerUname').textContent=prof.username;document.getElementById('drawerPin').textContent='PIN: '+prof.pin;applyAvatarEl(document.getElementById('drawerAvatar'),session.user.id,prof.username,prof.avatar_url);}
     initPushNotifications(session.user.id);trackOnlinePresence(session.user.id);
     const {count:pCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('addressee_id',session.user.id).eq('status','pending');
     const {count:uCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('requester_id',session.user.id).in('status',['accepted','declined']).eq('seen_by_requester',false);
@@ -468,7 +476,7 @@
     if(!data){searchMsg.textContent='Tidak ditemukan.';searchMsg.className='search-msg err';return;}
     if(data.id===session.user.id){searchMsg.textContent='Ini PIN kamu.';searchMsg.className='search-msg err';return;}
     const {data:existing}=await supabaseClient.from('contacts').select('status').or(`and(requester_id.eq.${session.user.id},addressee_id.eq.${data.id}),and(requester_id.eq.${data.id},addressee_id.eq.${session.user.id})`).maybeSingle();
-    foundProfile=data;document.getElementById('foundAvatar').textContent=initials(data.username);document.getElementById('foundAvatar').style.background=colorFor(data.id);document.getElementById('foundUname').textContent=data.username;
+    foundProfile=data;applyAvatarEl(document.getElementById('foundAvatar'),data.id,data.username,data.avatar_url||null);document.getElementById('foundUname').textContent=data.username;
     if(existing){
       const label=existing.status==='accepted'?'Sudah berteman':existing.status==='pending'?'Permintaan masih menunggu':'Permintaan pernah ditolak';
       foundCard.classList.add('show');searchMsg.textContent=label;searchMsg.className=existing.status==='accepted'?'search-msg ok':'search-msg err';return;
@@ -491,8 +499,8 @@
     const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
     if(!rows||rows.length===0){cList.innerHTML='<div class="panel-empty">Belum ada kontak.</div>';if(cCount)cCount.textContent='0';return;}
     const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
-    const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
-    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml(pMap[id])}"><div class="avatar" data-profuid="${escapeHtml(id)}" style="background:${colorFor(id)}">${escapeHtml(initials(pMap[id]))}</div><div class="uname">${escapeHtml(pMap[id])}</div></div>`).join('');
+    const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',oIds);const pMap={};(pData||[]).forEach(p=>{pMap[p.id]=p.username;contactAvatarMap[p.id]=p.avatar_url||null;});
+    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml(pMap[id])}"><div class="avatar" data-profuid="${escapeHtml(id)}" style="${avatarStyle(id,contactAvatarMap[id])}">${avatarInner(pMap[id],contactAvatarMap[id])}</div><div class="uname">${escapeHtml(pMap[id])}</div></div>`).join('');
     if(cCount)cCount.textContent=oIds.length;
     document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
     document.querySelectorAll('.contact-item .avatar').forEach(a=>a.addEventListener('click',e=>{e.stopPropagation();openContactPreview(a.dataset.profuid,a.closest('.contact-item').dataset.uname);}));
@@ -529,7 +537,7 @@
     const allIds=[session.user.id,...oIds];
     const {data:sRows}=await supabaseClient.from('statuses').select('id, user_id, content, created_at, expires_at').in('user_id',allIds).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
     if(!sRows||sRows.length===0){sList.innerHTML='<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada pembaruan status.</div>';return;}
-    const uIds=sRows.map(s=>s.user_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',uIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
+    const uIds=sRows.map(s=>s.user_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',uIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p);
     const sIds=sRows.map(s=>s.id);const {data:likeRows}=await supabaseClient.from('status_likes').select('status_id, user_id').in('status_id',sIds);
     const likeCountMap={},myLikedSet=new Set();
     (likeRows||[]).forEach(l=>{likeCountMap[l.status_id]=(likeCountMap[l.status_id]||0)+1;if(l.user_id===session.user.id)myLikedSet.add(l.status_id);});
@@ -537,9 +545,9 @@
       const count=likeCountMap[s.id]||0,liked=myLikedSet.has(s.id),isMine=s.user_id===session.user.id;
       return `<div class="status-card" data-sid="${escapeHtml(s.id)}">
       <div class="sc-head">
-        <div class="sc-avatar" style="background:${colorFor(s.user_id)}">${escapeHtml(initials(pMap[s.user_id]))}</div>
+        <div class="sc-avatar" style="${avatarStyle(s.user_id,(pMap[s.user_id]||{}).avatar_url)}">${avatarInner((pMap[s.user_id]||{}).username,(pMap[s.user_id]||{}).avatar_url)}</div>
         <div class="sc-head-info">
-          <div class="sc-uname">${escapeHtml(pMap[s.user_id]||'Pengguna')}</div>
+          <div class="sc-uname">${escapeHtml((pMap[s.user_id]||{}).username||'Pengguna')}</div>
           <div class="sc-tag">Status Baru</div>
         </div>
         <div class="sc-time">${escapeHtml(timeAgo(s.created_at))}</div>
@@ -566,12 +574,13 @@
       ...(updRows||[]).map(r=>({kind:'update',id:r.id,uid:r.addressee_id,status:r.status,seen:r.seen_by_requester}))
     ].sort((a,b)=>String(b.id).localeCompare(String(a.id)));
     if(items.length===0){nl.innerHTML='<div class="panel-empty"><div class="icon"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="var(--muted)" stroke-width="1.6"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>Belum ada notifikasi.</div>';return;}
-    const uids=[...new Set(items.map(i=>i.uid))];const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',uids);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p.username);
+    const uids=[...new Set(items.map(i=>i.uid))];const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',uids);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p);
     nl.innerHTML=items.map(it=>{
+      const prof=pMap[it.uid]||{};
       if(it.kind==='request'){
-        return `<div class="req-item"><div class="avatar" style="background:${colorFor(it.uid)}">${escapeHtml(initials(pMap[it.uid]))}</div><div class="info"><div class="uname">${escapeHtml(pMap[it.uid])}</div><div class="sub">Ingin berteman dengan kamu</div></div><div class="req-actions"><button class="btn-accept" onclick="respondReq('${escapeHtml(it.id)}','accepted',this)">✓ Terima</button><button class="btn-decline" onclick="respondReq('${escapeHtml(it.id)}','declined',this)">Tolak</button></div></div>`;
+        return `<div class="req-item"><div class="avatar" style="${avatarStyle(it.uid,prof.avatar_url)}">${avatarInner(prof.username,prof.avatar_url)}</div><div class="info"><div class="uname">${escapeHtml(prof.username)}</div><div class="sub">Ingin berteman dengan kamu</div></div><div class="req-actions"><button class="btn-accept" onclick="respondReq('${escapeHtml(it.id)}','accepted',this)">✓ Terima</button><button class="btn-decline" onclick="respondReq('${escapeHtml(it.id)}','declined',this)">Tolak</button></div></div>`;
       }
-      return `<div class="notif-item ${it.seen?'':'unseen'}"><div class="avatar" style="background:${colorFor(it.uid)}">${escapeHtml(initials(pMap[it.uid]))}</div><div class="info"><div class="uname">${escapeHtml(pMap[it.uid])}</div><div class="sub">${it.status==='accepted'?'✅ Diterima':'❌ Ditolak'}</div></div>${it.seen?'':'<span class="status-dot new"></span>'}</div>`;
+      return `<div class="notif-item ${it.seen?'':'unseen'}"><div class="avatar" style="${avatarStyle(it.uid,prof.avatar_url)}">${avatarInner(prof.username,prof.avatar_url)}</div><div class="info"><div class="uname">${escapeHtml(prof.username)}</div><div class="sub">${it.status==='accepted'?'✅ Diterima':'❌ Ditolak'}</div></div>${it.seen?'':'<span class="status-dot new"></span>'}</div>`;
     }).join('');
     const uIds=items.filter(i=>i.kind==='update'&&!i.seen).map(i=>i.id);if(uIds.length>0){await supabaseClient.from('contacts').update({seen_by_requester:true}).in('id',uIds);refreshNotifBadge();}
   }
@@ -781,7 +790,7 @@
       box.innerHTML='<div class="ncw-empty">Tidak ada kontak ditemukan.</div>';
       return;
     }
-    box.innerHTML=list.map(c=>`<div class="contact-item" data-uid="${escapeHtml(c.id)}" data-uname="${escapeHtml(c.username)}"><div class="avatar" style="background:${colorFor(c.id)}">${escapeHtml(initials(c.username))}</div><div class="uname">${escapeHtml(c.username)}</div></div>`).join('');
+    box.innerHTML=list.map(c=>`<div class="contact-item" data-uid="${escapeHtml(c.id)}" data-uname="${escapeHtml(c.username)}"><div class="avatar" style="${avatarStyle(c.id,c.avatar_url)}">${avatarInner(c.username,c.avatar_url)}</div><div class="uname">${escapeHtml(c.username)}</div></div>`).join('');
     document.querySelectorAll('#ncwList .contact-item').forEach(i=>i.addEventListener('click',()=>{
       window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`;
     }));
@@ -792,7 +801,7 @@
     const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
     if(!rows||rows.length===0){ncwAllContacts=[];box.innerHTML='<div class="ncw-empty">Belum ada kontak. Tambah kontak dulu lewat tab Kontak.</div>';return;}
     const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
-    const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);
+    const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',oIds);
     ncwAllContacts=(pData||[]).slice().sort((a,b)=>a.username.localeCompare(b.username));
     renderNewChatList(ncwAllContacts);
   }
@@ -805,8 +814,7 @@
   let cprevUid=null,cprevUname=null;
   function openContactPreview(uid,uname){
     cprevUid=uid;cprevUname=uname;
-    const av=document.getElementById('cprevAvatar');
-    av.textContent=initials(uname);av.style.background=colorFor(uid);
+    applyAvatarEl(document.getElementById('cprevAvatar'),uid,uname,contactAvatarMap[uid]||null);
     document.getElementById('cprevUname').textContent=uname;
     document.getElementById('cprevOverlay').classList.add('open');
   }
