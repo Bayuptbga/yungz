@@ -163,6 +163,23 @@
   .cprev-btn.primary{ background:var(--bbm-blue); color:#fff; }
   .cprev-btn.secondary{ background:var(--bg); color:var(--ink); border:1px solid var(--border); }
   .cprev-cancel{ width:100%; padding:13px 0; margin-top:6px; background:none; border:none; border-top:1px solid var(--border); color:var(--muted); font-size:14px; font-weight:600; cursor:pointer; }
+  /* ---- Bottom sheet "Chat Baru" (fab di tab Chat) ---- */
+  .ncw-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .22s ease; z-index:75; }
+  .ncw-overlay.open{ opacity:1; pointer-events:auto; }
+  .ncw-sheet{ width:100%; max-width:420px; height:78vh; background:var(--card-bg); border:1px solid var(--border); border-top-left-radius:20px; border-top-right-radius:20px; display:flex; flex-direction:column; transform:translateY(16px); transition:transform .22s ease; box-shadow:0 -10px 40px rgba(0,0,0,0.5); }
+  .ncw-overlay.open .ncw-sheet{ transform:translateY(0); }
+  .ncw-grip{ width:36px; height:4px; border-radius:3px; background:var(--border); margin:10px auto 6px; flex-shrink:0; }
+  .ncw-head{ display:flex; align-items:center; justify-content:space-between; padding:2px 18px 12px; flex-shrink:0; }
+  .ncw-head h3{ margin:0; font-size:16.5px; font-weight:700; color:var(--ink); }
+  .ncw-close{ cursor:pointer; color:var(--muted); display:flex; align-items:center; justify-content:center; width:30px; height:30px; }
+  .ncw-search-wrap{ padding:0 18px 12px; flex-shrink:0; }
+  .ncw-search{ display:flex; align-items:center; gap:8px; background:var(--bbm-blue-dark); border:1.5px solid var(--border); border-radius:999px; padding:0 14px; height:42px; }
+  .ncw-search svg{ width:18px; height:18px; stroke:var(--muted); flex-shrink:0; }
+  .ncw-search input{ flex:1; background:transparent; border:none; outline:none; color:var(--ink); font-size:14.5px; font-family:inherit; }
+  .ncw-search input::placeholder{ color:var(--muted); }
+  .ncw-list{ flex:1; overflow-y:auto; padding:2px 8px calc(20px + env(safe-area-inset-bottom)); }
+  .ncw-list .contact-item{ padding-left:10px; padding-right:10px; border-radius:10px; }
+  .ncw-empty{ padding:44px 24px; text-align:center; color:var(--muted); font-size:13.5px; line-height:1.6; }
   .tab-panel{ display:none; flex:1; min-height:0; flex-direction:column; overflow-y:auto; padding-bottom:calc(70px + env(safe-area-inset-bottom)); }
   .tab-panel.active{display:flex; animation:panelFadeIn .18s ease both;}
   #panelChats.active{display:flex;flex-direction:column;flex:1;min-height:0;position:relative;}
@@ -390,6 +407,19 @@
         <button class="cprev-btn secondary" id="cprevProfilBtn"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Lihat Profil</button>
       </div>
       <button class="cprev-cancel" id="cprevCancelBtn">Batal</button>
+    </div>
+  </div>
+  <div class="ncw-overlay" id="ncwOverlay">
+    <div class="ncw-sheet">
+      <div class="ncw-grip"></div>
+      <div class="ncw-head"><h3>Chat Baru</h3><div class="ncw-close" id="ncwCloseBtn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></div></div>
+      <div class="ncw-search-wrap">
+        <div class="ncw-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="ncwSearchInput" placeholder="Cari kontak...">
+        </div>
+      </div>
+      <div class="ncw-list" id="ncwList"></div>
     </div>
   </div>
   <div class="tabbar">
@@ -769,7 +799,43 @@
   document.getElementById('drawerSetelan').addEventListener('click',()=>window.location.href='setelan.html');
   document.getElementById('drawerDataPenyimpanan').addEventListener('click',()=>window.location.href='setelan.html#data');
   document.getElementById('drawerPrivasiKeamanan').addEventListener('click',()=>window.location.href='setelan.html#privasi');
-  document.getElementById('fabNewChat').addEventListener('click',()=>switchTab('kontak'));
+  document.getElementById('fabNewChat').addEventListener('click',openNewChatSheet);
+  let ncwAllContacts=[];
+  async function openNewChatSheet(){
+    document.getElementById('ncwOverlay').classList.add('open');
+    document.getElementById('ncwSearchInput').value='';
+    await loadNewChatContacts();
+  }
+  function closeNewChatSheet(){
+    document.getElementById('ncwOverlay').classList.remove('open');
+  }
+  function renderNewChatList(list){
+    const box=document.getElementById('ncwList');
+    if(!list||list.length===0){
+      box.innerHTML='<div class="ncw-empty">Tidak ada kontak ditemukan.</div>';
+      return;
+    }
+    box.innerHTML=list.map(c=>`<div class="contact-item" data-uid="${escapeHtml(c.id)}" data-uname="${escapeHtml(c.username)}"><div class="avatar" style="background:${colorFor(c.id)}">${escapeHtml(initials(c.username))}</div><div class="uname">${escapeHtml(c.username)}</div></div>`).join('');
+    document.querySelectorAll('#ncwList .contact-item').forEach(i=>i.addEventListener('click',()=>{
+      window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`;
+    }));
+  }
+  async function loadNewChatContacts(){
+    const box=document.getElementById('ncwList');box.innerHTML=skeletonRow().repeat(4);
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
+    const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
+    if(!rows||rows.length===0){ncwAllContacts=[];box.innerHTML='<div class="ncw-empty">Belum ada kontak. Tambah kontak dulu lewat tab Kontak.</div>';return;}
+    const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
+    const {data:pData}=await supabaseClient.from('profiles').select('id, username').in('id',oIds);
+    ncwAllContacts=(pData||[]).slice().sort((a,b)=>a.username.localeCompare(b.username));
+    renderNewChatList(ncwAllContacts);
+  }
+  document.getElementById('ncwCloseBtn').addEventListener('click',closeNewChatSheet);
+  document.getElementById('ncwOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeNewChatSheet();});
+  document.getElementById('ncwSearchInput').addEventListener('input',e=>{
+    const q=e.target.value.trim().toLowerCase();
+    renderNewChatList(!q?ncwAllContacts:ncwAllContacts.filter(c=>c.username.toLowerCase().includes(q)));
+  });
   let cprevUid=null,cprevUname=null;
   function openContactPreview(uid,uname){
     cprevUid=uid;cprevUname=uname;
