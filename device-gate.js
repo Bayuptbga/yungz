@@ -23,7 +23,7 @@
 //    (nama key sengaja tidak jelas artinya -- security-by-obscurity ringan,
 //    tetap bukan pengganti proteksi asli)
 (function () {
-  var DEVICE_GATE_ENABLED = true;
+  var DEVICE_GATE_ENABLED = false;
 
   // Saklar fitur tambahan -- masing-masing bisa dimatikan sendiri kalau bikin masalah,
   // tanpa perlu mematikan gate secara keseluruhan.
