@@ -23,14 +23,13 @@
 //    (nama key sengaja tidak jelas artinya -- security-by-obscurity ringan,
 //    tetap bukan pengganti proteksi asli)
 (function () {
+  // ==== SATU-SATUNYA SAKLAR ====
+  // true  = HANYA bisa dibuka lewat APK TWA (browser/PWA apa pun diblok, redirect ke akses-ditolak)
+  // false = bisa dibuka di browser manapun (desktop, mobile, dll) -- gate mati total
   var DEVICE_GATE_ENABLED = false;
 
-  // Saklar fitur tambahan -- masing-masing bisa dimatikan sendiri kalau bikin masalah,
-  // tanpa perlu mematikan gate secara keseluruhan.
-  var STRICT_REFERRER_CHECK = false;   // true = referrer TWA harus persis dari TWA_PACKAGE_NAME
-  var BLOCK_AUTOMATION = false;        // true = block browser automation/headless
-
-  // Package name APK TWA (dari PWABuilder). Dipakai kalau STRICT_REFERRER_CHECK aktif.
+  // Package name APK TWA (dari PWABuilder). Referrer saat dibuka dari APK harus persis
+  // "android-app://<package-ini>" -- ini yang membedakan APK asli dari browser biasa.
   var TWA_PACKAGE_NAME = 'com.bakuchat.id';
 
   if (!DEVICE_GATE_ENABLED) return;
@@ -38,32 +37,11 @@
     if (localStorage.getItem('bc_gate_bypass_x7q') === '1') return;
   } catch (e) { /* localStorage diblokir (mis. private mode) -> lanjut gate seperti biasa */ }
 
-  function isMobileUA() {
-    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  function isTWA() {
+    return document.referrer && document.referrer.indexOf('android-app://' + TWA_PACKAGE_NAME) === 0;
   }
 
-  // Ciri-ciri umum browser automation/headless (scraper, bot testing, dsb).
-  // Sekadar mempersulit, bukan mendeteksi semua kasus.
-  function looksAutomated() {
-    if (!BLOCK_AUTOMATION) return false;
-    if (navigator.webdriver) return true;
-    return /HeadlessChrome|PhantomJS|Puppeteer|Playwright/i.test(navigator.userAgent);
-  }
-
-  function isInstalledApp() {
-    // TWA (Android app wrapper dari PWABuilder).
-    if (document.referrer && document.referrer.indexOf('android-app://') === 0) {
-      if (!STRICT_REFERRER_CHECK) return true; // longgar: android-app:// apa saja diterima
-      return document.referrer.indexOf('android-app://' + TWA_PACKAGE_NAME) === 0; // ketat: harus package kita
-    }
-    // PWA yang di-"Add to Home Screen" lalu dibuka standalone (Android/desktop Chrome)
-    if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
-    // iOS: PWA yang di-"Add to Home Screen"
-    if (window.navigator.standalone === true) return true;
-    return false;
-  }
-
-  if (looksAutomated() || !isMobileUA() || !isInstalledApp()) {
+  if (!isTWA()) {
     location.replace('akses-ditolak');
   }
 })();
