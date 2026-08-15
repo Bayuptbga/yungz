@@ -281,7 +281,6 @@
   .sc-avatar-wrap:not(.ring) .sc-avatar{ box-shadow:none; }
   .status-card .sc-head-info{flex:1;min-width:0;}
   .status-card .sc-uname{font-size:14.5px;font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:6px;}
-  .sc-badge{ font-size:10px; font-weight:700; color:var(--bbm-blue-dark); background:#22d8e6; border-radius:5px; padding:1.5px 6px; letter-spacing:.3px; flex-shrink:0; }
   .status-card .sc-meta{font-size:12px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .status-card .sc-delete{ display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; margin-left:4px; cursor:pointer; flex-shrink:0; transition:background-color .15s ease; }
   .status-card .sc-delete:active{ background:var(--border); }
@@ -564,7 +563,7 @@ function timeAgo(iso){
       <div class="sc-head">
         <div class="sc-avatar-wrap${isMine?'':' ring'}"><div class="sc-avatar" style="${avatarStyle(s.user_id,sProf.avatar_url)}${isMine?'':'cursor:pointer;'}">${avatarInner(sProf.username,sProf.avatar_url)}</div></div>
         <div class="sc-head-info">
-          <div class="sc-uname">${escapeHtml(sProf.username||'Pengguna')}${isMine?'<span class="sc-badge">Kamu</span>':''}</div>
+          <div class="sc-uname">${escapeHtml(sProf.username||'Pengguna')}</div>
           <div class="sc-meta">${escapeHtml(timeAgo(s.created_at))}</div>
         </div>
         ${isMine?`<div class="sc-delete" data-id="${escapeHtml(s.id)}" onclick="deleteStatus(this)" title="Hapus status"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></div>`:''}
