@@ -77,34 +77,8 @@
     background:linear-gradient(180deg, rgba(6,15,24,0) 45%, var(--bg) 100%);
   }
   .topbar{
-    position:relative;padding:0 24px 32px;text-align:center;overflow:hidden;background:var(--bg);
+    position:relative;padding:28px 24px 32px;text-align:center;overflow:hidden;background:var(--bg);
   }
-  .topbar::before{
-    content:'';position:absolute;top:-54px;left:50%;transform:translateX(-50%);
-    width:230px;height:230px;border-radius:50%;
-    background:radial-gradient(circle, rgba(34,216,230,0.24) 0%, rgba(34,216,230,0) 68%);
-    pointer-events:none;
-  }
-  .logo-mark{
-    position:relative;width:84px;height:84px;border-radius:24px;margin:-42px auto 16px;
-    background:linear-gradient(145deg,#15385a,#0a1e2f);
-    display:flex;align-items:center;justify-content:center;
-    border:3px solid var(--bg);
-    box-shadow:0 16px 30px -12px rgba(0,0,0,0.65), 0 0 0 1px rgba(34,216,230,0.28);
-    animation:heroSettle .55s cubic-bezier(.16,1,.3,1) both;
-  }
-  @keyframes heroSettle{
-    from{transform:translateY(12px) scale(.9);opacity:0;}
-    to{transform:translateY(0) scale(1);opacity:1;}
-  }
-  @media (prefers-reduced-motion:reduce){ .logo-mark{animation:none;} }
-  .logo-mark img.bubble-img{width:62px;height:62px;border-radius:17px;object-fit:cover;}
-  .logo-lock{
-    position:absolute;right:-7px;bottom:-7px;width:28px;height:28px;border-radius:50%;
-    background:var(--accent);display:flex;align-items:center;justify-content:center;
-    box-shadow:0 0 0 3px var(--bg);
-  }
-  .logo-lock svg{width:14px;height:14px;}
   .topbar h1{margin:0 0 5px;font-family:'Space Grotesk',sans-serif;font-size:25px;font-weight:700;letter-spacing:-0.4px;}
   .topbar p{margin:0 0 16px;font-size:12.5px;color:var(--muted);}
   .badge-row{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:10.5px;color:var(--accent);font-weight:700;letter-spacing:0.5px;font-family:'Space Mono',monospace;text-transform:uppercase;background:var(--accent-soft);padding:6px 12px;border-radius:999px;border:1px solid rgba(34,216,230,0.25);}
@@ -265,13 +239,9 @@
   <div class="hero">
     <div class="topbar-banner"><img src="icons/banner.png" alt="Baku Chat"></div>
     <div class="topbar">
-      <div class="logo-mark">
-        <img class="bubble-img" src="icons/icon-128.png" alt="Baku Chat">
-        <div class="logo-lock"><svg viewBox="0 0 24 24" fill="none" stroke="#06222c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
-      </div>
       <h1>Baku Chat</h1>
       <p id="topSub">Masuk untuk lanjut ngobrol</p>
-      <div class="badge-row" id="topBadge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Akses dibatasi kontak &amp; PIN pribadi</span></div>
+      <div class="badge-row" id="topBadge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Encrypted end-to-end</span></div>
     </div>
   </div>
 
