@@ -46,8 +46,16 @@
     width:100%; max-width:420px; height:100%; background:var(--bg);
     box-shadow:0 0 40px rgba(0,0,0,0.5); display:flex; flex-direction:column; position:relative; overflow:hidden;
   }
-  /* Layar tablet (>=700px) -> kontainer lebih lega, tetap satu kolom */
+  /* ---- Breakpoint bertingkat: HP kecil -> phablet -> tablet Android kecil -> tablet Android besar ---- */
+  /* Phablet / HP layar besar (mis. Galaxy S Ultra, Note) */
+  @media (min-width:480px){ .phone{ max-width:480px; } }
+  /* Tablet Android portrait/landscape kecil (mis. Tab A, Tab S kecil) */
   @media (min-width:700px){ .phone{ max-width:640px; } }
+  /* Tablet Android besar (mis. Tab S8+/S9 Ultra) */
+  @media (min-width:1000px){ .phone{ max-width:720px; } }
+  /* HP diputar ke landscape (viewport pendek) -> jangan biarkan phone melebar penuh,
+     supaya proporsi tetap wajar dan konten tidak terlalu meregang ke samping */
+  @media (orientation:landscape) and (max-height:480px){ .phone{ max-width:480px; } }
   #authGate{ position:absolute; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center; }
   #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:#22d8e6; animation:authSpin .75s linear infinite; }
   @keyframes authSpin{ to{ transform:rotate(360deg); } }
