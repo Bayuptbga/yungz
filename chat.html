@@ -170,7 +170,8 @@
   .loading-spinner{ width:30px;height:30px; border:3px solid var(--border); border-top-color:#005c4b; border-radius:50%; animation:spin .75s linear infinite; }
   @keyframes spin{ to{ transform:rotate(360deg); } }
   .input-bar{ display:flex; align-items:flex-end; gap:8px; padding:10px 10px calc(10px + env(safe-area-inset-bottom)); background:transparent; flex-shrink:0; }
-  .input-bar textarea{ flex:1; resize:none; border:1.5px solid var(--border); border-radius:22px; padding:11px 17px; font-size:14.5px; font-family:inherit; outline:none; max-height:100px; background:transparent; color:var(--ink); transition:border-color .15s ease; }
+  .input-bar textarea{ flex:1; resize:none; border:1.5px solid var(--border); border-radius:22px; padding:11px 17px; font-size:14.5px; font-family:inherit; outline:none; max-height:100px; background:transparent; color:var(--ink); transition:border-color .15s ease; scrollbar-width:none; -ms-overflow-style:none; }
+  .input-bar textarea::-webkit-scrollbar{ display:none; width:0; height:0; }
   .input-bar textarea::placeholder{ color:var(--muted); }
   .input-bar textarea:disabled{background:transparent;color:var(--muted);border-color:var(--border);opacity:0.6;}
   .input-bar textarea:focus{ border-color:#005c4b; box-shadow:none; }
