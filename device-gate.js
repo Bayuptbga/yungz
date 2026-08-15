@@ -23,10 +23,14 @@
 //    (nama key sengaja tidak jelas artinya -- security-by-obscurity ringan,
 //    tetap bukan pengganti proteksi asli)
 (function () {
-  var DEVICE_GATE_ENABLED = false;
+  var DEVICE_GATE_ENABLED = true;
 
-  // Package name APK TWA (dari PWABuilder). Hanya referrer dari package INI yang
-  // dianggap "install resmi" -- bukan sembarang wrapper android-app://apa-saja.
+  // Saklar fitur tambahan -- masing-masing bisa dimatikan sendiri kalau bikin masalah,
+  // tanpa perlu mematikan gate secara keseluruhan.
+  var STRICT_REFERRER_CHECK = true;   // true = referrer TWA harus persis dari TWA_PACKAGE_NAME
+  var BLOCK_AUTOMATION = true;        // true = block browser automation/headless
+
+  // Package name APK TWA (dari PWABuilder). Dipakai kalau STRICT_REFERRER_CHECK aktif.
   var TWA_PACKAGE_NAME = 'com.bakuchat.id';
 
   if (!DEVICE_GATE_ENABLED) return;
@@ -41,14 +45,17 @@
   // Ciri-ciri umum browser automation/headless (scraper, bot testing, dsb).
   // Sekadar mempersulit, bukan mendeteksi semua kasus.
   function looksAutomated() {
+    if (!BLOCK_AUTOMATION) return false;
     if (navigator.webdriver) return true;
     return /HeadlessChrome|PhantomJS|Puppeteer|Playwright/i.test(navigator.userAgent);
   }
 
   function isInstalledApp() {
-    // TWA (Android app wrapper dari PWABuilder) HARUS kirim referrer persis dari
-    // package name APK kita -- bukan android-app:// apa saja.
-    if (document.referrer && document.referrer.indexOf('android-app://' + TWA_PACKAGE_NAME) === 0) return true;
+    // TWA (Android app wrapper dari PWABuilder).
+    if (document.referrer && document.referrer.indexOf('android-app://') === 0) {
+      if (!STRICT_REFERRER_CHECK) return true; // longgar: android-app:// apa saja diterima
+      return document.referrer.indexOf('android-app://' + TWA_PACKAGE_NAME) === 0; // ketat: harus package kita
+    }
     // PWA yang di-"Add to Home Screen" lalu dibuka standalone (Android/desktop Chrome)
     if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
     // iOS: PWA yang di-"Add to Home Screen"
