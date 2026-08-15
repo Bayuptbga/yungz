@@ -436,7 +436,7 @@
       }else if(looksEncrypted(m.content)){
         previewText='🔒 Pesan terenkripsi';
       }
-      if(previewText==='[INVITE_CALL]') previewText='📞 Panggilan suara';
+      if(previewText==='[INVITE_CALL]') previewText='📞 Panggilan (tidak tersedia)';
       if(previewText==='[CALL_REJECTED]') previewText='📞 Panggilan ditolak';
       return {uid:pid,uname:prof.username||'Pengguna',preview:(mine?'Kamu: ':'')+previewText,time:m.created_at,mine,deliveredAt:m.delivered_at,readAt:m.read_at,unread:!mine&&!m.read_at};
     }));
