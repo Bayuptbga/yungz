@@ -340,11 +340,12 @@
   }
   boot();
 
-  // ---- Foto Profil (base64 langsung di kolom profiles.avatar_url, hanya untuk profil sendiri) ----
+  // ---- Foto Profil: resize di client lalu upload ke Supabase Storage (bucket "avatars"),
+  // kolom profiles.avatar_url hanya menyimpan URL publiknya. Hanya untuk profil sendiri. ----
   const avatarFileInput=document.getElementById('avatarFileInput'), avatarEditBadge=document.getElementById('avatarEditBadge'), avatarHint=document.getElementById('avatarHint');
   avatarEditBadge.addEventListener('click', ()=>avatarFileInput.click());
 
-  function resizeImageToBase64(file, maxSize, quality){
+  function resizeImageToBlob(file, maxSize, quality){
     return new Promise((resolve, reject)=>{
       const reader=new FileReader();
       reader.onload=(e)=>{
@@ -356,7 +357,7 @@
           const canvas=document.createElement('canvas');
           canvas.width=w; canvas.height=h;
           canvas.getContext('2d').drawImage(img,0,0,w,h);
-          resolve(canvas.toDataURL('image/jpeg', quality));
+          canvas.toBlob(blob=>{ blob?resolve(blob):reject(new Error('Gagal memproses gambar')); }, 'image/jpeg', quality);
         };
         img.onerror=()=>reject(new Error('Gagal memuat gambar'));
         img.src=e.target.result;
@@ -371,16 +372,17 @@
     avatarFileInput.value='';
     if(!file || !currentUserId) return;
     if(!file.type.startsWith('image/')){ avatarHint.textContent='File harus berupa gambar.'; avatarHint.style.color='var(--error)'; return; }
-    avatarHint.textContent='Memproses foto...'; avatarHint.style.color='var(--muted)';
+    avatarHint.textContent='Mengunggah foto...'; avatarHint.style.color='var(--muted)';
     try{
-      const dataUrl = await resizeImageToBase64(file, 300, 0.75);
-      if(dataUrl.length > 350000){
-        avatarHint.textContent='Foto terlalu besar, coba foto lain.'; avatarHint.style.color='var(--error)';
-        return;
-      }
-      const {error} = await supabaseClient.from('profiles').update({avatar_url:dataUrl}).eq('id', currentUserId);
+      const blob = await resizeImageToBlob(file, 300, 0.75);
+      const path = currentUserId + '.jpg';
+      const {error:upErr} = await supabaseClient.storage.from('avatars').upload(path, blob, {contentType:'image/jpeg', upsert:true});
+      if(upErr){ avatarHint.textContent='Gagal mengunggah foto: '+upErr.message; avatarHint.style.color='var(--error)'; return; }
+      const {data:urlData} = supabaseClient.storage.from('avatars').getPublicUrl(path);
+      const publicUrl = urlData.publicUrl + '?v=' + Date.now();
+      const {error} = await supabaseClient.from('profiles').update({avatar_url:publicUrl}).eq('id', currentUserId);
       if(error){ avatarHint.textContent='Gagal menyimpan foto: '+error.message; avatarHint.style.color='var(--error)'; return; }
-      currentAvatarUrl=dataUrl;
+      currentAvatarUrl=publicUrl;
       setAvatar(document.getElementById('hAvatar'), currentUserId, currentUsername, currentAvatarUrl);
       avatarHint.textContent='Foto profil diperbarui.'; avatarHint.style.color='var(--ok)';
     }catch(err){
