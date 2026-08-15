@@ -286,13 +286,14 @@
   .status-card .sc-delete:active{ background:var(--border); }
   .status-card .sc-divider{border-top:1px solid var(--border);}
   .status-card .sc-content{padding:2px 14px 15px; font-size:14px; color:var(--ink); line-height:1.55; word-break:break-word; white-space:pre-wrap;}
-  .status-card .sc-like{ display:flex; align-items:center; justify-content:center; gap:7px; padding:11px; cursor:pointer; color:var(--muted); font-size:13px; font-weight:600; user-select:none; transition:background-color .15s ease, color .15s ease; }
-  .status-card .sc-like svg{width:18px;height:18px; flex-shrink:0; transition:transform .15s ease;}
-  .status-card .sc-like:active svg{transform:scale(1.15);}
-  .status-card .sc-like.liked{color:#22d8e6;}
-  .status-card .sc-like.liked svg{fill:#22d8e6;}
-  .status-card .sc-like:active{background:var(--border);}
-  .status-card .like-count{font-size:12.5px;font-weight:700;}
+  .status-card .sc-reactions{ display:flex; align-items:stretch; }
+  .status-card .rx-btn{ flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:10px 4px; cursor:pointer; color:var(--muted); font-size:12.5px; font-weight:700; user-select:none; transition:background-color .15s ease, color .15s ease; border-right:1px solid var(--border); }
+  .status-card .rx-btn:last-child{ border-right:none; }
+  .status-card .rx-btn .rx-emoji{ font-size:16px; line-height:1; transition:transform .15s ease; }
+  .status-card .rx-btn:active .rx-emoji{ transform:scale(1.25); }
+  .status-card .rx-btn:active{ background:var(--border); }
+  .status-card .rx-btn.active{ color:#22d8e6; }
+  .status-card .rx-count{ font-size:12px; font-weight:700; }
   .status-composer{ margin:14px 16px 0; background:var(--card-bg); border:1px solid var(--border); border-radius:16px; padding:13px 14px 10px; flex-shrink:0; box-shadow:0 2px 10px rgba(0,0,0,0.25); }
   .composer-top{ display:flex; align-items:center; gap:12px; }
   .composer-avatar{ width:38px;height:38px;border-radius:50%; display:flex;align-items:center;justify-content:center; font-weight:700;font-size:14px;color:#fff; background:var(--border); flex-shrink:0; }
@@ -556,9 +557,14 @@ function timeAgo(iso){
     myStatusInput.value='';
     await loadStatusTab(false);
   });
-  function statusCardHTML(s,likeCountMap,myLikedSet,pMap,myId){
-    const count=likeCountMap[s.id]||0,liked=myLikedSet.has(s.id),isMine=s.user_id===myId;
+  const REACTIONS=[{type:'like',emoji:'👍'},{type:'love',emoji:'❤️'},{type:'laugh',emoji:'😂'},{type:'angry',emoji:'😡'}];
+  function statusCardHTML(s,reactionCountMap,myReactionMap,pMap,myId){
+    const counts=reactionCountMap[s.id]||{},myReaction=myReactionMap[s.id]||null,isMine=s.user_id===myId;
     const sProf=pMap[s.user_id]||{};if(!isMine)contactAvatarMap[s.user_id]=sProf.avatar_url||null;
+    const rxHTML=REACTIONS.map(r=>{
+      const c=counts[r.type]||0,active=myReaction===r.type;
+      return `<div class="rx-btn${active?' active':''}" data-id="${escapeHtml(s.id)}" data-type="${r.type}" onclick="toggleReaction(this)"><span class="rx-emoji">${r.emoji}</span><span class="rx-count">${c>0?c:''}</span></div>`;
+    }).join('');
     return `<div class="status-card" data-sid="${escapeHtml(s.id)}" data-uid="${escapeHtml(s.user_id)}" data-uname="${escapeHtml(sProf.username||'Pengguna')}">
       <div class="sc-head">
         <div class="sc-avatar-wrap${isMine?'':' ring'}"><div class="sc-avatar" style="${avatarStyle(s.user_id,sProf.avatar_url)}${isMine?'':'cursor:pointer;'}">${avatarInner(sProf.username,sProf.avatar_url)}</div></div>
@@ -571,10 +577,7 @@ function timeAgo(iso){
       <div class="sc-divider"></div>
       <div class="sc-content">${escapeHtml(s.content)}</div>
       <div class="sc-divider"></div>
-      <div class="sc-like${liked?' liked':''}" data-id="${escapeHtml(s.id)}" onclick="toggleLike(this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 22h-3a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/></svg>
-        <span class="like-count">${count>0?count:''}</span>
-      </div>
+      <div class="sc-reactions">${rxHTML}</div>
     </div>`;
   }
   async function loadStatusTab(showSkeleton=true){
@@ -587,14 +590,19 @@ function timeAgo(iso){
     const {data:sRows}=await supabaseClient.from('statuses').select('id, user_id, content, created_at, expires_at').in('user_id',allIds).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
     if(!sRows||sRows.length===0){pinnedTitle.style.display='none';pinnedWrap.style.display='none';pinnedWrap.innerHTML='';sList.innerHTML='<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada pembaruan status.</div>';return;}
     const uIds=sRows.map(s=>s.user_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',uIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p);
-    const sIds=sRows.map(s=>s.id);const {data:likeRows}=await supabaseClient.from('status_likes').select('status_id, user_id').in('status_id',sIds);
-    const likeCountMap={},myLikedSet=new Set();
-    (likeRows||[]).forEach(l=>{likeCountMap[l.status_id]=(likeCountMap[l.status_id]||0)+1;if(l.user_id===session.user.id)myLikedSet.add(l.status_id);});
+    const sIds=sRows.map(s=>s.id);const {data:likeRows}=await supabaseClient.from('status_likes').select('status_id, user_id, reaction').in('status_id',sIds);
+    const reactionCountMap={},myReactionMap={};
+    (likeRows||[]).forEach(l=>{
+      const type=l.reaction||'like';
+      if(!reactionCountMap[l.status_id])reactionCountMap[l.status_id]={};
+      reactionCountMap[l.status_id][type]=(reactionCountMap[l.status_id][type]||0)+1;
+      if(l.user_id===session.user.id)myReactionMap[l.status_id]=type;
+    });
     const mineRows=sRows.filter(s=>s.user_id===session.user.id);
     const otherRows=sRows.filter(s=>s.user_id!==session.user.id);
     if(mineRows.length>0){
       pinnedTitle.style.display='';
-      pinnedWrap.innerHTML=mineRows.map(s=>statusCardHTML(s,likeCountMap,myLikedSet,pMap,session.user.id)).join('');
+      pinnedWrap.innerHTML=mineRows.map(s=>statusCardHTML(s,reactionCountMap,myReactionMap,pMap,session.user.id)).join('');
       pinnedWrap.style.display=myStatusCollapsed?'none':'';
       pinnedTitle.classList.toggle('collapsed',myStatusCollapsed);
       const countBadge=document.getElementById('myStatusCount');
@@ -604,7 +612,7 @@ function timeAgo(iso){
       pinnedTitle.style.display='none';pinnedWrap.style.display='none';pinnedWrap.innerHTML='';
     }
     sList.innerHTML=otherRows.length>0
-      ? otherRows.map(s=>statusCardHTML(s,likeCountMap,myLikedSet,pMap,session.user.id)).join('')
+      ? otherRows.map(s=>statusCardHTML(s,reactionCountMap,myReactionMap,pMap,session.user.id)).join('')
       : '<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada pembaruan dari kontak.</div>';
     document.querySelectorAll('#statusList .status-card .sc-avatar').forEach(a=>{
       const card=a.closest('.status-card');
@@ -672,23 +680,40 @@ function timeAgo(iso){
     if(error){el.style.pointerEvents='';alert('Gagal menghapus status.');return;}
     if(card){card.style.transition='opacity .25s ease';card.style.opacity='0';setTimeout(()=>card.remove(),250);}
   };
-  window.toggleLike=async(el)=>{
+  // Reaksi: 1 user cuma boleh punya 1 jenis reaksi aktif per status.
+  // Klik tombol yang sedang aktif -> batalkan reaksi (delete row).
+  // Klik tombol jenis lain -> ganti reaksi (upsert, replace row lama).
+  window.toggleReaction=async(el)=>{
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
-    const statusId=el.dataset.id;if(!statusId||el.dataset.busy==='1')return;
-    el.dataset.busy='1';
-    const countEl=el.querySelector('.like-count');
-    const wasLiked=el.classList.contains('liked');
-    let count=parseInt(countEl.textContent||'0',10)||0;
-    if(wasLiked){
-      el.classList.remove('liked');count=Math.max(0,count-1);countEl.textContent=count>0?count:'';
-      const {error}=await supabaseClient.from('status_likes').delete().eq('status_id',statusId).eq('user_id',session.user.id);
-      if(error){el.classList.add('liked');count+=1;countEl.textContent=count>0?count:'';}
+    const statusId=el.dataset.id,type=el.dataset.type;
+    const card=el.closest('.status-card');if(!card||!statusId||card.dataset.busy==='1')return;
+    card.dataset.busy='1';
+    const btns=[...card.querySelectorAll('.rx-btn')];
+    const prevActiveBtn=btns.find(b=>b.classList.contains('active'));
+    const prevType=prevActiveBtn?prevActiveBtn.dataset.type:null;
+    const readCount=b=>parseInt(b.querySelector('.rx-count').textContent||'0',10)||0;
+    const setCount=(b,n)=>{ b.querySelector('.rx-count').textContent = n>0 ? n : ''; };
+    // Optimistic update UI dulu
+    const snapshot=btns.map(b=>({el:b,active:b.classList.contains('active'),count:readCount(b)}));
+    if(prevType===type){
+      // batalkan reaksi yang sama
+      el.classList.remove('active');setCount(el,Math.max(0,readCount(el)-1));
     }else{
-      el.classList.add('liked');count+=1;countEl.textContent=count>0?count:'';
-      const {error}=await supabaseClient.from('status_likes').insert({status_id:statusId,user_id:session.user.id});
-      if(error){el.classList.remove('liked');count=Math.max(0,count-1);countEl.textContent=count>0?count:'';}
+      if(prevActiveBtn){prevActiveBtn.classList.remove('active');setCount(prevActiveBtn,Math.max(0,readCount(prevActiveBtn)-1));}
+      el.classList.add('active');setCount(el,readCount(el)+1);
     }
-    el.dataset.busy='0';
+    let error;
+    if(prevType===type){
+      ({error}=await supabaseClient.from('status_likes').delete().eq('status_id',statusId).eq('user_id',session.user.id));
+    }else{
+      ({error}=await supabaseClient.from('status_likes').upsert({status_id:statusId,user_id:session.user.id,reaction:type},{onConflict:'status_id,user_id'}));
+    }
+    if(error){
+      // rollback kalau gagal
+      snapshot.forEach(s=>{ s.el.classList.toggle('active',s.active); setCount(s.el,s.count); });
+      alert('Gagal mengirim reaksi, coba lagi.');
+    }
+    card.dataset.busy='0';
   };
   window.respondReq=async(id,st,btn)=>{
     const item=btn.closest('.req-item');item.querySelectorAll('button').forEach(b=>b.disabled=true);
