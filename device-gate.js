@@ -18,7 +18,7 @@
 //      localStorage.setItem('device_gate_disabled', '1')   // matikan gate di browser ini
 //      localStorage.removeItem('device_gate_disabled')     // nyalakan lagi
 (function () {
-  var DEVICE_GATE_ENABLED = true;
+  var DEVICE_GATE_ENABLED = false;
 
   if (!DEVICE_GATE_ENABLED) return;
   try {
