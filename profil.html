@@ -136,12 +136,20 @@
   .crop-box{ background:var(--card-bg); border:1px solid var(--border); border-radius:18px; width:100%; max-width:340px; padding:20px; box-shadow:0 10px 40px rgba(0,0,0,0.5); transform:scale(0.96); transition:transform .18s ease; }
   .crop-overlay.open .crop-box{ transform:scale(1); }
   .crop-title{ font-size:16px; font-weight:700; color:var(--ink); margin-bottom:14px; text-align:center; }
-  .crop-stage-wrap{ position:relative; width:280px; height:280px; margin:0 auto; border-radius:14px; overflow:hidden; background:#000; touch-action:none; }
+  .crop-stage-wrap{ position:relative; width:280px; height:280px; margin:0 auto; border-radius:10px; overflow:hidden; background:#000; touch-action:none; }
   .crop-stage-wrap canvas{ display:block; width:280px; height:280px; }
-  .crop-mask{ position:absolute; inset:0; pointer-events:none; box-shadow:0 0 0 2000px rgba(0,0,0,0.55); border-radius:4px; margin:14px; }
-  .crop-zoom-row{ display:flex; align-items:center; gap:10px; margin-top:18px; }
-  .crop-zoom-row svg{ width:16px; height:16px; stroke:var(--muted); flex-shrink:0; }
-  .crop-zoom-row input[type=range]{ flex:1; accent-color:var(--accent); }
+  .crop-box-sel{ position:absolute; box-shadow:0 0 0 2000px rgba(0,0,0,0.55); border:1.5px solid #fff; box-sizing:border-box; cursor:move; touch-action:none; }
+  .crop-box-sel .grid-line{ position:absolute; background:rgba(255,255,255,0.45); pointer-events:none; }
+  .crop-box-sel .grid-line.v1{ left:33.333%; top:0; bottom:0; width:1px; }
+  .crop-box-sel .grid-line.v2{ left:66.666%; top:0; bottom:0; width:1px; }
+  .crop-box-sel .grid-line.h1{ top:33.333%; left:0; right:0; height:1px; }
+  .crop-box-sel .grid-line.h2{ top:66.666%; left:0; right:0; height:1px; }
+  .crop-handle{ position:absolute; width:26px; height:26px; margin:-13px; touch-action:none; }
+  .crop-handle::after{ content:''; position:absolute; inset:9px; border-radius:2px; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,0.35); }
+  .crop-handle.tl{ top:0; left:0; cursor:nwse-resize; }
+  .crop-handle.tr{ top:0; right:0; cursor:nesw-resize; }
+  .crop-handle.bl{ bottom:0; left:0; cursor:nesw-resize; }
+  .crop-handle.br{ bottom:0; right:0; cursor:nwse-resize; }
   .crop-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
   .crop-actions button{ border:none; border-radius:10px; padding:10px 16px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; }
   .crop-cancel{ background:var(--border); color:var(--ink); }
@@ -241,12 +249,14 @@
     <div class="crop-title">Sesuaikan Foto</div>
     <div class="crop-stage-wrap" id="cropStageWrap">
       <canvas id="cropCanvas" width="280" height="280"></canvas>
-      <div class="crop-mask"></div>
-    </div>
-    <div class="crop-zoom-row">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M8 11h6"/></svg>
-      <input type="range" id="cropZoomSlider" min="0" max="100" value="0">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+      <div class="crop-box-sel" id="cropBoxSel">
+        <div class="grid-line v1"></div><div class="grid-line v2"></div>
+        <div class="grid-line h1"></div><div class="grid-line h2"></div>
+        <div class="crop-handle tl" data-corner="tl"></div>
+        <div class="crop-handle tr" data-corner="tr"></div>
+        <div class="crop-handle bl" data-corner="bl"></div>
+        <div class="crop-handle br" data-corner="br"></div>
+      </div>
     </div>
     <div class="crop-actions">
       <button class="crop-cancel" id="cropCancelBtn" type="button">Batal</button>
@@ -382,36 +392,35 @@
   const avatarFileInput=document.getElementById('avatarFileInput'), avatarEditBadge=document.getElementById('avatarEditBadge'), avatarHint=document.getElementById('avatarHint');
   avatarEditBadge.addEventListener('click', ()=>avatarFileInput.click());
 
-  // ---- Crop foto: user bisa geser & zoom sebelum foto diupload ----
-  const CROP_STAGE=280, CROP_OUTPUT=300;
+  // ---- Crop foto: kotak seleksi bisa ditarik dari sudutnya (resize) dan digeser (drag),
+  // mirip alat crop screenshot Android. Foto ditampilkan utuh, area di luar kotak digelapkan. ----
+  const CROP_STAGE=280, CROP_OUTPUT=300, CROP_MIN=50;
   const cropOverlay=document.getElementById('cropOverlay'), cropCanvas=document.getElementById('cropCanvas'),
-        cropCtx=cropCanvas.getContext('2d'), cropZoomSlider=document.getElementById('cropZoomSlider'),
-        cropOkBtn=document.getElementById('cropOkBtn'), cropCancelBtn=document.getElementById('cropCancelBtn'),
-        cropStageWrap=document.getElementById('cropStageWrap');
-  let cropImg=null, cropObjectUrl=null, cropMinScale=1, cropScale=1, cropOffX=0, cropOffY=0, cropDragging=false, cropDragStart=null;
+        cropCtx=cropCanvas.getContext('2d'), cropOkBtn=document.getElementById('cropOkBtn'),
+        cropCancelBtn=document.getElementById('cropCancelBtn'), cropStageWrap=document.getElementById('cropStageWrap'),
+        cropBoxSel=document.getElementById('cropBoxSel');
+  let cropImg=null, cropObjectUrl=null;
+  let dispX=0, dispY=0, dispW=0, dispH=0; // area gambar yang tampil di stage (letterboxed)
+  let box={x:0,y:0,size:0}; // kotak seleksi, dalam koordinat px stage (sama dgn koordinat canvas)
+  let cropMode=null, cropStart=null; // cropMode: 'move' | 'tl' | 'tr' | 'bl' | 'br'
 
-  function cropClamp(){
-    const dw=cropImg.width*cropScale, dh=cropImg.height*cropScale;
-    const maxX=Math.max(0,(dw-CROP_STAGE)/2), maxY=Math.max(0,(dh-CROP_STAGE)/2);
-    cropOffX=Math.max(-maxX,Math.min(maxX,cropOffX));
-    cropOffY=Math.max(-maxY,Math.min(maxY,cropOffY));
-  }
-  function drawCrop(){
-    cropClamp();
-    const dw=cropImg.width*cropScale, dh=cropImg.height*cropScale;
-    const dx=(CROP_STAGE-dw)/2+cropOffX, dy=(CROP_STAGE-dh)/2+cropOffY;
-    cropCtx.clearRect(0,0,CROP_STAGE,CROP_STAGE);
-    cropCtx.drawImage(cropImg,dx,dy,dw,dh);
+  function renderBox(){
+    cropBoxSel.style.left=box.x+'px'; cropBoxSel.style.top=box.y+'px';
+    cropBoxSel.style.width=box.size+'px'; cropBoxSel.style.height=box.size+'px';
   }
   function openCropper(file){
     cropObjectUrl=URL.createObjectURL(file);
     const img=new Image();
     img.onload=()=>{
       cropImg=img;
-      cropMinScale=Math.max(CROP_STAGE/img.width, CROP_STAGE/img.height);
-      cropScale=cropMinScale; cropOffX=0; cropOffY=0;
-      cropZoomSlider.value=0;
-      drawCrop();
+      const scale=Math.min(CROP_STAGE/img.width, CROP_STAGE/img.height);
+      dispW=img.width*scale; dispH=img.height*scale;
+      dispX=(CROP_STAGE-dispW)/2; dispY=(CROP_STAGE-dispH)/2;
+      cropCtx.clearRect(0,0,CROP_STAGE,CROP_STAGE);
+      cropCtx.drawImage(img,dispX,dispY,dispW,dispH);
+      const size=Math.min(dispW,dispH);
+      box={x:dispX+(dispW-size)/2, y:dispY+(dispH-size)/2, size};
+      renderBox();
       cropOverlay.classList.add('open');
     };
     img.onerror=()=>{ avatarHint.textContent='Gagal memuat gambar.'; avatarHint.style.color='var(--error)'; URL.revokeObjectURL(cropObjectUrl); };
@@ -420,27 +429,55 @@
   function closeCropper(){
     cropOverlay.classList.remove('open');
     if(cropObjectUrl){ URL.revokeObjectURL(cropObjectUrl); cropObjectUrl=null; }
-    cropImg=null;
+    cropImg=null; cropMode=null;
   }
-  cropZoomSlider.addEventListener('input', ()=>{
-    const t=cropZoomSlider.value/100; // 0..1 -> minScale..minScale*3
-    cropScale=cropMinScale*(1+2*t);
-    drawCrop();
-  });
-  function cropPointerPos(e){ return {x:e.clientX, y:e.clientY}; }
-  cropStageWrap.addEventListener('pointerdown',(e)=>{
+  function clampMoveBox(){
+    box.x=Math.max(dispX,Math.min(dispX+dispW-box.size,box.x));
+    box.y=Math.max(dispY,Math.min(dispY+dispH-box.size,box.y));
+  }
+  cropBoxSel.addEventListener('pointerdown',(e)=>{
     if(!cropImg)return;
-    cropDragging=true; cropStageWrap.setPointerCapture(e.pointerId);
-    const p=cropPointerPos(e); cropDragStart={x:p.x,y:p.y,offX:cropOffX,offY:cropOffY};
+    const handle=e.target.closest('.crop-handle');
+    cropMode=handle?handle.dataset.corner:'move';
+    cropStageWrap.setPointerCapture(e.pointerId);
+    cropStart={px:e.clientX,py:e.clientY,box:{...box}};
+    e.stopPropagation();
   });
   cropStageWrap.addEventListener('pointermove',(e)=>{
-    if(!cropDragging||!cropImg)return;
-    const p=cropPointerPos(e);
-    cropOffX=cropDragStart.offX+(p.x-cropDragStart.x);
-    cropOffY=cropDragStart.offY+(p.y-cropDragStart.y);
-    drawCrop();
+    if(!cropMode||!cropImg)return;
+    const dx=e.clientX-cropStart.px, dy=e.clientY-cropStart.py;
+    const maxSize=Math.min(dispW,dispH);
+    if(cropMode==='move'){
+      box.x=cropStart.box.x+dx; box.y=cropStart.box.y+dy;
+      clampMoveBox();
+    } else {
+      const b=cropStart.box;
+      let anchorX,anchorY,newSize;
+      if(cropMode==='br'){ anchorX=b.x; anchorY=b.y; newSize=Math.max(dx,dy); }
+      else if(cropMode==='tl'){ anchorX=b.x+b.size; anchorY=b.y+b.size; newSize=Math.max(-dx,-dy); }
+      else if(cropMode==='tr'){ anchorX=b.x; anchorY=b.y+b.size; newSize=Math.max(dx,-dy); }
+      else { anchorX=b.x+b.size; anchorY=b.y; newSize=Math.max(-dx,dy); } // bl
+      newSize=Math.max(CROP_MIN,Math.min(maxSize,newSize));
+      if(cropMode==='br'){ 
+        newSize=Math.min(newSize, dispX+dispW-anchorX, dispY+dispH-anchorY);
+        box={x:anchorX,y:anchorY,size:Math.max(CROP_MIN,newSize)};
+      } else if(cropMode==='tl'){
+        newSize=Math.min(newSize, anchorX-dispX, anchorY-dispY);
+        newSize=Math.max(CROP_MIN,newSize);
+        box={x:anchorX-newSize,y:anchorY-newSize,size:newSize};
+      } else if(cropMode==='tr'){
+        newSize=Math.min(newSize, dispX+dispW-anchorX, anchorY-dispY);
+        newSize=Math.max(CROP_MIN,newSize);
+        box={x:anchorX,y:anchorY-newSize,size:newSize};
+      } else { // bl
+        newSize=Math.min(newSize, anchorX-dispX, dispY+dispH-anchorY);
+        newSize=Math.max(CROP_MIN,newSize);
+        box={x:anchorX-newSize,y:anchorY,size:newSize};
+      }
+    }
+    renderBox();
   });
-  function cropPointerEnd(e){ cropDragging=false; }
+  function cropPointerEnd(){ cropMode=null; }
   cropStageWrap.addEventListener('pointerup',cropPointerEnd);
   cropStageWrap.addEventListener('pointercancel',cropPointerEnd);
   cropCancelBtn.addEventListener('click', ()=>{ closeCropper(); avatarFileInput.value=''; });
@@ -448,13 +485,12 @@
 
   function cropToBlob(){
     return new Promise((resolve,reject)=>{
-      const ratio=CROP_OUTPUT/CROP_STAGE;
-      const dw=cropImg.width*cropScale*ratio, dh=cropImg.height*cropScale*ratio;
-      const dx=(CROP_OUTPUT-dw)/2+cropOffX*ratio, dy=(CROP_OUTPUT-dh)/2+cropOffY*ratio;
+      const scaleOrig=cropImg.width/dispW;
+      const srcX=(box.x-dispX)*scaleOrig, srcY=(box.y-dispY)*scaleOrig, srcSize=box.size*scaleOrig;
       const outCanvas=document.createElement('canvas');
       outCanvas.width=CROP_OUTPUT; outCanvas.height=CROP_OUTPUT;
       const outCtx=outCanvas.getContext('2d');
-      outCtx.drawImage(cropImg,dx,dy,dw,dh);
+      outCtx.drawImage(cropImg,srcX,srcY,srcSize,srcSize,0,0,CROP_OUTPUT,CROP_OUTPUT);
       outCanvas.toBlob(blob=>{ blob?resolve(blob):reject(new Error('Gagal memproses gambar')); }, 'image/jpeg', 0.85);
     });
   }
