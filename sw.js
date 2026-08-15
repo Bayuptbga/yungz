@@ -1,11 +1,9 @@
 // Service Worker - Baku Chat
 //
 // ==== VERSIONING OTOMATIS ====
-// VERSION di bawah ini diisi OTOMATIS oleh GitHub Actions setiap deploy
-// (lihat .github/workflows/deploy.yml). Jangan edit manual di sini —
-// kalau kamu jalankan file ini langsung tanpa lewat Actions, __VERSION__
-// tidak akan tergantikan, tapi itu tidak masalah karena tetap unik per commit
-// selama workflow yang jalan.
+// VERSION di bawah ini diisi OTOMATIS oleh GitHub Actions setiap deploy,
+// berdasarkan jumlah commit di repo (jadi selalu naik: 1.0.1, 1.0.2, dst).
+// Lihat .github/workflows/deploy.yml. Jangan edit manual di sini.
 const VERSION = '__VERSION__';
 const CACHE_NAME = `private-chat-${VERSION}`;
 
