@@ -142,8 +142,15 @@
   </div>
   <div class="content">
     <div class="hero">
-      <div class="h-avatar" id="hAvatar">?</div>
+      <div style="position:relative; width:92px; height:92px;">
+        <div class="h-avatar" id="hAvatar">?</div>
+        <div id="avatarEditBadge" style="display:none; position:absolute; right:-2px; bottom:-2px; width:30px;height:30px;border-radius:50%;background:var(--accent);align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--bg);">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#062733" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+      </div>
+      <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
       <div class="h-uname" id="hUname">—</div>
+      <div id="avatarHint" style="font-size:11.5px; color:var(--muted); min-height:14px; margin-top:2px;"></div>
       <div class="h-joined" id="hJoined">Bergabung —</div>
     </div>
 
@@ -225,6 +232,10 @@
   const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return(u||'?').slice(0,2).toUpperCase();}
+  function setAvatar(el, id, username, avatarUrl){
+    if(avatarUrl){ el.style.background=`url(${avatarUrl}) center/cover no-repeat`; el.textContent=''; }
+    else { el.style.background=colorFor(id); el.textContent=initials(username); }
+  }
   function formatJoined(iso){
     if(!iso)return'Bergabung —';
     const d=new Date(iso);
@@ -233,6 +244,9 @@
   }
 
   let currentPin=null;
+  let currentUserId=null;
+  let currentUsername=null;
+  let currentAvatarUrl=null;
 
   function getParam(name){return new URLSearchParams(window.location.search).get(name);}
 
@@ -274,12 +288,11 @@
       const deleteContactBtn=document.getElementById('deleteContactBtn');
       clearChatBtn.style.display='flex';
       deleteContactBtn.style.display='flex';
-      const {data:prof,error:profErr} = await supabaseClient.from('profiles').select('username, created_at').eq('id', viewUid).maybeSingle();
+      const {data:prof,error:profErr} = await supabaseClient.from('profiles').select('username, created_at, avatar_url').eq('id', viewUid).maybeSingle();
       if(profErr){ console.error('Gagal memuat profil kontak:',profErr); }
       if(!prof){ document.getElementById('hUname').textContent='Pengguna tidak ditemukan'; document.getElementById('authGate').style.display='none'; return; }
       document.getElementById('hUname').textContent = prof.username;
-      document.getElementById('hAvatar').textContent = initials(prof.username);
-      document.getElementById('hAvatar').style.background = colorFor(viewUid);
+      setAvatar(document.getElementById('hAvatar'), viewUid, prof.username, prof.avatar_url);
       document.getElementById('hJoined').textContent = formatJoined(prof.created_at);
       document.getElementById('e2eCardDesc').textContent = 'Pesan antara kamu dan '+prof.username+' dilindungi enkripsi end-to-end.';
       document.getElementById('e2eInfoText').textContent = 'Semua pesan antara kamu dan '+prof.username+' dilindungi enkripsi end-to-end secara otomatis.';
@@ -302,14 +315,17 @@
       return;
     }
 
-    const {data:prof} = await supabaseClient.from('profiles').select('username, pin').eq('id', myUid).maybeSingle();
+    const {data:prof} = await supabaseClient.from('profiles').select('username, pin, avatar_url').eq('id', myUid).maybeSingle();
     if(prof){
       currentPin = prof.pin;
+      currentUserId = myUid;
+      currentAvatarUrl = prof.avatar_url || null;
       document.getElementById('hUname').textContent = prof.username;
+      currentUsername = prof.username;
       document.getElementById('iPin').textContent = prof.pin;
-      document.getElementById('hAvatar').textContent = initials(prof.username);
-      document.getElementById('hAvatar').style.background = colorFor(myUid);
+      setAvatar(document.getElementById('hAvatar'), myUid, prof.username, currentAvatarUrl);
     }
+    document.getElementById('avatarEditBadge').style.display = 'flex';
     document.getElementById('hJoined').textContent = formatJoined(session.user.created_at);
     document.getElementById('e2eCardDesc').textContent = 'Semua pesanmu di Baku Chat dilindungi enkripsi end-to-end. Bahkan kami pun tidak bisa membacanya.';
     document.getElementById('e2eInfoText').textContent = 'Semua pesan pribadi di Baku Chat dilindungi enkripsi end-to-end secara otomatis, di setiap obrolan yang kamu punya.';
@@ -323,6 +339,54 @@
     document.getElementById('authGate').style.display = 'none';
   }
   boot();
+
+  // ---- Foto Profil (base64 langsung di kolom profiles.avatar_url, hanya untuk profil sendiri) ----
+  const avatarFileInput=document.getElementById('avatarFileInput'), avatarEditBadge=document.getElementById('avatarEditBadge'), avatarHint=document.getElementById('avatarHint');
+  avatarEditBadge.addEventListener('click', ()=>avatarFileInput.click());
+
+  function resizeImageToBase64(file, maxSize, quality){
+    return new Promise((resolve, reject)=>{
+      const reader=new FileReader();
+      reader.onload=(e)=>{
+        const img=new Image();
+        img.onload=()=>{
+          let w=img.width, h=img.height;
+          if(w>h){ if(w>maxSize){ h=Math.round(h*maxSize/w); w=maxSize; } }
+          else { if(h>maxSize){ w=Math.round(w*maxSize/h); h=maxSize; } }
+          const canvas=document.createElement('canvas');
+          canvas.width=w; canvas.height=h;
+          canvas.getContext('2d').drawImage(img,0,0,w,h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror=()=>reject(new Error('Gagal memuat gambar'));
+        img.src=e.target.result;
+      };
+      reader.onerror=()=>reject(new Error('Gagal membaca file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  avatarFileInput.addEventListener('change', async ()=>{
+    const file=avatarFileInput.files[0];
+    avatarFileInput.value='';
+    if(!file || !currentUserId) return;
+    if(!file.type.startsWith('image/')){ avatarHint.textContent='File harus berupa gambar.'; avatarHint.style.color='var(--error)'; return; }
+    avatarHint.textContent='Memproses foto...'; avatarHint.style.color='var(--muted)';
+    try{
+      const dataUrl = await resizeImageToBase64(file, 300, 0.75);
+      if(dataUrl.length > 350000){
+        avatarHint.textContent='Foto terlalu besar, coba foto lain.'; avatarHint.style.color='var(--error)';
+        return;
+      }
+      const {error} = await supabaseClient.from('profiles').update({avatar_url:dataUrl}).eq('id', currentUserId);
+      if(error){ avatarHint.textContent='Gagal menyimpan foto: '+error.message; avatarHint.style.color='var(--error)'; return; }
+      currentAvatarUrl=dataUrl;
+      setAvatar(document.getElementById('hAvatar'), currentUserId, currentUsername, currentAvatarUrl);
+      avatarHint.textContent='Foto profil diperbarui.'; avatarHint.style.color='var(--ok)';
+    }catch(err){
+      avatarHint.textContent='Gagal memproses foto.'; avatarHint.style.color='var(--error)';
+    }
+  });
 
   document.getElementById('pinCopyBtn').addEventListener('click', async () => {
     if(!currentPin) return;
