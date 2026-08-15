@@ -125,31 +125,26 @@
   .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(34,216,230,0.14); color:#22d8e6; border:1px solid rgba(34,216,230,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
   .e2e-info-close-btn:active{ background:rgba(34,216,230,0.22); }
 
-  /* ---- Modal crop foto profil ---- */
-  .crop-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:340; opacity:0; pointer-events:none; transition:opacity .18s ease; padding:24px; }
+  /* ---- Cropper foto profil: fullscreen ala WhatsApp ---- */
+  .crop-overlay{ position:fixed; inset:0; background:#000; z-index:340; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:opacity .16s ease; }
   .crop-overlay.open{ opacity:1; pointer-events:auto; }
-  .crop-box{ background:var(--card-bg); border:1px solid var(--border); border-radius:18px; width:100%; max-width:380px; padding:20px; box-shadow:0 10px 40px rgba(0,0,0,0.5); transform:scale(0.96); transition:transform .18s ease; }
-  .crop-overlay.open .crop-box{ transform:scale(1); }
-  .crop-title{ font-size:16px; font-weight:700; color:var(--ink); margin-bottom:14px; text-align:center; }
-  .crop-stage-wrap{ position:relative; width:320px; height:320px; margin:0 auto; border-radius:10px; overflow:hidden; background:#000; touch-action:none; }
-  .crop-stage-wrap canvas{ display:block; width:320px; height:320px; }
-  .crop-box-sel{ position:absolute; box-shadow:0 0 0 2000px rgba(0,0,0,0.55); border:1.5px solid #fff; box-sizing:border-box; cursor:move; touch-action:none; }
-  .crop-box-sel .grid-line{ position:absolute; background:rgba(255,255,255,0.45); pointer-events:none; }
-  .crop-box-sel .grid-line.v1{ left:33.333%; top:0; bottom:0; width:1px; }
-  .crop-box-sel .grid-line.v2{ left:66.666%; top:0; bottom:0; width:1px; }
-  .crop-box-sel .grid-line.h1{ top:33.333%; left:0; right:0; height:1px; }
-  .crop-box-sel .grid-line.h2{ top:66.666%; left:0; right:0; height:1px; }
-  .crop-handle{ position:absolute; width:26px; height:26px; margin:-13px; touch-action:none; }
-  .crop-handle::after{ content:''; position:absolute; inset:9px; border-radius:2px; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,0.35); }
-  .crop-handle.tl{ top:0; left:0; cursor:nwse-resize; }
-  .crop-handle.tr{ top:0; right:0; cursor:nesw-resize; }
-  .crop-handle.bl{ bottom:0; left:0; cursor:nesw-resize; }
-  .crop-handle.br{ bottom:0; right:0; cursor:nwse-resize; }
-  .crop-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
-  .crop-actions button{ border:none; border-radius:10px; padding:10px 16px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; }
-  .crop-cancel{ background:var(--border); color:var(--ink); }
-  .crop-ok{ background:#22d8e6; color:#062733; }
-  .crop-ok:disabled{ opacity:0.5; }
+  .crop-topbar{ flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:14px 14px; padding-top:calc(14px + env(safe-area-inset-top,0px)); }
+  .crop-topbar-title{ color:#fff; font-size:15.5px; font-weight:600; }
+  .crop-icon-btn{ width:40px; height:40px; border-radius:50%; border:none; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-tap-highlight-color:transparent; padding:0; flex-shrink:0; }
+  .crop-icon-btn:active{ background:rgba(255,255,255,0.18); }
+  .crop-icon-btn svg{ width:19px; height:19px; }
+  .crop-confirm-btn{ background:var(--accent); }
+  .crop-confirm-btn:disabled{ opacity:0.5; pointer-events:none; }
+  .crop-stage{ position:relative; flex:1; min-height:0; overflow:hidden; touch-action:none; background:#000; }
+  .crop-stage img{ position:absolute; left:0; top:0; transform-origin:0 0; user-select:none; -webkit-user-drag:none; pointer-events:none; will-change:transform; }
+  .crop-circle{ position:absolute; box-shadow:0 0 0 2000px rgba(0,0,0,0.6); border:1.5px solid rgba(255,255,255,0.9); border-radius:50%; box-sizing:border-box; pointer-events:none; }
+  .crop-bottombar{ flex-shrink:0; display:flex; align-items:center; gap:14px; padding:18px 24px calc(22px + env(safe-area-inset-bottom,0px)); }
+  .crop-bottombar svg{ stroke:#fff; opacity:0.8; flex-shrink:0; width:17px; height:17px; }
+  .crop-bottombar svg.big{ width:22px; height:22px; }
+  #cropZoomRange{ flex:1; -webkit-appearance:none; appearance:none; height:3px; border-radius:2px; background:rgba(255,255,255,0.28); outline:none; margin:0; }
+  #cropZoomRange::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.4); }
+  #cropZoomRange::-moz-range-thumb{ width:18px; height:18px; border-radius:50%; background:var(--accent); border:none; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.4); }
+  .crop-hint{ text-align:center; color:rgba(255,255,255,0.55); font-size:12px; padding:0 24px 4px; flex-shrink:0; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js?v=1"></script>
@@ -277,23 +272,24 @@
 </div>
 
 <div class="crop-overlay" id="cropOverlay">
-  <div class="crop-box">
-    <div class="crop-title">Sesuaikan Foto</div>
-    <div class="crop-stage-wrap" id="cropStageWrap">
-      <canvas id="cropCanvas" width="320" height="320"></canvas>
-      <div class="crop-box-sel" id="cropBoxSel">
-        <div class="grid-line v1"></div><div class="grid-line v2"></div>
-        <div class="grid-line h1"></div><div class="grid-line h2"></div>
-        <div class="crop-handle tl" data-corner="tl"></div>
-        <div class="crop-handle tr" data-corner="tr"></div>
-        <div class="crop-handle bl" data-corner="bl"></div>
-        <div class="crop-handle br" data-corner="br"></div>
-      </div>
-    </div>
-    <div class="crop-actions">
-      <button class="crop-cancel" id="cropCancelBtn" type="button">Batal</button>
-      <button class="crop-ok" id="cropOkBtn" type="button">Pakai Foto</button>
-    </div>
+  <div class="crop-topbar">
+    <button class="crop-icon-btn" id="cropCancelBtn" type="button" aria-label="Batal">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="crop-topbar-title">Sesuaikan Foto</div>
+    <button class="crop-icon-btn crop-confirm-btn" id="cropOkBtn" type="button" aria-label="Pakai foto">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#062733" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+    </button>
+  </div>
+  <div class="crop-stage" id="cropStageWrap">
+    <img id="cropImgEl" draggable="false" alt="">
+    <div class="crop-circle" id="cropCircle"></div>
+  </div>
+  <div class="crop-hint">Geser untuk memindahkan &middot; cubit atau tarik slider untuk memperbesar</div>
+  <div class="crop-bottombar">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/></svg>
+    <input type="range" id="cropZoomRange" min="1" max="3" step="0.01" value="1">
+    <svg class="big" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg>
   </div>
 </div>
 <script>
@@ -321,106 +317,137 @@
 
   avatarEditBadge.addEventListener('click', ()=>avatarFileInput.click());
 
-  // ---- Crop foto: kotak seleksi bisa ditarik dari sudutnya (resize) dan digeser (drag),
-  // mirip alat crop screenshot Android. Foto ditampilkan utuh, area di luar kotak digelapkan. ----
-  const CROP_STAGE=320, CROP_OUTPUT=300, CROP_MIN=60;
-  const cropOverlay=document.getElementById('cropOverlay'), cropCanvas=document.getElementById('cropCanvas'),
-        cropCtx=cropCanvas.getContext('2d'), cropOkBtn=document.getElementById('cropOkBtn'),
-        cropCancelBtn=document.getElementById('cropCancelBtn'), cropStageWrap=document.getElementById('cropStageWrap'),
-        cropBoxSel=document.getElementById('cropBoxSel');
+  // ---- Crop foto: layar penuh ala WhatsApp. Foto bisa digeser (drag/pan) dan
+  // diperbesar (pinch dua jari, scroll wheel, atau slider), area lingkaran di tengah
+  // menandai bagian yang akan dipakai sebagai foto profil. ----
+  const CROP_OUTPUT=400, CROP_MIN_ZOOM=1, CROP_MAX_ZOOM=3;
+  const cropOverlay=document.getElementById('cropOverlay'), cropImgEl=document.getElementById('cropImgEl'),
+        cropOkBtn=document.getElementById('cropOkBtn'), cropCancelBtn=document.getElementById('cropCancelBtn'),
+        cropStageWrap=document.getElementById('cropStageWrap'), cropCircle=document.getElementById('cropCircle'),
+        cropZoomRange=document.getElementById('cropZoomRange');
   let cropImg=null, cropObjectUrl=null;
-  let dispX=0, dispY=0, dispW=0, dispH=0;
-  let box={x:0,y:0,size:0};
-  let cropMode=null, cropStart=null;
+  let stageW=0, stageH=0, circleR=0, circleCX=0, circleCY=0, baseScale=1;
+  let zoom=1, cx=0, cy=0;
+  const cropPointers=new Map();
+  let dragStart=null, pinchStart=null;
 
-  function renderBox(){
-    cropBoxSel.style.left=box.x+'px'; cropBoxSel.style.top=box.y+'px';
-    cropBoxSel.style.width=box.size+'px'; cropBoxSel.style.height=box.size+'px';
+  function measureStage(){
+    const r=cropStageWrap.getBoundingClientRect();
+    stageW=r.width; stageH=r.height;
+    circleR=Math.min(stageW,stageH)*0.42;
+    circleCX=stageW/2; circleCY=stageH/2;
+    cropCircle.style.width=cropCircle.style.height=(circleR*2)+'px';
+    cropCircle.style.left=(circleCX-circleR)+'px';
+    cropCircle.style.top=(circleCY-circleR)+'px';
+  }
+  function applyTransform(){
+    const dispW=cropImg.width*baseScale*zoom, dispH=cropImg.height*baseScale*zoom;
+    cropImgEl.style.width=dispW+'px'; cropImgEl.style.height=dispH+'px';
+    cropImgEl.style.transform=`translate(${(cx-dispW/2)}px, ${(cy-dispH/2)}px)`;
+  }
+  function clampCenter(){
+    const dispW=cropImg.width*baseScale*zoom, dispH=cropImg.height*baseScale*zoom;
+    const minCx=circleCX+circleR-dispW/2, maxCx=circleCX-circleR+dispW/2;
+    const minCy=circleCY+circleR-dispH/2, maxCy=circleCY-circleR+dispH/2;
+    cx=Math.max(minCx,Math.min(maxCx,cx));
+    cy=Math.max(minCy,Math.min(maxCy,cy));
+  }
+  function setZoom(newZoom, anchorX, anchorY){
+    newZoom=Math.max(CROP_MIN_ZOOM,Math.min(CROP_MAX_ZOOM,newZoom));
+    if(anchorX==null){ anchorX=circleCX; anchorY=circleCY; }
+    const oldDispW=cropImg.width*baseScale*zoom, oldDispH=cropImg.height*baseScale*zoom;
+    const relX=(anchorX-(cx-oldDispW/2))/oldDispW, relY=(anchorY-(cy-oldDispH/2))/oldDispH;
+    zoom=newZoom;
+    const newDispW=cropImg.width*baseScale*zoom, newDispH=cropImg.height*baseScale*zoom;
+    cx=anchorX-relX*newDispW+newDispW/2; cy=anchorY-relY*newDispH+newDispH/2;
+    clampCenter();
+    applyTransform();
+    cropZoomRange.value=zoom;
   }
   function openCropper(file){
     cropObjectUrl=URL.createObjectURL(file);
     const img=new Image();
     img.onload=()=>{
       cropImg=img;
-      const scale=Math.min(CROP_STAGE/img.width, CROP_STAGE/img.height);
-      dispW=img.width*scale; dispH=img.height*scale;
-      dispX=(CROP_STAGE-dispW)/2; dispY=(CROP_STAGE-dispH)/2;
-      cropCtx.clearRect(0,0,CROP_STAGE,CROP_STAGE);
-      cropCtx.drawImage(img,dispX,dispY,dispW,dispH);
-      const size=Math.min(dispW,dispH);
-      box={x:dispX+(dispW-size)/2, y:dispY+(dispH-size)/2, size};
-      renderBox();
       cropOverlay.classList.add('open');
+      document.body.style.overflow='hidden';
+      requestAnimationFrame(()=>{
+        measureStage();
+        baseScale=(circleR*2)/Math.min(img.width,img.height);
+        zoom=1; cx=circleCX; cy=circleCY;
+        cropZoomRange.value=1;
+        cropImgEl.src=cropObjectUrl;
+        applyTransform();
+      });
     };
     img.onerror=()=>{ avatarHint.textContent='Gagal memuat gambar.'; avatarHint.className='hint err'; URL.revokeObjectURL(cropObjectUrl); };
     img.src=cropObjectUrl;
   }
   function closeCropper(){
     cropOverlay.classList.remove('open');
+    document.body.style.overflow='';
     if(cropObjectUrl){ URL.revokeObjectURL(cropObjectUrl); cropObjectUrl=null; }
-    cropImg=null; cropMode=null;
+    cropImg=null; cropPointers.clear(); dragStart=null; pinchStart=null;
+    cropImgEl.removeAttribute('src');
   }
-  function clampMoveBox(){
-    box.x=Math.max(dispX,Math.min(dispX+dispW-box.size,box.x));
-    box.y=Math.max(dispY,Math.min(dispY+dispH-box.size,box.y));
-  }
-  cropBoxSel.addEventListener('pointerdown',(e)=>{
+  cropStageWrap.addEventListener('pointerdown',(e)=>{
     if(!cropImg)return;
-    const handle=e.target.closest('.crop-handle');
-    cropMode=handle?handle.dataset.corner:'move';
     cropStageWrap.setPointerCapture(e.pointerId);
-    cropStart={px:e.clientX,py:e.clientY,box:{...box}};
-    e.stopPropagation();
+    cropPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(cropPointers.size===1){
+      dragStart={x:e.clientX,y:e.clientY,cx,cy};
+    } else if(cropPointers.size===2){
+      dragStart=null;
+      const pts=[...cropPointers.values()];
+      const dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+      const rect=cropStageWrap.getBoundingClientRect();
+      pinchStart={dist, zoom, cx, cy, midX:(pts[0].x+pts[1].x)/2-rect.left, midY:(pts[0].y+pts[1].y)/2-rect.top};
+    }
   });
   cropStageWrap.addEventListener('pointermove',(e)=>{
-    if(!cropMode||!cropImg)return;
-    const dx=e.clientX-cropStart.px, dy=e.clientY-cropStart.py;
-    const maxSize=Math.min(dispW,dispH);
-    if(cropMode==='move'){
-      box.x=cropStart.box.x+dx; box.y=cropStart.box.y+dy;
-      clampMoveBox();
-    } else {
-      const b=cropStart.box;
-      let anchorX,anchorY,newSize;
-      if(cropMode==='br'){ anchorX=b.x; anchorY=b.y; newSize=Math.max(dx,dy); }
-      else if(cropMode==='tl'){ anchorX=b.x+b.size; anchorY=b.y+b.size; newSize=Math.max(-dx,-dy); }
-      else if(cropMode==='tr'){ anchorX=b.x; anchorY=b.y+b.size; newSize=Math.max(dx,-dy); }
-      else { anchorX=b.x+b.size; anchorY=b.y; newSize=Math.max(-dx,dy); } // bl
-      newSize=Math.max(CROP_MIN,Math.min(maxSize,newSize));
-      if(cropMode==='br'){
-        newSize=Math.min(newSize, dispX+dispW-anchorX, dispY+dispH-anchorY);
-        box={x:anchorX,y:anchorY,size:Math.max(CROP_MIN,newSize)};
-      } else if(cropMode==='tl'){
-        newSize=Math.min(newSize, anchorX-dispX, anchorY-dispY);
-        newSize=Math.max(CROP_MIN,newSize);
-        box={x:anchorX-newSize,y:anchorY-newSize,size:newSize};
-      } else if(cropMode==='tr'){
-        newSize=Math.min(newSize, dispX+dispW-anchorX, anchorY-dispY);
-        newSize=Math.max(CROP_MIN,newSize);
-        box={x:anchorX,y:anchorY-newSize,size:newSize};
-      } else { // bl
-        newSize=Math.min(newSize, anchorX-dispX, dispY+dispH-anchorY);
-        newSize=Math.max(CROP_MIN,newSize);
-        box={x:anchorX-newSize,y:anchorY,size:newSize};
-      }
+    if(!cropImg||!cropPointers.has(e.pointerId))return;
+    cropPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(cropPointers.size===1&&dragStart){
+      cx=dragStart.cx+(e.clientX-dragStart.x); cy=dragStart.cy+(e.clientY-dragStart.y);
+      clampCenter(); applyTransform();
+    } else if(cropPointers.size===2&&pinchStart){
+      const pts=[...cropPointers.values()];
+      const dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+      cx=pinchStart.cx; cy=pinchStart.cy;
+      setZoom(pinchStart.zoom*(dist/pinchStart.dist), pinchStart.midX, pinchStart.midY);
     }
-    renderBox();
   });
-  function cropPointerEnd(){ cropMode=null; }
+  function cropPointerEnd(e){
+    cropPointers.delete(e.pointerId);
+    if(cropPointers.size<2) pinchStart=null;
+    if(cropPointers.size===1){
+      const remaining=[...cropPointers.values()][0];
+      dragStart={x:remaining.x,y:remaining.y,cx,cy};
+    } else if(cropPointers.size===0){ dragStart=null; }
+  }
   cropStageWrap.addEventListener('pointerup',cropPointerEnd);
   cropStageWrap.addEventListener('pointercancel',cropPointerEnd);
+  cropStageWrap.addEventListener('wheel',(e)=>{
+    if(!cropImg)return;
+    e.preventDefault();
+    const rect=cropStageWrap.getBoundingClientRect();
+    setZoom(zoom-e.deltaY*0.0015, e.clientX-rect.left, e.clientY-rect.top);
+  },{passive:false});
+  cropZoomRange.addEventListener('input',()=>{ if(cropImg) setZoom(parseFloat(cropZoomRange.value)); });
+  window.addEventListener('resize',()=>{ if(cropImg){ measureStage(); clampCenter(); applyTransform(); } });
   cropCancelBtn.addEventListener('click', ()=>{ closeCropper(); avatarFileInput.value=''; });
-  cropOverlay.addEventListener('click',(e)=>{ if(e.target.id==='cropOverlay'){ closeCropper(); avatarFileInput.value=''; } });
 
   function cropToBlob(){
     return new Promise((resolve,reject)=>{
-      const scaleOrig=cropImg.width/dispW;
-      const srcX=(box.x-dispX)*scaleOrig, srcY=(box.y-dispY)*scaleOrig, srcSize=box.size*scaleOrig;
+      const s=baseScale*zoom;
+      const dispW=cropImg.width*s, dispH=cropImg.height*s;
+      const circleLeft=circleCX-circleR, circleTop=circleCY-circleR;
+      const srcX=(circleLeft-(cx-dispW/2))/s, srcY=(circleTop-(cy-dispH/2))/s, srcSize=(circleR*2)/s;
       const outCanvas=document.createElement('canvas');
       outCanvas.width=CROP_OUTPUT; outCanvas.height=CROP_OUTPUT;
       const outCtx=outCanvas.getContext('2d');
       outCtx.drawImage(cropImg,srcX,srcY,srcSize,srcSize,0,0,CROP_OUTPUT,CROP_OUTPUT);
-      outCanvas.toBlob(blob=>{ blob?resolve(blob):reject(new Error('Gagal memproses gambar')); }, 'image/jpeg', 0.85);
+      outCanvas.toBlob(blob=>{ blob?resolve(blob):reject(new Error('Gagal memproses gambar')); }, 'image/jpeg', 0.9);
     });
   }
 
