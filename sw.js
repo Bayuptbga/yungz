@@ -1,4 +1,4 @@
-// Service Worker - Private Chat
+// Service Worker - Baku Chat
 const CACHE_NAME = 'private-chat-v4';
 
 // Aset yang nyaris tidak pernah berubah (ikon, font) -> lebih cocok cache-first
@@ -113,7 +113,7 @@ self.addEventListener('fetch', (event) => {
 
 // Terima push notification dari server (dikirim lewat Supabase Edge Function)
 self.addEventListener('push', (event) => {
-  let payload = { title: 'Private Chat', body: 'Ada pesan baru', url: './' };
+  let payload = { title: 'Baku Chat', body: 'Ada pesan baru', url: './' };
   try {
     if (event.data) payload = { ...payload, ...event.data.json() };
   } catch (e) {

@@ -41,7 +41,7 @@ function validUsername(u){
 }
 
 /* ===== dari e2e.js ===== */
-// e2e.js — End-to-End Encryption untuk Private Chat (skema v2: enkripsi per-penerima)
+// e2e.js — End-to-End Encryption untuk Baku Chat (skema v2: enkripsi per-penerima)
 //
 // RIWAYAT PERUBAHAN DARI SKEMA LAMA (v1):
 // Skema v1 pakai SATU shared key (ECDH antara private key A + public key B) untuk

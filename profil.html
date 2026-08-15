@@ -36,6 +36,8 @@
     min-height:100vh; display:flex; justify-content:center; -webkit-font-smoothing:antialiased; position:relative;
   }
   .phone{ width:100%; max-width:420px; min-height:100vh; background:var(--bg); display:flex; flex-direction:column; position:relative; }
+  /* Layar tablet (>=700px) -> kontainer lebih lega, tetap satu kolom */
+  @media (min-width:700px){ .phone{ max-width:640px; } }
   #authGate{ position:absolute; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center; }
   #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent); animation:authSpin .75s linear infinite; }
   @keyframes authSpin{ to{ transform:rotate(360deg); } }
@@ -134,7 +136,7 @@
 //      localStorage.setItem('device_gate_disabled', '1')   // matikan gate di browser ini
 //      localStorage.removeItem('device_gate_disabled')     // nyalakan lagi
 (function () {
-  var DEVICE_GATE_ENABLED = false;
+  var DEVICE_GATE_ENABLED = true;
 
   if (!DEVICE_GATE_ENABLED) return;
   try {
