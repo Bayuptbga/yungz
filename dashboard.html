@@ -165,17 +165,16 @@
   .cprev-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:70; padding:24px; }
   .cprev-overlay.open{ opacity:1; pointer-events:auto; }
   .cprev-card{ background:var(--card-bg); border-radius:16px; width:100%; max-width:290px; text-align:center; border:1px solid var(--border); overflow:hidden; }
-  .cprev-top{ width:100%; padding:30px 20px 18px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--bbm-blue),var(--bbm-blue-dark)); }
-  .cprev-avatar{ width:92px; height:92px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:32px; box-shadow:0 6px 18px rgba(0,0,0,0.35); flex-shrink:0; }
-  .cprev-body{ padding:18px 22px 14px; }
+  .cprev-top{ width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; }
+  .cprev-avatar{ width:100%; height:100%; border-radius:0; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:52px; flex-shrink:0; }
+  .cprev-body{ padding:18px 22px 20px; }
   .cprev-uname{ font-size:17px; font-weight:700; color:var(--ink); word-break:break-word; }
   .cprev-sub{ font-size:12.5px; color:var(--muted); margin-top:3px; margin-bottom:20px; }
-  .cprev-actions{ display:flex; flex-direction:column; gap:8px; }
-  .cprev-btn{ width:100%; padding:12px 0; border-radius:10px; font-size:14.5px; font-weight:700; cursor:pointer; border:none; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .cprev-actions{ display:flex; flex-direction:row; gap:10px; }
+  .cprev-btn{ flex:1; padding:14px 6px 12px; border-radius:14px; font-size:11.5px; font-weight:700; cursor:pointer; border:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; }
   .cprev-btn svg{ width:18px; height:18px; flex-shrink:0; }
   .cprev-btn.primary{ background:var(--bbm-blue); color:#fff; }
   .cprev-btn.secondary{ background:var(--bg); color:var(--ink); border:1px solid var(--border); }
-  .cprev-cancel{ width:100%; padding:13px 0; margin-top:6px; background:none; border:none; border-top:1px solid var(--border); color:var(--muted); font-size:14px; font-weight:600; cursor:pointer; }
   /* ---- Bottom sheet "Chat Baru" (fab di tab Chat) ---- */
   .ncw-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .22s ease; z-index:75; }
   .ncw-overlay.open{ opacity:1; pointer-events:auto; }
@@ -377,7 +376,6 @@
           <button class="cprev-btn primary" id="cprevSendBtn"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg>Kirim Pesan</button>
           <button class="cprev-btn secondary" id="cprevProfilBtn"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Lihat Profil</button>
         </div>
-      <button class="cprev-cancel" id="cprevCancelBtn">Batal</button>
       </div>
     </div>
   </div>
@@ -825,7 +823,6 @@
   function closeContactPreview(){document.getElementById('cprevOverlay').classList.remove('open');cprevUid=null;cprevUname=null;}
   document.getElementById('cprevSendBtn').addEventListener('click',()=>{if(cprevUid)window.location.href=`chat.html?uid=${cprevUid}&uname=${encodeURIComponent(cprevUname)}`;});
   document.getElementById('cprevProfilBtn').addEventListener('click',()=>{if(cprevUid)window.location.href=`profil.html?uid=${cprevUid}`;});
-  document.getElementById('cprevCancelBtn').addEventListener('click',closeContactPreview);
   document.getElementById('cprevOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeContactPreview();});
   function openAddModal(){
     document.getElementById('searchMsg').textContent='';
