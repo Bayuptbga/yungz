@@ -164,8 +164,9 @@
   .pin-modal .pm-close{ width:100%; padding:11px 0; background:var(--bbm-blue); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
   .cprev-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:70; padding:24px; }
   .cprev-overlay.open{ opacity:1; pointer-events:auto; }
-  .cprev-card{ background:var(--card-bg); border-radius:16px; padding:28px 22px 14px; width:100%; max-width:290px; text-align:center; border:1px solid var(--border); }
-  .cprev-avatar{ width:84px; height:84px; border-radius:50%; margin:0 auto 14px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:30px; }
+  .cprev-card{ background:var(--card-bg); border-radius:16px; width:100%; max-width:290px; text-align:center; border:1px solid var(--border); overflow:hidden; }
+  .cprev-banner{ width:100%; height:150px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:42px; }
+  .cprev-body{ padding:20px 22px 14px; }
   .cprev-uname{ font-size:17px; font-weight:700; color:var(--ink); word-break:break-word; }
   .cprev-sub{ font-size:12.5px; color:var(--muted); margin-top:3px; margin-bottom:20px; }
   .cprev-actions{ display:flex; flex-direction:column; gap:8px; }
@@ -367,14 +368,16 @@
     </div>
   <div class="cprev-overlay" id="cprevOverlay">
     <div class="cprev-card">
-      <div class="cprev-avatar" id="cprevAvatar">?</div>
-      <div class="cprev-uname" id="cprevUname">—</div>
-      <div class="cprev-sub">Kontak</div>
-      <div class="cprev-actions">
-        <button class="cprev-btn primary" id="cprevSendBtn"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg>Kirim Pesan</button>
-        <button class="cprev-btn secondary" id="cprevProfilBtn"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Lihat Profil</button>
-      </div>
+      <div class="cprev-banner" id="cprevBanner">?</div>
+      <div class="cprev-body">
+        <div class="cprev-uname" id="cprevUname">—</div>
+        <div class="cprev-sub">Kontak</div>
+        <div class="cprev-actions">
+          <button class="cprev-btn primary" id="cprevSendBtn"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg>Kirim Pesan</button>
+          <button class="cprev-btn secondary" id="cprevProfilBtn"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Lihat Profil</button>
+        </div>
       <button class="cprev-cancel" id="cprevCancelBtn">Batal</button>
+      </div>
     </div>
   </div>
   <div class="ncw-overlay" id="ncwOverlay">
@@ -814,7 +817,7 @@
   let cprevUid=null,cprevUname=null;
   function openContactPreview(uid,uname){
     cprevUid=uid;cprevUname=uname;
-    applyAvatarEl(document.getElementById('cprevAvatar'),uid,uname,contactAvatarMap[uid]||null);
+    applyAvatarEl(document.getElementById('cprevBanner'),uid,uname,contactAvatarMap[uid]||null);
     document.getElementById('cprevUname').textContent=uname;
     document.getElementById('cprevOverlay').classList.add('open');
   }
