@@ -1,9 +1,11 @@
 name: Deploy to GitHub Pages
 
+# Jalan otomatis tiap kali ada push ke branch main.
+# Kalau branch utama repo kamu namanya "master" (bukan "main"), ganti di bawah.
 on:
   push:
     branches: [main]
-  workflow_dispatch:
+  workflow_dispatch: # biar bisa di-trigger manual dari tab Actions kalau perlu
 
 permissions:
   contents: read
@@ -23,13 +25,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # perlu full history biar jumlah commit akurat
 
       - name: Generate version & inject ke semua file
         run: |
-          VERSION="$(date -u +'%Y%m%d.%H%M')-$(git rev-parse --short HEAD)"
-          echo "Versi build ini: $VERSION"
-          grep -rl "__VERSION__" --include="*.html" --include="*.js" . | \
-            xargs -r sed -i "s/__VERSION__/$VERSION/g"
+          # Nomor versi = jumlah commit di repo, jadi selalu naik urut: 1.0.1, 1.0.2, dst.
+          COMMIT_COUNT="$(git rev-list --count HEAD)"
+          VERSION="1.0.$COMMIT_COUNT"
+
+          # Tanggal & jam build, format gampang dibaca.
+          BUILD_DATE="$(date -u +'%d %b %Y, %H:%M UTC')"
+
+          echo "Versi build ini: $VERSION ($BUILD_DATE)"
+
+          # Ganti semua placeholder di file html & sw.js jadi nilai asli.
+          # (aman, cuma nyentuh file text .html dan .js, gak nyentuh gambar/font)
+          grep -rl "__VERSION__\|__BUILD_DATE__" --include="*.html" --include="*.js" . | \
+            xargs -r sed -i "s/__VERSION__/$VERSION/g; s/__BUILD_DATE__/$BUILD_DATE/g"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
