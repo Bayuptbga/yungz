@@ -171,26 +171,13 @@
     <div class="section-title">Umum</div>
     <div class="card">
       <div class="setting-row" style="cursor:pointer;" onclick="switchView('privasi')">
-        <div><div class="s-label">Privasi &amp; Keamanan</div><div class="s-sub">Ganti kata sandi akunmu</div></div>
+        <div><div class="s-label">Privasi &amp; Keamanan</div><div class="s-sub">Kata sandi &amp; hapus akun</div></div>
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
       <div class="setting-row" style="cursor:pointer;" onclick="switchView('data')">
         <div><div class="s-label">Data &amp; Penyimpanan</div><div class="s-sub">Cadangan chat</div></div>
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-    </div>
-
-    <div class="section-title danger-title">Zona Berbahaya</div>
-    <div class="card">
-      <div class="danger-note">Menghapus akun akan menghapus <b>semua chat, kontak, status, dan data lainnya secara permanen</b>. Tindakan ini tidak bisa dibatalkan.</div>
-      <form id="deleteForm">
-        <div class="field">
-          <label>Konfirmasi Kata Sandi</label>
-          <div class="input-wrap"><input type="password" id="deletePassword" required autocomplete="current-password"><span class="toggle-pw" onclick="const p=document.getElementById('deletePassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
-        </div>
-        <div class="hint" id="deleteHint">Masukkan kata sandi untuk melanjutkan</div>
-        <button type="submit" class="btn btn-danger" id="deleteSubmitBtn"><span class="spinner"></span><span class="btn-label">Hapus Akun Saya</span></button>
-      </form>
     </div>
 
     <div class="section-title">About</div>
@@ -237,6 +224,19 @@
         </div>
         <div class="hint" id="pwHint">Minimal 6 karakter</div>
         <button type="submit" class="btn" id="pwSubmitBtn"><span class="spinner"></span><span class="btn-label">Simpan Kata Sandi</span></button>
+      </form>
+    </div>
+
+    <div class="section-title danger-title">Zona Berbahaya</div>
+    <div class="card">
+      <div class="danger-note">Menghapus akun akan menghapus <b>semua chat, kontak, status, dan data lainnya secara permanen</b>. Tindakan ini tidak bisa dibatalkan.</div>
+      <form id="deleteForm">
+        <div class="field">
+          <label>Konfirmasi Kata Sandi</label>
+          <div class="input-wrap"><input type="password" id="deletePassword" required autocomplete="current-password"><span class="toggle-pw" onclick="const p=document.getElementById('deletePassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
+        </div>
+        <div class="hint" id="deleteHint">Masukkan kata sandi untuk melanjutkan</div>
+        <button type="submit" class="btn btn-danger" id="deleteSubmitBtn"><span class="spinner"></span><span class="btn-label">Hapus Akun Saya</span></button>
       </form>
     </div>
   </div>
