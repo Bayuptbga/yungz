@@ -26,7 +26,7 @@
   // ==== SATU-SATUNYA SAKLAR ====
   // true  = HANYA bisa dibuka lewat APK TWA (browser/PWA apa pun diblok, redirect ke akses-ditolak)
   // false = bisa dibuka di browser manapun (desktop, mobile, dll) -- gate mati total
-  var DEVICE_GATE_ENABLED = true;
+  var DEVICE_GATE_ENABLED = false;
 
   // Package name APK TWA (dari PWABuilder). Referrer saat dibuka dari APK harus persis
   // "android-app://<package-ini>" -- ini yang membedakan APK asli dari browser biasa.
