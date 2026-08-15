@@ -213,6 +213,10 @@
   .section-title{ padding:16px 16px 8px; font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; flex-shrink:0; display:flex; align-items:center; gap:8px; }
   .section-title::after{ content:''; flex:1; height:1px; background:var(--border); }
   .count-badge{ background:var(--border); color:var(--muted); font-weight:700; font-size:11px; padding:2px 8px; border-radius:999px; text-transform:none; letter-spacing:normal; }
+  .status-toggle{cursor:pointer; user-select:none;}
+  .status-toggle:active{opacity:.7;}
+  .status-toggle-arrow{transition:transform .2s ease; flex-shrink:0;}
+  .status-toggle.collapsed .status-toggle-arrow{transform:rotate(-90deg);}
   .contact-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background-color .15s ease; }
   .contact-item:active{background:var(--border);}
   .contact-item .avatar{ width:48px;height:48px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:16px; }
@@ -351,7 +355,7 @@
       </div>
     </div>
     <div class="search-msg" id="myStatusMsg"></div>
-    <div class="section-title" id="myStatusTitle" style="display:none;">Status Saya</div>
+    <div class="section-title status-toggle" id="myStatusTitle" style="display:none;"><span>Status Saya</span><span id="myStatusCount" class="count-badge" style="display:none;"></span><svg id="myStatusArrow" class="status-toggle-arrow" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
     <div id="myStatusPinned"></div>
     <div class="section-title">Pembaruan Kontak</div>
     <div id="statusList"></div>
@@ -415,6 +419,7 @@
 </div>
 <script>
   let currentUserPin=null,myPrivateKey=null;const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
+  let myStatusCollapsed=false;
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return(u||'?').slice(0,2).toUpperCase();}
   // Helper foto profil: dipakai di template string (avatarStyle/avatarInner) dan di DOM langsung (applyAvatarEl).
@@ -534,6 +539,11 @@ function timeAgo(iso){
   const myStatusInput=document.getElementById('myStatusInput'),postStatusBtn=document.getElementById('postStatusBtn'),myStatusMsg=document.getElementById('myStatusMsg'),emojiBtn=document.getElementById('emojiBtn'),photoBtn=document.getElementById('photoBtn');
   emojiBtn.addEventListener('click',()=>{myStatusInput.value+='😊';myStatusInput.focus();});
   photoBtn.addEventListener('click',()=>{myStatusMsg.textContent='Fitur unggah foto belum tersedia.';myStatusMsg.className='search-msg err';});
+  document.getElementById('myStatusTitle').addEventListener('click',()=>{
+    myStatusCollapsed=!myStatusCollapsed;
+    document.getElementById('myStatusTitle').classList.toggle('collapsed',myStatusCollapsed);
+    document.getElementById('myStatusPinned').style.display=myStatusCollapsed?'none':'';
+  });
   postStatusBtn.addEventListener('click',async()=>{
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
     const content=myStatusInput.value.trim();
@@ -584,8 +594,13 @@ function timeAgo(iso){
     const mineRows=sRows.filter(s=>s.user_id===session.user.id);
     const otherRows=sRows.filter(s=>s.user_id!==session.user.id);
     if(mineRows.length>0){
-      pinnedTitle.style.display='';pinnedWrap.style.display='';
+      pinnedTitle.style.display='';
       pinnedWrap.innerHTML=mineRows.map(s=>statusCardHTML(s,likeCountMap,myLikedSet,pMap,session.user.id)).join('');
+      pinnedWrap.style.display=myStatusCollapsed?'none':'';
+      pinnedTitle.classList.toggle('collapsed',myStatusCollapsed);
+      const countBadge=document.getElementById('myStatusCount');
+      if(mineRows.length>1){countBadge.textContent=mineRows.length;countBadge.style.display='';}
+      else{countBadge.style.display='none';}
     }else{
       pinnedTitle.style.display='none';pinnedWrap.style.display='none';pinnedWrap.innerHTML='';
     }
