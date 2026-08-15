@@ -77,7 +77,7 @@
   .tabbar{
     position:absolute; left:50%; bottom:calc(14px + env(safe-area-inset-bottom)); transform:translateX(-50%);
     display:flex; align-items:center; gap:3px;
-    background:rgba(27,42,50,0.82); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+    background:rgba(18,51,80,0.82); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
     border-radius:999px; padding:6px; z-index:25;
     border:1px solid rgba(255,255,255,0.07);
     box-shadow:0 10px 28px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.04) inset;
@@ -436,7 +436,7 @@
       }else if(looksEncrypted(m.content)){
         previewText='🔒 Pesan terenkripsi';
       }
-      if(previewText==='[INVITE_CALL]') previewText='📞 Panggilan (tidak tersedia)';
+      if(previewText==='[INVITE_CALL]') previewText='📞 Panggilan suara';
       if(previewText==='[CALL_REJECTED]') previewText='📞 Panggilan ditolak';
       return {uid:pid,uname:prof.username||'Pengguna',preview:(mine?'Kamu: ':'')+previewText,time:m.created_at,mine,deliveredAt:m.delivered_at,readAt:m.read_at,unread:!mine&&!m.read_at};
     }));
