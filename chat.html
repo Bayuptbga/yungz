@@ -348,6 +348,10 @@
   const colorPalette = ['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return (u||'?').slice(0,2).toUpperCase();}
+  function applyAvatarEl(el,id,username,avatarUrl){
+    if(avatarUrl){el.style.background=`url(${avatarUrl}) center/cover no-repeat`;el.textContent='';}
+    else{el.style.background=colorFor(id);el.textContent=initials(username);}
+  }
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
   function keyChangeNoticeHTML(uname){
     return `<div class="keychange-notice"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg><span>Kode keamanan enkripsi dengan <b>${escapeHtml(uname||'kontak ini')}</b> telah berubah. <span class="e2e-learn">Info lebih lanjut</span>.</span></div>`;
@@ -381,7 +385,7 @@
       const {data:rel,error:relErr}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
       if(relErr) throw relErr;
       if(!rel){msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#7ea0b7" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.6 3-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/><path d="M18 8v5M15.5 10.5h5"/></svg></div><div class="es-title">Belum berteman</div><span>Tambahkan lewat tab Kontak dulu ya.</span></div>`;return;}
-      const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, public_key').eq('id',peerId).maybeSingle();
+      const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, public_key, avatar_url').eq('id',peerId).maybeSingle();
       if(profErr) throw profErr;
       if(!peerUsername) peerUsername=prof?prof.username:'Pengguna';
       peerPublicKeyB64=prof&&prof.public_key?prof.public_key:null;
@@ -402,7 +406,7 @@
       // hilang setelah sekali dilihat) sampai user membersihkan obrolan lewat
       // menu "Bersihkan Obrolan", yang akan mereset flag ini.
       const showKeyChangeNotice = localStorage.getItem(keyChangeNoticeLS)==='1';
-      peerAvatar.textContent=initials(peerUsername);peerAvatar.style.background=colorFor(peerId);peerUnameEl.textContent=peerUsername;
+      applyAvatarEl(peerAvatar,peerId,peerUsername,prof&&prof.avatar_url);peerUnameEl.textContent=peerUsername;
       updateInputAvailability();
       await loadMessages(showKeyChangeNotice);await markIncomingAsRead();subscribeRealtime();subscribePresence();subscribePeerKeyChange();
     }catch(err){
