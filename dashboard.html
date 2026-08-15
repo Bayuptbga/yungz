@@ -273,29 +273,41 @@
   .status-item .content.has-status{color:var(--ink);}
   .my-status .content{color:var(--muted);}
   .my-status-editor{padding:0 16px 16px; background:var(--card-bg); border-bottom:8px solid var(--bg);}
-  .status-card{ background:var(--card-bg); border-radius:14px; margin:10px 12px; overflow:hidden; border:1px solid var(--border); box-shadow:0 2px 10px rgba(0,0,0,0.25); }
-  .status-card .sc-head{ display:flex; align-items:center; gap:12px; padding:14px 14px 12px; }
-  .sc-avatar-wrap{ width:44px; height:44px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  /* ---- Status sebagai bubble chat: milik saya rata kanan, kontak rata kiri ---- */
+  .status-card{ display:flex; align-items:flex-end; gap:8px; margin:3px 12px; }
+  .status-card.theirs{ justify-content:flex-start; }
+  .status-card.mine{ justify-content:flex-end; }
+  .sc-avatar-wrap{ width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; margin-bottom:2px; }
   .sc-avatar-wrap.ring{ background:linear-gradient(135deg,#22d8e6,#2a7de1); padding:2px; }
-  .status-card .sc-avatar{ width:100%;height:100%;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:14px; flex-shrink:0; box-shadow:0 0 0 2px var(--card-bg); }
+  .status-card .sc-avatar{ width:100%;height:100%;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:12.5px; flex-shrink:0; box-shadow:0 0 0 2px var(--bg); }
   .sc-avatar-wrap:not(.ring) .sc-avatar{ box-shadow:none; }
-  .status-card .sc-head-info{flex:1;min-width:0;}
-  .status-card .sc-uname{font-size:14.5px;font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:6px;}
-  .status-card .sc-meta{font-size:12px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .status-card .sc-delete{ display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; margin-left:4px; cursor:pointer; flex-shrink:0; transition:background-color .15s ease; }
-  .status-card .sc-delete:active{ background:var(--border); }
-  .status-card .sc-divider{border-top:1px solid var(--border);}
-  .status-card .sc-content{padding:2px 14px 15px; font-size:14px; color:var(--ink); line-height:1.55; word-break:break-word; white-space:pre-wrap;}
-  .status-card .sc-reactions{ display:flex; align-items:center; justify-content:space-between; padding:6px 6px 6px 14px; gap:8px; }
-  .status-card .rx-summary{ display:flex; align-items:center; gap:6px; min-width:0; color:var(--muted); font-size:12.5px; }
+  .sb-col{ display:flex; flex-direction:column; max-width:76%; min-width:0; }
+  .status-card.mine .sb-col{ align-items:flex-end; }
+  .status-card.theirs .sb-col{ align-items:flex-start; }
+  .status-card .sc-uname{ font-size:12px; font-weight:700; color:#22d8e6; margin:0 4px 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .sb-bubble{ position:relative; padding:9px 12px 7px; border-radius:16px; box-shadow:0 1px 4px rgba(0,0,0,0.25); min-width:0; max-width:100%; }
+  .status-card.theirs .sb-bubble{ background:var(--card-bg); border:1px solid var(--border); border-bottom-left-radius:4px; }
+  .status-card.mine .sb-bubble{ background:linear-gradient(135deg,#1f5f96,#184068); border-bottom-right-radius:4px; }
+  .status-card .sc-content{ font-size:14px; line-height:1.5; word-break:break-word; white-space:pre-wrap; color:var(--ink); }
+  .status-card.mine .sc-content{ color:#f2fbff; }
+  .sb-meta{ display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-top:4px; }
+  .status-card .sc-meta{ font-size:10.5px; color:var(--muted); white-space:nowrap; }
+  .status-card.mine .sc-meta{ color:rgba(255,255,255,0.75); }
+  .status-card .sc-delete{ display:flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; cursor:pointer; flex-shrink:0; opacity:.8; color:var(--muted); }
+  .status-card.mine .sc-delete{ color:rgba(255,255,255,0.85); }
+  .status-card .sc-delete svg{ width:11px; height:11px; }
+  .status-card .sc-delete:active{ opacity:1; }
+  .sc-reactions{ display:flex; align-items:center; gap:8px; margin-top:4px; padding:0 3px; }
+  .status-card.mine .sc-reactions{ flex-direction:row-reverse; }
+  .status-card .rx-summary{ display:flex; align-items:center; gap:6px; min-width:0; color:var(--muted); font-size:11.5px; }
   .status-card .rx-summary.empty{ color:var(--muted); }
-  .status-card .rx-summary-emojis{ font-size:14px; letter-spacing:-2px; }
+  .status-card .rx-summary-emojis{ font-size:13px; letter-spacing:-2px; }
   .status-card .rx-summary-count{ font-weight:700; letter-spacing:0; }
-  .status-card .rx-summary-empty{ font-size:12px; }
-  .status-card .rx-toggle{ display:flex; align-items:center; gap:6px; padding:8px 14px; border-radius:999px; cursor:pointer; color:var(--muted); font-size:12.5px; font-weight:700; user-select:none; touch-action:manipulation; transition:background-color .15s ease, color .15s ease; flex-shrink:0; }
+  .status-card .rx-summary-empty{ font-size:11px; }
+  .status-card .rx-toggle{ display:flex; align-items:center; gap:5px; padding:5px 11px; border-radius:999px; cursor:pointer; color:var(--muted); font-size:11.5px; font-weight:700; user-select:none; touch-action:manipulation; transition:background-color .15s ease, color .15s ease; flex-shrink:0; background:var(--card-bg); border:1px solid var(--border); }
   .status-card .rx-toggle:active{ background:var(--border); }
   .status-card .rx-toggle.active{ color:#22d8e6; }
-  .status-card .rx-toggle-emoji{ font-size:16px; line-height:1; display:flex; align-items:center; transition:transform .15s ease; }
+  .status-card .rx-toggle-emoji{ font-size:15px; line-height:1; display:flex; align-items:center; transition:transform .15s ease; }
   .status-card .rx-toggle:active .rx-toggle-emoji{ transform:scale(1.2); }
   .rx-picker{ position:fixed; display:flex; gap:4px; background:var(--card-bg); border:1px solid var(--border); border-radius:999px; padding:6px; box-shadow:0 8px 24px rgba(0,0,0,0.5); z-index:80; opacity:0; pointer-events:none; transform:translateY(6px) scale(.9); transition:opacity .15s ease, transform .15s ease; }
   .rx-picker.open{ opacity:1; pointer-events:auto; transform:translateY(0) scale(1); }
@@ -582,23 +594,23 @@ function timeAgo(iso){
     const counts=reactionCountMap[s.id]||{},myReaction=myReactionMap[s.id]||null,isMine=s.user_id===myId;
     const sProf=pMap[s.user_id]||{};if(!isMine)contactAvatarMap[s.user_id]=sProf.avatar_url||null;
     const summary=reactionSummaryHTML(counts);
-    return `<div class="status-card" data-sid="${escapeHtml(s.id)}" data-uid="${escapeHtml(s.user_id)}" data-uname="${escapeHtml(sProf.username||'Pengguna')}" data-counts='${JSON.stringify(counts)}'>
-      <div class="sc-head">
-        <div class="sc-avatar-wrap${isMine?'':' ring'}"><div class="sc-avatar" style="${avatarStyle(s.user_id,sProf.avatar_url)}${isMine?'':'cursor:pointer;'}">${avatarInner(sProf.username,sProf.avatar_url)}</div></div>
-        <div class="sc-head-info">
-          <div class="sc-uname">${escapeHtml(sProf.username||'Pengguna')}</div>
-          <div class="sc-meta">${escapeHtml(timeAgo(s.created_at))}</div>
+    return `<div class="status-card ${isMine?'mine':'theirs'}" data-sid="${escapeHtml(s.id)}" data-uid="${escapeHtml(s.user_id)}" data-uname="${escapeHtml(sProf.username||'Pengguna')}" data-counts='${JSON.stringify(counts)}'>
+      ${isMine?'':`<div class="sc-avatar-wrap ring"><div class="sc-avatar" style="${avatarStyle(s.user_id,sProf.avatar_url)}cursor:pointer;">${avatarInner(sProf.username,sProf.avatar_url)}</div></div>`}
+      <div class="sb-col">
+        <div class="sc-uname"${isMine?' style="display:none;"':''}>${escapeHtml(sProf.username||'Pengguna')}</div>
+        <div class="sb-bubble">
+          <div class="sc-content">${escapeHtml(s.content)}</div>
+          <div class="sb-meta">
+            <span class="sc-meta">${escapeHtml(timeAgo(s.created_at))}</span>
+            ${isMine?`<span class="sc-delete" data-id="${escapeHtml(s.id)}" onclick="deleteStatus(this)" title="Hapus status"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></span>`:''}
+          </div>
         </div>
-        ${isMine?`<div class="sc-delete" data-id="${escapeHtml(s.id)}" onclick="deleteStatus(this)" title="Hapus status"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></div>`:''}
-      </div>
-      <div class="sc-divider"></div>
-      <div class="sc-content">${escapeHtml(s.content)}</div>
-      <div class="sc-divider"></div>
-      <div class="sc-reactions">
-        <div class="rx-summary${summary?'':' empty'}">${summary||'<span class="rx-summary-empty">Beri reaksi pertama</span>'}</div>
-        <div class="rx-toggle${myReaction?' active':''}" data-id="${escapeHtml(s.id)}" data-current="${myReaction||''}">
-          <span class="rx-toggle-emoji">${rxToggleIconHTML(myReaction)}</span>
-          <span class="rx-toggle-label">${myReaction?'Bereaksi':'Suka'}</span>
+        <div class="sc-reactions">
+          <div class="rx-summary${summary?'':' empty'}">${summary||'<span class="rx-summary-empty">Beri reaksi pertama</span>'}</div>
+          <div class="rx-toggle${myReaction?' active':''}" data-id="${escapeHtml(s.id)}" data-current="${myReaction||''}">
+            <span class="rx-toggle-emoji">${rxToggleIconHTML(myReaction)}</span>
+            <span class="rx-toggle-label">${myReaction?'Bereaksi':'Suka'}</span>
+          </div>
         </div>
       </div>
     </div>`;
