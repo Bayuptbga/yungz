@@ -254,7 +254,8 @@
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return(u||'?').slice(0,2).toUpperCase();}
 
-  // ---- Foto Profil (disimpan sebagai base64 langsung di kolom profiles.avatar_url) ----
+  // ---- Foto Profil: file diresize di client lalu di-upload ke Supabase Storage
+  // (bucket "avatars"), kolom profiles.avatar_url hanya menyimpan URL publiknya. ----
   const avatarPreview=document.getElementById('avatarPreview'), avatarFileInput=document.getElementById('avatarFileInput'),
         avatarEditBadge=document.getElementById('avatarEditBadge'), avatarHint=document.getElementById('avatarHint'),
         avatarRemoveRow=document.getElementById('avatarRemoveRow'), avatarRemoveBtn=document.getElementById('avatarRemoveBtn');
@@ -273,9 +274,8 @@
 
   avatarEditBadge.addEventListener('click', ()=>avatarFileInput.click());
 
-  // Resize + compress di canvas sebelum jadi base64, supaya ukurannya wajar
-  // buat disimpan langsung di kolom database (bukan Supabase Storage).
-  function resizeImageToBase64(file, maxSize, quality){
+  // Resize + compress di canvas, hasilnya Blob JPEG (bukan base64) supaya bisa di-upload ke Storage.
+  function resizeImageToBlob(file, maxSize, quality){
     return new Promise((resolve, reject)=>{
       const reader=new FileReader();
       reader.onload=(e)=>{
@@ -287,7 +287,7 @@
           const canvas=document.createElement('canvas');
           canvas.width=w; canvas.height=h;
           canvas.getContext('2d').drawImage(img,0,0,w,h);
-          resolve(canvas.toDataURL('image/jpeg', quality));
+          canvas.toBlob(blob=>{ blob?resolve(blob):reject(new Error('Gagal memproses gambar')); }, 'image/jpeg', quality);
         };
         img.onerror=()=>reject(new Error('Gagal memuat gambar'));
         img.src=e.target.result;
@@ -302,16 +302,18 @@
     avatarFileInput.value='';
     if(!file) return;
     if(!file.type.startsWith('image/')){ avatarHint.textContent='File harus berupa gambar.'; avatarHint.className='hint err'; return; }
-    avatarHint.textContent='Memproses foto...'; avatarHint.className='hint';
+    avatarHint.textContent='Mengunggah foto...'; avatarHint.className='hint';
     try{
-      const dataUrl = await resizeImageToBase64(file, 300, 0.75);
-      if(dataUrl.length > 350000){
-        avatarHint.textContent='Foto terlalu besar, coba foto lain.'; avatarHint.className='hint err';
-        return;
-      }
-      const {error} = await supabaseClient.from('profiles').update({avatar_url:dataUrl}).eq('id', currentUserId);
+      const blob = await resizeImageToBlob(file, 300, 0.75);
+      const path = currentUserId + '.jpg';
+      const {error:upErr} = await supabaseClient.storage.from('avatars').upload(path, blob, {contentType:'image/jpeg', upsert:true});
+      if(upErr){ avatarHint.textContent='Gagal mengunggah foto: '+upErr.message; avatarHint.className='hint err'; return; }
+      const {data:urlData} = supabaseClient.storage.from('avatars').getPublicUrl(path);
+      // Tambah query ?v=timestamp supaya browser tidak menampilkan foto lama dari cache.
+      const publicUrl = urlData.publicUrl + '?v=' + Date.now();
+      const {error} = await supabaseClient.from('profiles').update({avatar_url:publicUrl}).eq('id', currentUserId);
       if(error){ avatarHint.textContent='Gagal menyimpan foto: '+error.message; avatarHint.className='hint err'; return; }
-      currentAvatarUrl=dataUrl;
+      currentAvatarUrl=publicUrl;
       renderAvatarPreview();
       avatarHint.textContent='Foto profil berhasil diperbarui.'; avatarHint.className='hint ok';
     }catch(err){
@@ -321,6 +323,7 @@
 
   avatarRemoveBtn.addEventListener('click', async ()=>{
     if(!confirm('Hapus foto profil?')) return;
+    await supabaseClient.storage.from('avatars').remove([currentUserId + '.jpg']);
     const {error} = await supabaseClient.from('profiles').update({avatar_url:null}).eq('id', currentUserId);
     if(error){ avatarHint.textContent='Gagal menghapus foto: '+error.message; avatarHint.className='hint err'; return; }
     currentAvatarUrl=null;
