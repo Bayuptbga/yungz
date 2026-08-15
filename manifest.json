@@ -1,7 +1,7 @@
 {
-  "id": "/?id=privatechat",
-  "name": "Private Chat",
-  "short_name": "Private Chat",
+  "id": "/?id=bakuchat",
+  "name": "Baku Chat",
+  "short_name": "Baku Chat",
   "description": "Aplikasi pesan instan dengan privasi penuh.",
   "start_url": "./index.html",
   "scope": "./",
@@ -76,6 +76,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "id": "com.bakuchat.id"
     }
   ]
 }
