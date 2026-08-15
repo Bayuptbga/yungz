@@ -491,27 +491,38 @@
     const who=q.sender_id===currentUserId?'Anda':(peerUsername||'Kontak');
     return `<div class="reply-quote" data-jump="${replyToId}"><div class="rq-name">${escapeHtml(who)}</div><div class="rq-text">${escapeHtml(normalizeText(q.content).slice(0,120))}</div></div>`;
   }
+  function inviteContentHTML(m, mine) {
+    const isReal = m.id && !String(m.id).startsWith('temp-');
+    if (m.content === '[CALL_REJECTED]') {
+      return `<div class="invite-card" style="background:rgba(224,76,76,0.08); padding:12px; border-radius:10px; text-align:center; border:1px solid #e04c4c; min-width:180px; margin-top:4px;">
+          <div style="font-weight:bold; color:#e04c4c; font-size:14px;">📞 Panggilan ditolak</div>
+        </div>`;
+    }
+    const cancelBtnHTML = (mine && isReal) ? `<button onclick="cancelCallInvite('${m.id}')" style="background:transparent; color:#e04c4c; border:1px solid #e04c4c; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">Batalkan</button>` : '';
+    const rejectBtnHTML = (!mine && isReal) ? `<button onclick="rejectCallInvite('${m.id}')" style="background:transparent; color:#e04c4c; border:1px solid #e04c4c; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">Tolak</button>` : '';
+    return `<div class="invite-card" style="background:rgba(83,189,235,0.1); padding:12px; border-radius:10px; text-align:center; border:1px solid #53bdeb; min-width:180px; margin-top:4px;">
+          <div style="font-weight:bold; margin-bottom:10px; color:#53bdeb; font-size:14px;">📞 Panggilan Suara</div>
+          <button onclick="window.location.href='call.html?uid=${peerId}${isReal?'&msgid='+encodeURIComponent(m.id):''}'" style="background:#53bdeb; color:#062733; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%;">Masuk Panggilan</button>
+          ${cancelBtnHTML}${rejectBtnHTML}
+        </div>`;
+  }
+
+  function isInviteContent(content) { return content === '[INVITE_CALL]' || content === '[CALL_REJECTED]'; }
+
   function appendBubble(m,sending){
     const mine=m.sender_id===currentUserId;const locked=isLockedContent(m.content);
     const row=document.createElement('div');row.className='bubble-row '+(mine?'mine':'theirs')+(sending?' sending':'')+(locked?' locked':'');row.dataset.id=m.id;
     
     let contentHTML = '';
-    if (m.content === '[INVITE_CALL]') {
-      const isReal = m.id && !String(m.id).startsWith('temp-');
-      const cancelBtnHTML = (mine && isReal) ? `<button onclick="cancelCallInvite('${m.id}')" style="background:transparent; color:#e04c4c; border:1px solid #e04c4c; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%; margin-top:8px;">Batalkan</button>` : '';
-      contentHTML = `
-        <div style="background:rgba(83,189,235,0.1); padding:12px; border-radius:10px; text-align:center; border:1px solid #53bdeb; min-width:180px; margin-top:4px;">
-          <div style="font-weight:bold; margin-bottom:10px; color:#53bdeb; font-size:14px;">📞 Panggilan Suara</div>
-          <button onclick="window.location.href='call.html?uid=${peerId}${isReal?'&msgid='+encodeURIComponent(m.id):''}'" style="background:#53bdeb; color:#062733; border:none; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%;">Masuk Panggilan</button>
-          ${cancelBtnHTML}
-        </div>`;
+    if (isInviteContent(m.content)) {
+      contentHTML = inviteContentHTML(m, mine);
     } else {
       contentHTML = `<div class="txt"></div>`;
     }
 
     row.innerHTML=`<div class="swipe-reply-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#53bdeb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17l-5-5 5-5"/><path d="M4 12h10a5 5 0 015 5v1"/></svg></div><div class="bubble">${replyQuoteHTML(m.reply_to_id)}${contentHTML}<div class="meta"><span>${timeLabel(m.created_at)}</span>${mine?`<span class="tick">${tickSvg(m.delivered_at,m.read_at)}</span>`:''}</div></div>`;
     
-    if (m.content !== '[INVITE_CALL]') {
+    if (!isInviteContent(m.content)) {
       row.querySelector('.txt').textContent=normalizeText(m.content);
     }
     
@@ -642,8 +653,17 @@
       if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(m);scrollToBottom();
       if(m.content==='🔔 PING!!!'&&navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
       const n=new Date().toISOString();if(document.visibilityState==='visible')await supabaseClient.from('messages').update({delivered_at:n,read_at:n}).eq('id',m.id);else await supabaseClient.from('messages').update({delivered_at:n}).eq('id',m.id).is('delivered_at',null);
-    }).on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:`sender_id=eq.${currentUserId}`},(p)=>{
-      const row=msgArea.querySelector(`.bubble-row[data-id="${p.new.id}"]`);if(row){const t=row.querySelector('.tick');if(t)t.innerHTML=tickSvg(p.new.delivered_at,p.new.read_at);}
+    }).on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:`sender_id=eq.${currentUserId}`},async(p)=>{
+      const row=msgArea.querySelector(`.bubble-row[data-id="${p.new.id}"]`);if(!row)return;
+      const t=row.querySelector('.tick');if(t)t.innerHTML=tickSvg(p.new.delivered_at,p.new.read_at);
+      const card=row.querySelector('.invite-card');
+      if(card){
+        const decrypted=await E2E.decryptMessage(myPrivateKey,p.new.content,true,peerPublicKeyB64);
+        if(decrypted==='[CALL_REJECTED]'){
+          card.outerHTML=inviteContentHTML({id:p.new.id,content:decrypted},true);
+          messagesById.set(p.new.id,{id:p.new.id,sender_id:currentUserId,content:decrypted});
+        }
+      }
     }).on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},(p)=>{
       const delId=p.old&&p.old.id;if(delId==null)return;
       const row=msgArea.querySelector(`.bubble-row[data-id="${delId}"]`);if(row)row.remove();
@@ -705,6 +725,23 @@
       const row=msgArea.querySelector(`.bubble-row[data-id="${msgId}"]`);
       if(row) row.remove();
       messagesById.delete(msgId);
+    }
+  }
+
+  // Tolak undangan panggilan masuk. Bubble diubah jadi status "Panggilan ditolak"
+  // (bukan dihapus), dengan cara meng-update kolom content pesan yang sama, tetap
+  // dienkripsi end-to-end dengan pasangan kunci sender/receiver aslinya sehingga
+  // kedua sisi tetap bisa mendekripsinya. Perubahan tampil ke pengirim lewat
+  // langganan realtime UPDATE yang sudah ada.
+  async function rejectCallInvite(msgId){
+    if(!msgId || !myPublicKeyB64 || !peerPublicKeyB64) return;
+    const rejected='[CALL_REJECTED]';
+    const encrypted=await E2E.encryptMessage(peerPublicKeyB64,myPublicKeyB64,rejected);
+    const {error}=await supabaseClient.from('messages').update({content:encrypted}).eq('id',msgId).eq('receiver_id',currentUserId);
+    if(!error){
+      const row=msgArea.querySelector(`.bubble-row[data-id="${msgId}"]`);
+      if(row){const card=row.querySelector('.invite-card');if(card)card.outerHTML=inviteContentHTML({id:msgId,content:rejected},false);}
+      messagesById.set(msgId,{id:msgId,sender_id:peerId,content:rejected});
     }
   }
 
