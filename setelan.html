@@ -125,26 +125,6 @@
   .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(34,216,230,0.14); color:#22d8e6; border:1px solid rgba(34,216,230,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
   .e2e-info-close-btn:active{ background:rgba(34,216,230,0.22); }
 
-  /* ---- Cropper foto profil: fullscreen ala WhatsApp ---- */
-  .crop-overlay{ position:fixed; inset:0; background:#000; z-index:340; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:opacity .16s ease; }
-  .crop-overlay.open{ opacity:1; pointer-events:auto; }
-  .crop-topbar{ flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:14px 14px; padding-top:calc(14px + env(safe-area-inset-top,0px)); }
-  .crop-topbar-title{ color:#fff; font-size:15.5px; font-weight:600; }
-  .crop-icon-btn{ width:40px; height:40px; border-radius:50%; border:none; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-tap-highlight-color:transparent; padding:0; flex-shrink:0; }
-  .crop-icon-btn:active{ background:rgba(255,255,255,0.18); }
-  .crop-icon-btn svg{ width:19px; height:19px; }
-  .crop-confirm-btn{ background:var(--accent); }
-  .crop-confirm-btn:disabled{ opacity:0.5; pointer-events:none; }
-  .crop-stage{ position:relative; flex:1; min-height:0; overflow:hidden; touch-action:none; background:#000; }
-  .crop-stage img{ position:absolute; left:0; top:0; transform-origin:0 0; user-select:none; -webkit-user-drag:none; pointer-events:none; will-change:transform; }
-  .crop-circle{ position:absolute; box-shadow:0 0 0 2000px rgba(0,0,0,0.6); border:1.5px solid rgba(255,255,255,0.9); border-radius:50%; box-sizing:border-box; pointer-events:none; }
-  .crop-bottombar{ flex-shrink:0; display:flex; align-items:center; gap:14px; padding:18px 24px calc(22px + env(safe-area-inset-bottom,0px)); }
-  .crop-bottombar svg{ stroke:#fff; opacity:0.8; flex-shrink:0; width:17px; height:17px; }
-  .crop-bottombar svg.big{ width:22px; height:22px; }
-  #cropZoomRange{ flex:1; -webkit-appearance:none; appearance:none; height:3px; border-radius:2px; background:rgba(255,255,255,0.28); outline:none; margin:0; }
-  #cropZoomRange::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.4); }
-  #cropZoomRange::-moz-range-thumb{ width:18px; height:18px; border-radius:50%; background:var(--accent); border:none; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.4); }
-  .crop-hint{ text-align:center; color:rgba(255,255,255,0.55); font-size:12px; padding:0 24px 4px; flex-shrink:0; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js?v=1"></script>
@@ -160,17 +140,13 @@
   <!-- ============ VIEW: MENU UTAMA (dulu setelan.html) ============ -->
   <div class="content view active" id="viewMain">
     <div class="section-title">Foto Profil</div>
-    <div class="card" style="text-align:center;">
-      <div style="position:relative; width:88px; height:88px; margin:0 auto 12px;">
-        <div id="avatarPreview" style="width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:30px;color:#fff;background:var(--border);">?</div>
-        <div id="avatarEditBadge" style="position:absolute; right:-2px; bottom:-2px; width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--card-bg);">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#062733" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    <div class="card">
+      <div class="setting-row" style="cursor:pointer;" onclick="location.href='profil.html'">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div id="avatarPreview" style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;background:var(--border);flex-shrink:0;">?</div>
+          <div><div class="s-label">Edit Profil</div><div class="s-sub">Ubah foto &amp; info profilmu</div></div>
         </div>
-      </div>
-      <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
-      <div class="hint" id="avatarHint" style="min-height:14px; margin-top:2px;">Ketuk ikon kamera untuk ganti foto</div>
-      <div id="avatarRemoveRow" style="display:none; margin-top:6px;">
-        <span class="toggle-pw" id="avatarRemoveBtn" style="cursor:pointer;">Hapus Foto</span>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
     </div>
 
@@ -271,228 +247,23 @@
   </div>
 </div>
 
-<div class="crop-overlay" id="cropOverlay">
-  <div class="crop-topbar">
-    <button class="crop-icon-btn" id="cropCancelBtn" type="button" aria-label="Batal">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-    </button>
-    <div class="crop-topbar-title">Sesuaikan Foto</div>
-    <button class="crop-icon-btn crop-confirm-btn" id="cropOkBtn" type="button" aria-label="Pakai foto">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#062733" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-    </button>
-  </div>
-  <div class="crop-stage" id="cropStageWrap">
-    <img id="cropImgEl" draggable="false" alt="">
-    <div class="crop-circle" id="cropCircle"></div>
-  </div>
-  <div class="crop-hint">Geser untuk memindahkan &middot; cubit atau tarik slider untuk memperbesar</div>
-  <div class="crop-bottombar">
-    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/></svg>
-    <input type="range" id="cropZoomRange" min="1" max="3" step="0.01" value="1">
-    <svg class="big" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg>
-  </div>
-</div>
 <script>
   const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return(u||'?').slice(0,2).toUpperCase();}
 
-  // ---- Foto Profil: file diresize di client lalu di-upload ke Supabase Storage
-  // (bucket "avatars"), kolom profiles.avatar_url hanya menyimpan URL publiknya. ----
-  const avatarPreview=document.getElementById('avatarPreview'), avatarFileInput=document.getElementById('avatarFileInput'),
-        avatarEditBadge=document.getElementById('avatarEditBadge'), avatarHint=document.getElementById('avatarHint'),
-        avatarRemoveRow=document.getElementById('avatarRemoveRow'), avatarRemoveBtn=document.getElementById('avatarRemoveBtn');
+  // ---- Foto Profil: preview saja di sini, edit/ganti fotonya dilakukan di halaman Profil ----
+  const avatarPreview=document.getElementById('avatarPreview');
 
   function renderAvatarPreview(){
     if(currentAvatarUrl){
       avatarPreview.style.background=`url(${currentAvatarUrl}) center/cover no-repeat`;
       avatarPreview.textContent='';
-      avatarRemoveRow.style.display='block';
     } else {
       avatarPreview.style.background = currentUserId ? colorFor(currentUserId) : 'var(--border)';
       avatarPreview.textContent = initials(currentUsername);
-      avatarRemoveRow.style.display='none';
     }
   }
-
-  avatarEditBadge.addEventListener('click', ()=>avatarFileInput.click());
-
-  // ---- Crop foto: layar penuh ala WhatsApp. Foto bisa digeser (drag/pan) dan
-  // diperbesar (pinch dua jari, scroll wheel, atau slider), area lingkaran di tengah
-  // menandai bagian yang akan dipakai sebagai foto profil. ----
-  const CROP_OUTPUT=400, CROP_MIN_ZOOM=1, CROP_MAX_ZOOM=3;
-  const cropOverlay=document.getElementById('cropOverlay'), cropImgEl=document.getElementById('cropImgEl'),
-        cropOkBtn=document.getElementById('cropOkBtn'), cropCancelBtn=document.getElementById('cropCancelBtn'),
-        cropStageWrap=document.getElementById('cropStageWrap'), cropCircle=document.getElementById('cropCircle'),
-        cropZoomRange=document.getElementById('cropZoomRange');
-  let cropImg=null, cropObjectUrl=null;
-  let stageW=0, stageH=0, circleR=0, circleCX=0, circleCY=0, baseScale=1;
-  let zoom=1, cx=0, cy=0;
-  const cropPointers=new Map();
-  let dragStart=null, pinchStart=null;
-
-  function measureStage(){
-    const r=cropStageWrap.getBoundingClientRect();
-    stageW=r.width; stageH=r.height;
-    circleR=Math.min(stageW,stageH)*0.42;
-    circleCX=stageW/2; circleCY=stageH/2;
-    cropCircle.style.width=cropCircle.style.height=(circleR*2)+'px';
-    cropCircle.style.left=(circleCX-circleR)+'px';
-    cropCircle.style.top=(circleCY-circleR)+'px';
-  }
-  function applyTransform(){
-    const dispW=cropImg.width*baseScale*zoom, dispH=cropImg.height*baseScale*zoom;
-    cropImgEl.style.width=dispW+'px'; cropImgEl.style.height=dispH+'px';
-    cropImgEl.style.transform=`translate(${(cx-dispW/2)}px, ${(cy-dispH/2)}px)`;
-  }
-  function clampCenter(){
-    const dispW=cropImg.width*baseScale*zoom, dispH=cropImg.height*baseScale*zoom;
-    const minCx=circleCX+circleR-dispW/2, maxCx=circleCX-circleR+dispW/2;
-    const minCy=circleCY+circleR-dispH/2, maxCy=circleCY-circleR+dispH/2;
-    cx=Math.max(minCx,Math.min(maxCx,cx));
-    cy=Math.max(minCy,Math.min(maxCy,cy));
-  }
-  function setZoom(newZoom, anchorX, anchorY){
-    newZoom=Math.max(CROP_MIN_ZOOM,Math.min(CROP_MAX_ZOOM,newZoom));
-    if(anchorX==null){ anchorX=circleCX; anchorY=circleCY; }
-    const oldDispW=cropImg.width*baseScale*zoom, oldDispH=cropImg.height*baseScale*zoom;
-    const relX=(anchorX-(cx-oldDispW/2))/oldDispW, relY=(anchorY-(cy-oldDispH/2))/oldDispH;
-    zoom=newZoom;
-    const newDispW=cropImg.width*baseScale*zoom, newDispH=cropImg.height*baseScale*zoom;
-    cx=anchorX-relX*newDispW+newDispW/2; cy=anchorY-relY*newDispH+newDispH/2;
-    clampCenter();
-    applyTransform();
-    cropZoomRange.value=zoom;
-  }
-  function openCropper(file){
-    cropObjectUrl=URL.createObjectURL(file);
-    const img=new Image();
-    img.onload=()=>{
-      cropImg=img;
-      cropOverlay.classList.add('open');
-      document.body.style.overflow='hidden';
-      requestAnimationFrame(()=>{
-        measureStage();
-        baseScale=(circleR*2)/Math.min(img.width,img.height);
-        zoom=1; cx=circleCX; cy=circleCY;
-        cropZoomRange.value=1;
-        cropImgEl.src=cropObjectUrl;
-        applyTransform();
-      });
-    };
-    img.onerror=()=>{ avatarHint.textContent='Gagal memuat gambar.'; avatarHint.className='hint err'; URL.revokeObjectURL(cropObjectUrl); };
-    img.src=cropObjectUrl;
-  }
-  function closeCropper(){
-    cropOverlay.classList.remove('open');
-    document.body.style.overflow='';
-    if(cropObjectUrl){ URL.revokeObjectURL(cropObjectUrl); cropObjectUrl=null; }
-    cropImg=null; cropPointers.clear(); dragStart=null; pinchStart=null;
-    cropImgEl.removeAttribute('src');
-  }
-  cropStageWrap.addEventListener('pointerdown',(e)=>{
-    if(!cropImg)return;
-    cropStageWrap.setPointerCapture(e.pointerId);
-    cropPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(cropPointers.size===1){
-      dragStart={x:e.clientX,y:e.clientY,cx,cy};
-    } else if(cropPointers.size===2){
-      dragStart=null;
-      const pts=[...cropPointers.values()];
-      const dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
-      const rect=cropStageWrap.getBoundingClientRect();
-      pinchStart={dist, zoom, cx, cy, midX:(pts[0].x+pts[1].x)/2-rect.left, midY:(pts[0].y+pts[1].y)/2-rect.top};
-    }
-  });
-  cropStageWrap.addEventListener('pointermove',(e)=>{
-    if(!cropImg||!cropPointers.has(e.pointerId))return;
-    cropPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(cropPointers.size===1&&dragStart){
-      cx=dragStart.cx+(e.clientX-dragStart.x); cy=dragStart.cy+(e.clientY-dragStart.y);
-      clampCenter(); applyTransform();
-    } else if(cropPointers.size===2&&pinchStart){
-      const pts=[...cropPointers.values()];
-      const dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
-      cx=pinchStart.cx; cy=pinchStart.cy;
-      setZoom(pinchStart.zoom*(dist/pinchStart.dist), pinchStart.midX, pinchStart.midY);
-    }
-  });
-  function cropPointerEnd(e){
-    cropPointers.delete(e.pointerId);
-    if(cropPointers.size<2) pinchStart=null;
-    if(cropPointers.size===1){
-      const remaining=[...cropPointers.values()][0];
-      dragStart={x:remaining.x,y:remaining.y,cx,cy};
-    } else if(cropPointers.size===0){ dragStart=null; }
-  }
-  cropStageWrap.addEventListener('pointerup',cropPointerEnd);
-  cropStageWrap.addEventListener('pointercancel',cropPointerEnd);
-  cropStageWrap.addEventListener('wheel',(e)=>{
-    if(!cropImg)return;
-    e.preventDefault();
-    const rect=cropStageWrap.getBoundingClientRect();
-    setZoom(zoom-e.deltaY*0.0015, e.clientX-rect.left, e.clientY-rect.top);
-  },{passive:false});
-  cropZoomRange.addEventListener('input',()=>{ if(cropImg) setZoom(parseFloat(cropZoomRange.value)); });
-  window.addEventListener('resize',()=>{ if(cropImg){ measureStage(); clampCenter(); applyTransform(); } });
-  cropCancelBtn.addEventListener('click', ()=>{ closeCropper(); avatarFileInput.value=''; });
-
-  function cropToBlob(){
-    return new Promise((resolve,reject)=>{
-      const s=baseScale*zoom;
-      const dispW=cropImg.width*s, dispH=cropImg.height*s;
-      const circleLeft=circleCX-circleR, circleTop=circleCY-circleR;
-      const srcX=(circleLeft-(cx-dispW/2))/s, srcY=(circleTop-(cy-dispH/2))/s, srcSize=(circleR*2)/s;
-      const outCanvas=document.createElement('canvas');
-      outCanvas.width=CROP_OUTPUT; outCanvas.height=CROP_OUTPUT;
-      const outCtx=outCanvas.getContext('2d');
-      outCtx.drawImage(cropImg,srcX,srcY,srcSize,srcSize,0,0,CROP_OUTPUT,CROP_OUTPUT);
-      outCanvas.toBlob(blob=>{ blob?resolve(blob):reject(new Error('Gagal memproses gambar')); }, 'image/jpeg', 0.9);
-    });
-  }
-
-  cropOkBtn.addEventListener('click', async ()=>{
-    if(!cropImg || !currentUserId) return;
-    cropOkBtn.disabled=true;
-    avatarHint.textContent='Mengunggah foto...'; avatarHint.className='hint';
-    try{
-      const blob=await cropToBlob();
-      closeCropper();
-      const path=currentUserId+'.jpg';
-      const {error:upErr}=await supabaseClient.storage.from('avatars').upload(path, blob, {contentType:'image/jpeg', upsert:true});
-      if(upErr){ avatarHint.textContent='Gagal mengunggah foto: '+upErr.message; avatarHint.className='hint err'; return; }
-      const {data:urlData}=supabaseClient.storage.from('avatars').getPublicUrl(path);
-      const publicUrl=urlData.publicUrl+'?v='+Date.now();
-      const {error}=await supabaseClient.from('profiles').update({avatar_url:publicUrl}).eq('id', currentUserId);
-      if(error){ avatarHint.textContent='Gagal menyimpan foto: '+error.message; avatarHint.className='hint err'; return; }
-      currentAvatarUrl=publicUrl;
-      renderAvatarPreview();
-      avatarHint.textContent='Foto profil berhasil diperbarui.'; avatarHint.className='hint ok';
-    }catch(err){
-      avatarHint.textContent='Gagal memproses foto.'; avatarHint.className='hint err';
-    }finally{
-      cropOkBtn.disabled=false;
-      avatarFileInput.value='';
-    }
-  });
-
-  avatarFileInput.addEventListener('change', ()=>{
-    const file=avatarFileInput.files[0];
-    if(!file) return;
-    if(!file.type.startsWith('image/')){ avatarHint.textContent='File harus berupa gambar.'; avatarHint.className='hint err'; avatarFileInput.value=''; return; }
-    avatarHint.textContent='';
-    openCropper(file);
-  });
-
-  avatarRemoveBtn.addEventListener('click', async ()=>{
-    if(!confirm('Hapus foto profil?')) return;
-    await supabaseClient.storage.from('avatars').remove([currentUserId + '.jpg']);
-    const {error} = await supabaseClient.from('profiles').update({avatar_url:null}).eq('id', currentUserId);
-    if(error){ avatarHint.textContent='Gagal menghapus foto: '+error.message; avatarHint.className='hint err'; return; }
-    currentAvatarUrl=null;
-    renderAvatarPreview();
-    avatarHint.textContent='Foto profil dihapus.'; avatarHint.className='hint ok';
-  });
 
   // ---- Navigasi sub-halaman di dalam satu file (menggantikan 3 file lama) ----
   const VIEWS = {
