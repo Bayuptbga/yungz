@@ -30,6 +30,7 @@ const APP_SHELL = [
   './manifest.json',
   './device-gate.js?v=__VERSION__',
   './app.js?v=__VERSION__',
+  './offline-db.js?v=__VERSION__',
   './icons/icon-192.png?v=3',
   './icons/icon-512.png?v=3',
   './icons/apple-touch-icon.png?v=3'
