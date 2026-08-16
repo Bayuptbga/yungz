@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Baku Chat - Chat</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#123350">
+<meta name="theme-color" content="#ffffff">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -22,15 +22,15 @@
 <style>
   @view-transition { navigation: auto; }
   :root{
-    --bbm-blue-dark:#0a1e2f;
-    --bbm-blue:#123350;
-    --bbm-blue-light:#184068;
-    --bg:#0a1c2c;
-    --card-bg:#123350;
-    --ink:#eef6fb;
-    --ink-soft:#aab8c2;
-    --muted:#7ea0b7;
-    --border:#1d425e;
+    --bbm-blue-dark:#0039f0;
+    --bbm-blue:#0564f5;
+    --bbm-blue-light:#2f7dff;
+    --bg:#f4f7fb;
+    --card-bg:#ffffff;
+    --ink:#101f33;
+    --ink-soft:#55697d;
+    --muted:#66798d;
+    --border:#e2e8f1;
   }
   *{box-sizing:border-box;}
   html{ overscroll-behavior:none; -webkit-tap-highlight-color:transparent; }
@@ -49,7 +49,7 @@
   /* Layar tablet (>=700px) -> kontainer lebih lega, tetap satu kolom */
   @media (min-width:700px){ .phone{ max-width:640px; } }
   #authGate{ position:absolute; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center; }
-  #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:#22d8e6; animation:authSpin .75s linear infinite; }
+  #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:#0564f5; animation:authSpin .75s linear infinite; }
   @keyframes authSpin{ to{ transform:rotate(360deg); } }
   .appbar{
     background:linear-gradient(120deg,var(--bbm-blue-dark),var(--bbm-blue) 55%,var(--bbm-blue-light));
@@ -62,10 +62,10 @@
   .appbar .who{flex:1;min-width:0;}
   .appbar .uname{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .appbar .sub{font-size:11.5px;opacity:0.82;margin-top:1px;}
-  .appbar .sub.online{opacity:1;color:#2ecc71;font-weight:600;}
-  .status-dot{ display:inline-block; width:8px;height:8px; border-radius:50%; margin-left:6px; background:#7ea0b7; vertical-align:middle; box-shadow:0 0 0 2px rgba(255,255,255,0.25); }
-  .status-dot.online{ background:#2ecc71; }
-  .e2e-lock{ width:26px;height:26px; border-radius:50%; background:rgba(34,216,230,0.16); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .appbar .sub.online{opacity:1;color:#189a56;font-weight:600;}
+  .status-dot{ display:inline-block; width:8px;height:8px; border-radius:50%; margin-left:6px; background:#66798d; vertical-align:middle; box-shadow:0 0 0 2px rgba(255,255,255,0.25); }
+  .status-dot.online{ background:#189a56; }
+  .e2e-lock{ width:26px;height:26px; border-radius:50%; background:rgba(5,100,245,0.16); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .appbar .menu-btn{ cursor:pointer; width:34px;height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s ease; position:relative; }
   .appbar .menu-btn:active{ background:rgba(255,255,255,0.16); }
   .chat-menu{ position:absolute; top:calc(100% + 6px); right:10px; background:var(--card-bg); border-radius:12px; box-shadow:0 6px 24px rgba(0,0,0,0.5); min-width:180px; overflow:hidden; z-index:50; display:none; }
@@ -73,23 +73,23 @@
   .chat-menu .item{ padding:13px 16px; font-size:14.5px; color:var(--ink); cursor:pointer; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); }
   .chat-menu .item:last-child{border-bottom:none;}
   .chat-menu .item:active{background:var(--border);}
-  .chat-menu .item.danger{color:#f15c6d;}
+  .chat-menu .item.danger{color:#e4394f;}
   .chat-menu .item.ping{color:#e08a00;font-weight:600;}
   .ptr-indicator{ display:flex; align-items:center; justify-content:center; height:0; overflow:hidden; flex-shrink:0; background:var(--bg); }
   .ptr-spinner{ width:22px; height:22px; border-radius:50%; border:2.5px solid var(--border); border-top-color:var(--border); }
-  .ptr-indicator.loading .ptr-spinner{ border-top-color:#22d8e6; animation:authSpin .7s linear infinite; }
+  .ptr-indicator.loading .ptr-spinner{ border-top-color:#0564f5; animation:authSpin .7s linear infinite; }
   .msg-area{
     flex:1; overflow-y:auto; overflow-x:hidden; padding:14px 12px 6px; display:flex; flex-direction:column; gap:2px;
-    background-color:var(--bg); background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0); background-size:20px 20px; scroll-behavior:smooth;
+    background-color:var(--bg); background-image:radial-gradient(circle at 1px 1px, rgba(16,31,51,0.04) 1px, transparent 0); background-size:20px 20px; scroll-behavior:smooth;
   }
   .msg-area::-webkit-scrollbar{ width:6px; }
-  .msg-area::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.1); border-radius:3px; }
+  .msg-area::-webkit-scrollbar-thumb{ background:rgba(16,31,51,0.14); border-radius:3px; }
   .e2e-banner{
-    align-self:center; max-width:88%; text-align:center; background:rgba(34,216,230,0.1); border:1px solid rgba(34,216,230,0.22);
+    align-self:center; max-width:88%; text-align:center; background:rgba(5,100,245,0.1); border:1px solid rgba(5,100,245,0.22);
     color:#bcdff2; font-size:11.5px; line-height:16px; padding:9px 14px; border-radius:10px; margin:6px 0 12px; flex-shrink:0;
     display:flex; align-items:center; gap:7px; cursor:pointer;
   }
-  .e2e-banner .e2e-learn{ font-weight:700; color:#22d8e6; text-decoration:underline; }
+  .e2e-banner .e2e-learn{ font-weight:700; color:#0564f5; text-decoration:underline; }
 
   /* ---- Popup "Pelajari selengkapnya" enkripsi E2E ---- */
   .e2e-info-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:flex-end; justify-content:center; z-index:320; opacity:0; pointer-events:none; transition:opacity .2s ease; }
@@ -97,13 +97,13 @@
   .e2e-info-sheet{ width:100%; max-width:420px; background:var(--card-bg); border:1px solid var(--border); border-top-left-radius:22px; border-top-right-radius:22px; padding:10px 24px calc(28px + env(safe-area-inset-bottom)); box-shadow:0 -10px 40px rgba(0,0,0,0.5); transform:translateY(16px); transition:transform .2s ease; text-align:center; }
   .e2e-info-overlay.open .e2e-info-sheet{ transform:translateY(0); }
   .e2e-info-grip{ width:36px; height:4px; border-radius:3px; background:var(--border); margin:0 auto 18px; }
-  .e2e-info-icon{ width:64px; height:64px; border-radius:18px; background:rgba(34,216,230,0.14); display:flex; align-items:center; justify-content:center; margin:0 auto 18px; }
-  .e2e-info-icon svg{ width:30px; height:30px; stroke:#22d8e6; }
+  .e2e-info-icon{ width:64px; height:64px; border-radius:18px; background:rgba(5,100,245,0.14); display:flex; align-items:center; justify-content:center; margin:0 auto 18px; }
+  .e2e-info-icon svg{ width:30px; height:30px; stroke:#0564f5; }
   .e2e-info-sheet h3{ font-size:18px; font-weight:700; color:var(--ink); margin:0 0 12px; line-height:1.35; }
   .e2e-info-sheet p{ font-size:13.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 22px; }
-  .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(34,216,230,0.14); color:#22d8e6; border:1px solid rgba(34,216,230,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
-  .e2e-info-close-btn:active{ background:rgba(34,216,230,0.22); }
-  .e2e-banner svg{width:14px;height:14px;flex-shrink:0;stroke:#22d8e6;}
+  .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(5,100,245,0.14); color:#0564f5; border:1px solid rgba(5,100,245,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .e2e-info-close-btn:active{ background:rgba(5,100,245,0.22); }
+  .e2e-banner svg{width:14px;height:14px;flex-shrink:0;stroke:#0564f5;}
   .keychange-notice{
     align-self:center; max-width:88%; text-align:center; background:rgba(224,138,0,0.1); border:1px solid rgba(224,138,0,0.28);
     color:#f0b429; font-size:11.5px; line-height:16px; padding:9px 14px; border-radius:10px; margin:6px 0 12px; flex-shrink:0;
@@ -113,7 +113,7 @@
   .keychange-notice .e2e-learn{font-weight:700;color:#f0b429;text-decoration:underline;}
 
   .day-sep{
-    align-self:center; position:sticky; top:6px; background:rgba(27,42,50,0.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    align-self:center; position:sticky; top:6px; background:rgba(255,255,255,0.88); border:1px solid var(--border); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
     color:var(--ink-soft); font-size:11px; font-weight:600; padding:5px 13px; border-radius:20px; margin:12px 0 10px; flex-shrink:0; box-shadow:0 1px 5px rgba(0,0,0,0.2); z-index:3;
   }
   .bubble-row{ display:flex; align-items:flex-end; width:100%; flex-shrink:0; margin:3px 0; animation:bubbleIn .2s ease both; }
@@ -121,14 +121,14 @@
   .bubble-row.mine{justify-content:flex-end;}
   .bubble-row.theirs{justify-content:flex-start;}
   .bubble-row.sending .bubble{ opacity:0.6; transition:opacity .15s ease; }
-  .bubble-row.send-failed .bubble{ opacity:1; background:#3f1d24 !important; border:1px solid #f15c6d; }
-  .bubble-row.send-failed .bubble::after{ content:"⚠ Gagal terkirim"; display:block; font-size:10.5px; color:#f15c6d; margin-top:3px; }
+  .bubble-row.send-failed .bubble{ opacity:1; background:#fdecee !important; border:1px solid #e4394f; }
+  .bubble-row.send-failed .bubble::after{ content:"⚠ Gagal terkirim"; display:block; font-size:10.5px; color:#e4394f; margin-top:3px; }
   .bubble{
     display:flex; flex-direction:column; align-items:flex-end; max-width:78%; width:fit-content; padding:8px 11px 6px; border-radius:16px;
     font-size:14.5px; line-height:20px; word-wrap:break-word; overflow-wrap:break-word; box-shadow:0 1px 2px rgba(0,0,0,0.2);
   }
-  .bubble-row.mine .bubble{ background:linear-gradient(135deg,#0a84ff,#0060df); border:1px solid #0a6fe0; border-top-right-radius:4px; color:#fdfeff; }
-  .bubble-row.theirs .bubble{ background:#ffffff; border:1px solid #e3e9ee; border-top-left-radius:4px; color:#1c2b36; box-shadow:0 1px 3px rgba(0,0,0,0.35); }
+  .bubble-row.mine .bubble{ background:linear-gradient(135deg,#3b6fd6,#1a3f8f); border:1px solid #2f5ec2; border-top-right-radius:4px; color:#fdfeff; }
+  .bubble-row.theirs .bubble{ background:#ffffff; border:1px solid #e3e9ee; border-top-left-radius:4px; color:#101f33; box-shadow:0 1px 3px rgba(0,0,0,0.12); }
   .bubble .txt{ align-self:stretch; min-width:36px; text-align:left; white-space:pre-wrap; word-wrap:break-word; }
   .bubble .meta{ display:flex; align-items:center; gap:4px; margin-top:3px; font-size:10.5px; color:var(--ink-soft); white-space:nowrap; }
   .bubble-row.mine .meta{ color:rgba(255,255,255,0.78); }
@@ -145,11 +145,11 @@
   .reply-quote .rq-text{ font-size:12.5px; color:#5b6b78; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .bubble-row.mine .reply-quote .rq-text{ color:rgba(255,255,255,0.85); }
   .bubble-row.highlight .bubble{ animation:replyFlash 1s ease; }
-  @keyframes replyFlash{ 0%{ box-shadow:0 0 0 2px #22d8e6; } 100%{ box-shadow:none; } }
-  .reply-bar{ display:none; align-items:center; gap:10px; padding:9px 12px; background:var(--card-bg); border-top:1px solid var(--border); border-left:3px solid #22d8e6; flex-shrink:0; }
+  @keyframes replyFlash{ 0%{ box-shadow:0 0 0 2px #0564f5; } 100%{ box-shadow:none; } }
+  .reply-bar{ display:none; align-items:center; gap:10px; padding:9px 12px; background:var(--card-bg); border-top:1px solid var(--border); border-left:3px solid #0564f5; flex-shrink:0; }
   .reply-bar.show{ display:flex; }
   .reply-bar .rb-body{ flex:1; min-width:0; }
-  .reply-bar .rb-name{ font-size:12.5px; font-weight:700; color:#22d8e6; }
+  .reply-bar .rb-name{ font-size:12.5px; font-weight:700; color:#0564f5; }
   .reply-bar .rb-text{ font-size:12.5px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
   .reply-bar .rb-close{ cursor:pointer; padding:6px; color:var(--muted); flex-shrink:0; display:flex; }
 
@@ -158,7 +158,7 @@
   .bubble-row .bubble{ transition:transform .18s ease; }
   .bubble-row.no-anim .bubble{ transition:none; }
   .bubble-row.locked .bubble{ font-style:italic; opacity:0.75; }
-  .swipe-reply-icon{ position:absolute; left:8px; top:50%; width:30px;height:30px;border-radius:50%; background:rgba(34,216,230,0.16); display:flex;align-items:center;justify-content:center; opacity:0; transform:translateY(-50%) scale(0.5); transition:opacity .15s ease, transform .15s ease; pointer-events:none; }
+  .swipe-reply-icon{ position:absolute; left:8px; top:50%; width:30px;height:30px;border-radius:50%; background:rgba(5,100,245,0.16); display:flex;align-items:center;justify-content:center; opacity:0; transform:translateY(-50%) scale(0.5); transition:opacity .15s ease, transform .15s ease; pointer-events:none; }
   .swipe-reply-icon.show{ opacity:1; transform:translateY(-50%) scale(1); }
   .swipe-reply-icon svg{ width:15px;height:15px; }
 
@@ -170,7 +170,7 @@
   .bubble-ctx-menu .item{ padding:13px 16px; font-size:14.5px; color:var(--ink); cursor:pointer; display:flex; align-items:center; gap:12px; border-bottom:1px solid var(--border); }
   .bubble-ctx-menu .item:last-child{ border-bottom:none; }
   .bubble-ctx-menu .item:active{ background:var(--border); }
-  .bubble-ctx-menu .item.danger{ color:#f15c6d; }
+  .bubble-ctx-menu .item.danger{ color:#e4394f; }
   .bubble-ctx-menu .item svg{ width:18px;height:18px; flex-shrink:0; }
   .empty-state{ margin:auto; text-align:center; color:var(--muted); font-size:13.5px; padding:32px 30px; display:flex; flex-direction:column; align-items:center; gap:12px; }
   .empty-state .es-icon{ width:54px;height:54px; border-radius:50%; background:var(--card-bg); display:flex;align-items:center;justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
@@ -196,27 +196,27 @@
   .confirm-actions button{ border:none; border-radius:10px; padding:10px 16px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; }
   .confirm-cancel{ background:var(--border); color:var(--ink); }
   .confirm-cancel:active{ background:var(--bbm-blue-light); }
-  .confirm-ok{ background:#f15c6d; color:#1b0a0c; }
+  .confirm-ok{ background:#e4394f; color:#fdecee; }
   .confirm-ok:active{ background:#e14758; }
 
   /* ---- Modal PIN Enkripsi (restore key / tawarkan setel key) ---- */
   .kmodal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center; z-index:300; opacity:0; pointer-events:none; transition:opacity .2s ease; padding:24px; }
   .kmodal-overlay.open{ opacity:1; pointer-events:auto; }
   .kmodal{ background:var(--card-bg); border:1px solid var(--border); border-radius:16px; width:100%; max-width:340px; padding:24px 20px 20px; box-shadow:0 20px 50px rgba(0,0,0,0.5); }
-  .kmodal .km-icon{width:46px;height:46px;border-radius:50%;background:rgba(34,216,230,0.14);display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
-  .kmodal .km-icon svg{width:22px;height:22px;stroke:#22d8e6;}
+  .kmodal .km-icon{width:46px;height:46px;border-radius:50%;background:rgba(5,100,245,0.14);display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+  .kmodal .km-icon svg{width:22px;height:22px;stroke:#0564f5;}
   .kmodal h3{font-size:16px;margin:0 0 6px;color:var(--ink);}
   .kmodal p{font-size:12.5px;color:var(--muted);line-height:1.5;margin:0 0 16px;}
   .kmodal .field{margin-bottom:12px;}
   .kmodal .input-wrap{display:flex;align-items:center;gap:2px;border:1.5px solid var(--border);border-radius:11px;background:var(--bg);padding:0 12px;}
-  .kmodal .input-wrap:focus-within{border-color:#22d8e6;}
+  .kmodal .input-wrap:focus-within{border-color:#0564f5;}
   .kmodal .input-wrap svg{width:16px;height:16px;color:var(--muted);flex-shrink:0;stroke:var(--muted);}
   .kmodal .input-wrap input{border:none;outline:none;background:transparent;padding:12px 8px;font-size:14.5px;width:100%;color:var(--ink);font-family:inherit;}
-  .kmodal .toggle-pw{font-size:10.5px;color:#22d8e6;font-weight:700;cursor:pointer;letter-spacing:0.5px;flex-shrink:0;}
+  .kmodal .toggle-pw{font-size:10.5px;color:#0564f5;font-weight:700;cursor:pointer;letter-spacing:0.5px;flex-shrink:0;}
   .kmodal .hint{font-size:11.5px;min-height:14px;margin-top:2px;color:var(--muted);}
-  .kmodal .hint.err{color:#f15c6d;}
-  .kmodal .btn{width:100%;padding:13px 0;background:linear-gradient(135deg,#22d8e6,#0e93a8);color:#062733;border:none;border-radius:11px;font-size:14.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;}
-  .kmodal .btn .spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(6,39,51,0.3);border-top-color:#062733;animation:spin .7s linear infinite;display:none;}
+  .kmodal .hint.err{color:#e4394f;}
+  .kmodal .btn{width:100%;padding:13px 0;background:linear-gradient(135deg,#0564f5,#0039f0);color:#ffffff;border:none;border-radius:11px;font-size:14.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;}
+  .kmodal .btn .spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.35);border-top-color:#ffffff;animation:spin .7s linear infinite;display:none;}
   .kmodal .btn.loading .spinner{display:inline-block;}
   .kmodal .btn:disabled{cursor:default;opacity:0.85;}
   .kmodal .skip-link{display:block;text-align:center;font-size:12px;color:var(--muted);margin-top:14px;cursor:pointer;text-decoration:underline;}
@@ -226,19 +226,19 @@
   .kpage-overlay.open{ opacity:1; pointer-events:auto; }
   .kpage-top{ display:flex; align-items:center; justify-content:space-between; padding:calc(14px + env(safe-area-inset-top)) 16px 4px; flex-shrink:0; }
   .kpage-back{ background:none; border:none; color:var(--ink); padding:8px; margin:-8px; cursor:pointer; display:flex; align-items:center; border-radius:50%; }
-  .kpage-back:active{ background:rgba(255,255,255,0.08); }
-  .kpage-skip{ background:none; border:none; color:#22d8e6; font-size:15px; font-weight:600; cursor:pointer; padding:8px; margin:-8px; font-family:inherit; }
+  .kpage-back:active{ background:rgba(16,31,51,0.08); }
+  .kpage-skip{ background:none; border:none; color:#0564f5; font-size:15px; font-weight:600; cursor:pointer; padding:8px; margin:-8px; font-family:inherit; }
   .kpage-body{ padding:26px 22px 0; flex:1; overflow-y:auto; }
   .kpage-title-row h2{ font-size:23px; font-weight:700; line-height:1.3; margin:0 0 26px; color:var(--ink); max-width:300px; }
   .kpage-title-row h2.has-sub{ margin-bottom:10px; }
   .kpage-sub{ font-size:13px; color:var(--muted); line-height:1.55; margin:0 0 24px; max-width:300px; }
   .pin-boxes{ display:flex; gap:9px; margin-bottom:16px; }
-  .pin-box{ width:100%; aspect-ratio:4/5; min-width:0; text-align:center; font-size:22px; font-weight:700; color:var(--ink); background:var(--card-bg); border:1.5px solid var(--border); border-radius:12px; outline:none; font-family:inherit; caret-color:#22d8e6; }
+  .pin-box{ width:100%; aspect-ratio:4/5; min-width:0; text-align:center; font-size:22px; font-weight:700; color:var(--ink); background:var(--card-bg); border:1.5px solid var(--border); border-radius:12px; outline:none; font-family:inherit; caret-color:#0564f5; }
   .pin-box::placeholder{ color:var(--muted); font-weight:400; }
-  .pin-box:focus{ border-color:#22d8e6; }
-  .kpage-forgot{ display:inline-block; color:#22d8e6; font-size:14px; font-weight:500; cursor:pointer; }
+  .pin-box:focus{ border-color:#0564f5; }
+  .kpage-forgot{ display:inline-block; color:#0564f5; font-size:14px; font-weight:500; cursor:pointer; }
   .kpage-body .hint{ font-size:12.5px; min-height:16px; margin-top:10px; color:var(--muted); }
-  .kpage-body .hint.err{ color:#f15c6d; font-weight:600; }
+  .kpage-body .hint.err{ color:#e4394f; font-weight:600; }
 
   /* ---- Halaman konfirmasi danger (Lupa PIN): ditumpuk di atas halaman lain ---- */
   .kpage-overlay-danger{ z-index:310; }
@@ -248,7 +248,7 @@
   .kpage-actions{ display:flex; flex-direction:column; gap:10px; padding:16px 22px calc(20px + env(safe-area-inset-bottom)); flex-shrink:0; }
   .kpage-btn-cancel{ width:100%; padding:14px 0; background:var(--card-bg); color:var(--ink); border:1.5px solid var(--border); border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; }
   .kpage-btn-cancel:active{ background:var(--border); }
-  .kpage-btn-danger{ width:100%; padding:14px 0; background:linear-gradient(135deg,#f15c6d,#c8394a); color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .kpage-btn-danger{ width:100%; padding:14px 0; background:linear-gradient(135deg,#e4394f,#c8394a); color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px; }
   .kpage-btn-danger .spinner{ width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;animation:spin .7s linear infinite;display:none; }
   .kpage-btn-danger.loading .spinner{ display:inline-block; }
   .kpage-btn-danger:disabled{ opacity:0.85; cursor:default; }
@@ -256,13 +256,13 @@
   /* ---- Banner: ajakan buat PIN Enkripsi (di atas area pesan) ---- */
   .pin-banner{ display:none; flex-shrink:0; background:var(--card-bg); border-bottom:1px solid var(--border); padding:14px; gap:12px; align-items:flex-start; }
   .pin-banner.show{ display:flex; }
-  .pin-banner .pb-icon{ width:36px;height:36px;border-radius:10px; background:rgba(34,216,230,0.14); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .pin-banner .pb-icon svg{ width:18px;height:18px; stroke:#22d8e6; }
+  .pin-banner .pb-icon{ width:36px;height:36px;border-radius:10px; background:rgba(5,100,245,0.14); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .pin-banner .pb-icon svg{ width:18px;height:18px; stroke:#0564f5; }
   .pin-banner .pb-body{ flex:1; min-width:0; }
   .pin-banner .pb-title{ font-size:14px; font-weight:700; color:var(--ink); margin-bottom:3px; }
   .pin-banner .pb-sub{ font-size:12px; color:var(--muted); line-height:1.45; margin-bottom:10px; }
   .pin-banner .pb-actions{ display:flex; gap:10px; align-items:center; }
-  .pin-banner .pb-btn{ background:#22d8e6; color:#062733; border:none; border-radius:8px; padding:8px 14px; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .pin-banner .pb-btn{ background:#0564f5; color:#ffffff; border:none; border-radius:8px; padding:8px 14px; font-size:12.5px; font-weight:700; cursor:pointer; }
   .pin-banner .pb-btn:active{ transform:scale(0.97); }
   .pin-banner .pb-dismiss{ background:none; border:none; color:var(--muted); font-size:12px; font-weight:600; cursor:pointer; padding:8px 4px; }
 </style>
@@ -277,7 +277,7 @@
     <div class="back" onclick="window.location.href='dashboard.html'"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
     <div class="avatar" id="peerAvatar" style="cursor:pointer;">?</div>
     <div class="who" id="peerWho" style="cursor:pointer;"><div class="uname"><span id="peerUname">@—</span><span class="status-dot" id="statusDot"></span></div><div class="sub" id="peerSub">-</div></div>
-    <div class="e2e-lock" id="e2eLock" title="Pesan di chat ini dienkripsi end-to-end"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#22d8e6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
+    <div class="e2e-lock" id="e2eLock" title="Pesan di chat ini dienkripsi end-to-end"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#0564f5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
     <div class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
       <div class="chat-menu" id="chatMenu">
         <div class="item danger" id="menuHapusPermanen">Bersihkan Obrolan (Semua Orang)</div>
@@ -382,7 +382,7 @@
     if(status==='delivered'){
       return `<svg ${attrs}><circle cx="12" cy="12" r="10" fill="#0a84ff"/><path d="M5.8 12.3l2.6 2.6L14 9" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M10.8 12.3l2.6 2.6L19 9" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
     }
-    return `<svg ${attrs}><circle cx="12" cy="12" r="10" fill="#2ecc71"/><path d="M5.8 12.3l2.6 2.6L14 9" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M10.8 12.3l2.6 2.6L19 9" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+    return `<svg ${attrs}><circle cx="12" cy="12" r="10" fill="#189a56"/><path d="M5.8 12.3l2.6 2.6L14 9" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M10.8 12.3l2.6 2.6L19 9" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
   }
   async function init(){
     try{
@@ -398,7 +398,7 @@
       document.getElementById('authGate').style.display='none';
       const {data:rel,error:relErr}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
       if(relErr) throw relErr;
-      if(!rel){msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#7ea0b7" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.6 3-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/><path d="M18 8v5M15.5 10.5h5"/></svg></div><div class="es-title">Belum berteman</div><span>Tambahkan lewat tab Kontak dulu ya.</span></div>`;return;}
+      if(!rel){msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#66798d" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.6 3-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/><path d="M18 8v5M15.5 10.5h5"/></svg></div><div class="es-title">Belum berteman</div><span>Tambahkan lewat tab Kontak dulu ya.</span></div>`;return;}
       const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, public_key, avatar_url').eq('id',peerId).maybeSingle();
       if(profErr) throw profErr;
       if(!peerUsername) peerUsername=prof?prof.username:'Pengguna';
@@ -426,7 +426,7 @@
     }catch(err){
       console.error('init error:',err);
       document.getElementById('authGate').style.display='none';
-      msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#f15c6d" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div><div class="es-title">Gagal memuat percakapan</div><span>Cek koneksi internet lalu tarik-turun atau buka ulang chat ini.</span></div>`;
+      msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#e4394f" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div><div class="es-title">Gagal memuat percakapan</div><span>Cek koneksi internet lalu tarik-turun atau buka ulang chat ini.</span></div>`;
     }
   }
 
@@ -457,7 +457,7 @@
     const {data:rows,error}=await query;
     const banner=`<div class="e2e-banner" id="e2eBanner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Pesan terenkripsi secara end-to-end. Hanya orang di obrolan ini yang bisa membaca atau membagikannya. <span class="e2e-learn">Pelajari selengkapnya</span>.</span></div>`;
     const keyNotice=showKeyChangeNotice?keyChangeNoticeHTML(peerUsername):'';
-    if(error||!rows||rows.length===0){msgArea.innerHTML=banner+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#7ea0b7" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`+keyNotice;return;}
+    if(error||!rows||rows.length===0){msgArea.innerHTML=banner+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#66798d" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`+keyNotice;return;}
     for(const m of rows){m.content=await E2E.decryptMessage(myPrivateKey,m.content,m.sender_id===currentUserId,peerPublicKeyB64);}
     msgArea.innerHTML=banner;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});
     if(keyNotice){const div=document.createElement('div');div.innerHTML=keyNotice;msgArea.appendChild(div.firstElementChild);}
@@ -476,8 +476,8 @@
           <div style="font-weight:bold; color:#e04c4c; font-size:14px;">📞 Panggilan ditolak</div>
         </div>`;
     }
-    return `<div class="invite-card" style="background:rgba(255,255,255,0.05); padding:12px; border-radius:10px; text-align:center; border:1px solid #3a5570; min-width:180px; margin-top:4px;">
-          <div style="font-weight:bold; color:#9db9cc; font-size:14px;">📞 Fitur panggilan sudah tidak tersedia</div>
+    return `<div class="invite-card" style="background:#eef2f8; padding:12px; border-radius:10px; text-align:center; border:1px solid var(--border); min-width:180px; margin-top:4px;">
+          <div style="font-weight:bold; color:#55697d; font-size:14px;">📞 Fitur panggilan sudah tidak tersedia</div>
         </div>`;
   }
 
@@ -494,7 +494,7 @@
       contentHTML = `<div class="txt"></div>`;
     }
 
-    row.innerHTML=`<div class="swipe-reply-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#22d8e6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17l-5-5 5-5"/><path d="M4 12h10a5 5 0 015 5v1"/></svg></div><div class="bubble">${replyQuoteHTML(m.reply_to_id)}${contentHTML}<div class="meta"><span>${timeLabel(m.created_at)}</span>${mine?`<span class="tick" data-status="${tickStatus(m.delivered_at,m.read_at)}">${tickSvg(tickStatus(m.delivered_at,m.read_at))}</span>`:''}</div></div>`;
+    row.innerHTML=`<div class="swipe-reply-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0564f5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17l-5-5 5-5"/><path d="M4 12h10a5 5 0 015 5v1"/></svg></div><div class="bubble">${replyQuoteHTML(m.reply_to_id)}${contentHTML}<div class="meta"><span>${timeLabel(m.created_at)}</span>${mine?`<span class="tick" data-status="${tickStatus(m.delivered_at,m.read_at)}">${tickSvg(tickStatus(m.delivered_at,m.read_at))}</span>`:''}</div></div>`;
     
     if (!isInviteContent(m.content)) {
       row.querySelector('.txt').textContent=normalizeText(m.content);

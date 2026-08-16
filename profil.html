@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Baku Chat - Profil</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#123350">
+<meta name="theme-color" content="#ffffff">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -19,16 +19,16 @@
 <style>
   @view-transition { navigation: auto; }
   :root{
-    --bbm-blue-dark:#0a1e2f;
-    --bbm-blue:#123350;
-    --bg:#0a1c2c;
-    --card-bg:#123350;
-    --ink:#eef6fb;
-    --muted:#7ea0b7;
-    --border:#1d425e;
-    --ok:#2ecc71;
-    --error:#f15c6d;
-    --accent:#22d8e6;
+    --bbm-blue-dark:#0039f0;
+    --bbm-blue:#0564f5;
+    --bg:#f4f7fb;
+    --card-bg:#ffffff;
+    --ink:#101f33;
+    --muted:#66798d;
+    --border:#e2e8f1;
+    --ok:#189a56;
+    --error:#e4394f;
+    --accent:#0564f5;
   }
   *{box-sizing:border-box;}
   html{ overscroll-behavior:none; -webkit-tap-highlight-color:transparent; }
@@ -59,7 +59,7 @@
   .content{ flex:1; overflow-y:auto; padding:26px 16px 40px; }
 
   .hero{ display:flex; flex-direction:column; align-items:center; text-align:center; margin-bottom:26px; }
-  .hero .h-avatar{ width:92px; height:92px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:32px; color:#fff; background:var(--border); box-shadow:0 6px 18px rgba(0,0,0,0.35); flex-shrink:0; }
+  .hero .h-avatar{ width:92px; height:92px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:32px; color:#fff; background:var(--bbm-blue); box-shadow:0 6px 18px rgba(0,0,0,0.35); flex-shrink:0; }
   .hero .h-uname{ font-size:20px; font-weight:700; margin-top:14px; word-break:break-word; }
   .hero .h-joined{ font-size:12.5px; color:var(--muted); margin-top:4px; }
 
@@ -75,13 +75,13 @@
   .info-row + .info-row{ border-top:1px solid var(--border); }
   .info-row .i-label{ font-size:13.5px; color:var(--muted); }
   .info-row .i-value{ font-size:14px; font-weight:600; font-family:'Courier New',monospace; letter-spacing:1px; }
-  .pin-copy-btn{ background:rgba(34,216,230,0.14); color:var(--accent); border:1px solid rgba(34,216,230,0.3); border-radius:7px; padding:5px 11px; font-size:11.5px; font-weight:700; cursor:pointer; font-family:'Segoe UI',sans-serif; flex-shrink:0; }
+  .pin-copy-btn{ background:rgba(5,100,245,0.14); color:var(--accent); border:1px solid rgba(5,100,245,0.3); border-radius:7px; padding:5px 11px; font-size:11.5px; font-weight:700; cursor:pointer; font-family:'Segoe UI',sans-serif; flex-shrink:0; }
   .pin-copy-btn:active{ transform:scale(0.96); }
 
   .action-row{ display:flex; gap:10px; margin-bottom:22px; }
-  .action-btn{ flex:1; padding:14px 6px 12px; background:rgba(34,216,230,0.14); color:var(--accent); border:1px solid rgba(34,216,230,0.3); border-radius:14px; font-size:11.5px; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; font-family:inherit; text-align:center; }
-  .action-btn.danger{ background:rgba(241,92,109,0.12); color:#f15c6d; border:1px solid rgba(241,92,109,0.3); }
-  .action-btn .a-icon{ width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(34,216,230,0.16); flex-shrink:0; }
+  .action-btn{ flex:1; padding:14px 6px 12px; background:rgba(5,100,245,0.14); color:var(--accent); border:1px solid rgba(5,100,245,0.3); border-radius:14px; font-size:11.5px; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; font-family:inherit; text-align:center; }
+  .action-btn.danger{ background:rgba(241,92,109,0.12); color:#e4394f; border:1px solid rgba(241,92,109,0.3); }
+  .action-btn .a-icon{ width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(5,100,245,0.16); flex-shrink:0; }
   .action-btn.danger .a-icon{ background:rgba(241,92,109,0.16); }
   .action-btn .a-icon svg{ width:17px; height:17px; }
   .action-btn:active{ transform:scale(0.96); }
@@ -96,21 +96,21 @@
   .confirm-actions button{ border:none; border-radius:10px; padding:10px 16px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; }
   .confirm-cancel{ background:var(--border); color:var(--ink); }
   .confirm-cancel:active{ background:var(--border); }
-  .confirm-ok{ background:#f15c6d; color:#1b0a0c; }
+  .confirm-ok{ background:#e4394f; color:#fdecee; }
   .confirm-ok:active{ background:#e14758; }
   .btn{ display:flex; align-items:center; justify-content:center; gap:9px; width:100%; background:var(--card-bg); color:var(--ink); border:1px solid var(--border); border-radius:14px; padding:14px; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; margin-bottom:22px; }
   .btn:active{ transform:scale(0.98); }
   .btn svg{ width:17px; height:17px; flex-shrink:0; }
 
   /* ---- Kartu info keamanan enkripsi end-to-end ---- */
-  .e2e-card{ display:flex; align-items:flex-start; gap:14px; background:linear-gradient(135deg,rgba(34,216,230,0.13),rgba(34,216,230,0.05)); border:1px solid rgba(34,216,230,0.28); border-radius:16px; padding:16px; margin-bottom:22px; cursor:pointer; transition:background-color .15s ease; }
-  .e2e-card:active{ background:rgba(34,216,230,0.16); }
-  .e2e-card-icon{ width:42px; height:42px; border-radius:50%; background:rgba(34,216,230,0.18); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .e2e-card{ display:flex; align-items:flex-start; gap:14px; background:linear-gradient(135deg,rgba(5,100,245,0.13),rgba(5,100,245,0.05)); border:1px solid rgba(5,100,245,0.28); border-radius:16px; padding:16px; margin-bottom:22px; cursor:pointer; transition:background-color .15s ease; }
+  .e2e-card:active{ background:rgba(5,100,245,0.16); }
+  .e2e-card-icon{ width:42px; height:42px; border-radius:50%; background:rgba(5,100,245,0.18); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .e2e-card-icon svg{ width:20px; height:20px; stroke:var(--accent); }
   .e2e-card-body{ flex:1; min-width:0; }
   .e2e-card-title{ font-size:14.5px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:6px; }
   .e2e-card-title .e2e-badge{ width:15px; height:15px; border-radius:50%; background:var(--ok); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .e2e-card-title .e2e-badge svg{ width:9px; height:9px; stroke:#0b1a12; stroke-width:3.5; }
+  .e2e-card-title .e2e-badge svg{ width:9px; height:9px; stroke:#eafaf0; stroke-width:3.5; }
   .e2e-card-desc{ font-size:12.5px; color:var(--muted); line-height:1.5; margin-top:5px; }
   .e2e-card-link{ font-size:12.5px; font-weight:700; color:var(--accent); margin-top:9px; text-decoration:underline; }
 
@@ -120,15 +120,15 @@
   .e2e-info-sheet{ width:100%; max-width:420px; background:var(--card-bg); border:1px solid var(--border); border-top-left-radius:22px; border-top-right-radius:22px; padding:10px 24px calc(28px + env(safe-area-inset-bottom)); box-shadow:0 -10px 40px rgba(0,0,0,0.5); transform:translateY(16px); transition:transform .2s ease; text-align:center; }
   .e2e-info-overlay.open .e2e-info-sheet{ transform:translateY(0); }
   .e2e-info-grip{ width:36px; height:4px; border-radius:3px; background:var(--border); margin:0 auto 18px; }
-  .e2e-info-icon{ width:64px; height:64px; border-radius:18px; background:rgba(34,216,230,0.14); display:flex; align-items:center; justify-content:center; margin:0 auto 18px; }
+  .e2e-info-icon{ width:64px; height:64px; border-radius:18px; background:rgba(5,100,245,0.14); display:flex; align-items:center; justify-content:center; margin:0 auto 18px; }
   .e2e-info-icon svg{ width:30px; height:30px; stroke:var(--accent); }
   .e2e-info-sheet h3{ font-size:18px; font-weight:700; color:var(--ink); margin:0 0 12px; line-height:1.35; }
   .e2e-info-sheet p{ font-size:13.5px; color:var(--muted); line-height:1.6; margin:0 0 14px; text-align:left; }
   .e2e-info-sheet .e2e-info-points{ text-align:left; margin:0 0 22px; padding:0; list-style:none; }
   .e2e-info-sheet .e2e-info-points li{ display:flex; gap:10px; align-items:flex-start; font-size:13px; color:var(--ink); line-height:1.5; margin-bottom:12px; }
   .e2e-info-sheet .e2e-info-points li svg{ width:16px; height:16px; stroke:var(--accent); flex-shrink:0; margin-top:1px; }
-  .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(34,216,230,0.14); color:var(--accent); border:1px solid rgba(34,216,230,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
-  .e2e-info-close-btn:active{ background:rgba(34,216,230,0.22); }
+  .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(5,100,245,0.14); color:var(--accent); border:1px solid rgba(5,100,245,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .e2e-info-close-btn:active{ background:rgba(5,100,245,0.22); }
 
   /* ---- Cropper foto profil: fullscreen ala WhatsApp ---- */
   .crop-overlay{ position:fixed; inset:0; background:#000; z-index:300; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:opacity .16s ease; }
@@ -166,7 +166,7 @@
       <div style="position:relative; width:92px; height:92px;">
         <div class="h-avatar" id="hAvatar">?</div>
         <div id="avatarEditBadge" style="display:none; position:absolute; right:-2px; bottom:-2px; width:30px;height:30px;border-radius:50%;background:var(--accent);align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--bg);">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#062733" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </div>
       </div>
       <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
@@ -249,7 +249,7 @@
     </button>
     <div class="crop-topbar-title">Sesuaikan Foto</div>
     <button class="crop-icon-btn crop-confirm-btn" id="cropOkBtn" type="button" aria-label="Pakai foto">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#062733" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
     </button>
   </div>
   <div class="crop-stage" id="cropStageWrap">
