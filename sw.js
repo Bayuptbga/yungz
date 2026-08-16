@@ -30,7 +30,6 @@ const APP_SHELL = [
   './manifest.json',
   './device-gate.js?v=__VERSION__',
   './app.js?v=__VERSION__',
-  './offline-db.js?v=__VERSION__',
   './icons/icon-192.png?v=3',
   './icons/icon-512.png?v=3',
   './icons/apple-touch-icon.png?v=3'
@@ -66,8 +65,11 @@ self.addEventListener('activate', (event) => {
 //   biar data chat selalu fresh dan tidak basi.
 // - Ikon & font (jarang berubah) -> cache-first, biar tampil instan tanpa nunggu
 //   network; kalau belum ada di cache baru ambil dari network sekali lalu disimpan.
-// - Sisanya (html, css, js aplikasi) -> network-first, fallback ke cache kalau
-//   offline. Jadi saat online selalu dapat versi terbaru, saat offline tetap bisa dibuka.
+// - Sisanya (html, css, js aplikasi) -> stale-while-revalidate: langsung balas dari
+//   cache kalau ada (jadi buka app INSTAN, tidak nunggu network), sambil diam-diam
+//   fetch versi terbaru di background utk dipakai pas load berikutnya. Aman karena
+//   app.js sudah auto-reload sekali saat SW baru ambil alih (lihat controllerchange
+//   listener), jadi user tetap otomatis dapat update terbaru tanpa nunggu di awal.
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
 
@@ -98,24 +100,29 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Simpan salinan terbaru ke cache, tapi cuma kalau response-nya sukses
-        // (biar cache tidak ketiban file 404/500).
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, clone);
-          });
-        }
-        return response;
-      })
-      .catch(() => {
-        // Offline -> ambil dari cache
-        return caches.match(event.request).then((cached) => {
-          return cached || caches.match('./');
-        });
-      })
+    caches.match(event.request).then((cached) => {
+      // Fetch terbaru selalu jalan di background buat nyimpen versi baru ke cache,
+      // dipakai kalau ternyata belum ada cache sama sekali (first load / offline).
+      const networkFetch = fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => null); // offline / gagal -> biar ditangani lewat fallback di bawah
+
+      if (cached) {
+        // Ada di cache -> balas INSTAN, update terbaru disimpan diam-diam
+        // di background utk dipakai pas request berikutnya.
+        return cached;
+      }
+
+      // Belum ada di cache (pertama kali) -> harus nunggu network,
+      // fallback ke shell utama kalau ternyata offline.
+      return networkFetch.then((response) => response || caches.match('./'));
+    })
   );
 });
 
