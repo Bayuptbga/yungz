@@ -15,7 +15,10 @@ function isStaticAsset(url) {
     url.includes('fonts.gstatic.com');
 }
 
-// File "app shell" yang dicache saat instalasi, biar bisa dibuka offline
+// File "app shell" yang dicache saat instalasi, biar bisa dibuka offline.
+// CSS & JS per-halaman dipisah dari HTML (lihat css/ dan js/) supaya browser
+// bisa cache masing-masing terpisah -- kalau cuma HTML yang berubah, aset
+// CSS/JS lama masih valid dari cache dan tidak perlu diunduh ulang.
 const APP_SHELL = [
   './',
   './index.html',
@@ -30,6 +33,17 @@ const APP_SHELL = [
   './manifest.json',
   './device-gate.js?v=__VERSION__',
   './app.js?v=__VERSION__',
+  './css/index.css?v=__VERSION__',
+  './css/dashboard.css?v=__VERSION__',
+  './css/chat.css?v=__VERSION__',
+  './css/profil.css?v=__VERSION__',
+  './css/setelan.css?v=__VERSION__',
+  './css/akses-ditolak.css?v=__VERSION__',
+  './js/index.js?v=__VERSION__',
+  './js/dashboard.js?v=__VERSION__',
+  './js/chat.js?v=__VERSION__',
+  './js/profil.js?v=__VERSION__',
+  './js/setelan.js?v=__VERSION__',
   './icons/icon-192.png?v=3',
   './icons/icon-512.png?v=3',
   './icons/apple-touch-icon.png?v=3'
