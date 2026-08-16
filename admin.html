@@ -5,19 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Baku Chat - Admin</title>
 <meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b0f17">
 <style>
   :root{
-    --bbm-blue-dark:#0039f0;
-    --bbm-blue:#0564f5;
-    --bbm-blue-light:#2f7dff;
-    --bg:#f4f7fb;
-    --card-bg:#ffffff;
-    --ink:#101f33;
-    --muted:#66798d;
-    --border:#e2e8f1;
-    --ok:#189a56;
-    --error:#e4394f;
-    --warn:#c8830a;
+    --bbm-blue-dark:#3f7bff;
+    --bbm-blue:#5b93ff;
+    --bbm-blue-light:#84aeff;
+    --bg:#0b0f17;
+    --card-bg:#141a24;
+    --ink:#e9edf5;
+    --muted:#8894a6;
+    --border:#242c3a;
+    --ok:#34c17a;
+    --error:#f2495c;
+    --warn:#e0a634;
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
@@ -25,7 +26,7 @@
 
   /* ---------- Login gate ---------- */
   #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
-  .login-card{width:100%;max-width:340px;background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:28px 24px;box-shadow:0 10px 30px rgba(16,31,51,0.08);}
+  .login-card{width:100%;max-width:340px;background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:28px 24px;box-shadow:0 10px 30px rgba(0,0,0,0.35);}
   .login-card h1{font-size:19px;margin:0 0 4px;font-weight:800;background:linear-gradient(90deg,var(--bbm-blue),var(--bbm-blue-light));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
   .login-card p{margin:0 0 20px;font-size:12.5px;color:var(--muted);}
   .field{margin-bottom:14px;}
@@ -68,13 +69,13 @@
   .u-name{font-size:14.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px;}
   .u-meta{font-size:11.5px;color:var(--muted);margin-top:2px;}
   .badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;}
-  .badge.active{background:rgba(24,154,86,0.12);color:var(--ok);}
-  .badge.banned{background:rgba(228,57,79,0.12);color:var(--error);}
+  .badge.active{background:rgba(52,193,122,0.16);color:var(--ok);}
+  .badge.banned{background:rgba(242,73,92,0.16);color:var(--error);}
   .u-actions{display:flex;gap:6px;flex-shrink:0;}
   .u-actions button{border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink);border-radius:8px;padding:7px 11px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
   .u-actions button:active{background:var(--border);}
-  .u-actions button.danger{color:var(--error);border-color:rgba(228,57,79,0.3);}
-  .u-actions button.warn{color:var(--warn);border-color:rgba(200,131,10,0.3);}
+  .u-actions button.danger{color:var(--error);border-color:rgba(242,73,92,0.4);}
+  .u-actions button.warn{color:var(--warn);border-color:rgba(224,166,52,0.4);}
 
   .empty-state,.loading-state{padding:50px 20px;text-align:center;color:var(--muted);font-size:13px;}
 
@@ -84,7 +85,7 @@
   .pager span{font-size:12.5px;color:var(--muted);}
 
   /* ---------- Modal / confirm ---------- */
-  .overlay{position:fixed;inset:0;background:rgba(16,31,51,0.5);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s ease;z-index:100;padding:20px;}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s ease;z-index:100;padding:20px;}
   .overlay.open{opacity:1;pointer-events:auto;}
   .modal{background:var(--card-bg);border-radius:16px;width:100%;max-width:340px;padding:22px 20px;transform:translateY(8px);transition:transform .18s ease;}
   .overlay.open .modal{transform:translateY(0);}
@@ -101,7 +102,7 @@
   .detail-row .k{color:var(--muted);}
   .detail-row .v{font-weight:600;text-align:right;word-break:break-all;}
 
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s ease, transform .2s ease;z-index:200;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1f2836;border:1px solid var(--border);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s ease, transform .2s ease;z-index:200;box-shadow:0 10px 30px rgba(0,0,0,0.4);}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
