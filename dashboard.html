@@ -120,6 +120,14 @@
     0%,100%{ box-shadow:0 0 0 0 rgba(240,41,63,0.55); }
     50%{ box-shadow:0 0 0 4px rgba(240,41,63,0); }
   }
+  .tabbar .tabitem .badge.status-newdot{
+    background:radial-gradient(circle at 30% 30%, #5b9dff, #2f6fed);
+    animation:badgePulseBlue 1.8s ease-in-out infinite;
+  }
+  @keyframes badgePulseBlue{
+    0%,100%{ box-shadow:0 0 0 0 rgba(47,111,237,0.55); }
+    50%{ box-shadow:0 0 0 4px rgba(47,111,237,0); }
+  }
   .chatlist{ flex:1; overflow-y:auto; }
   .skel-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; }
   .skel-avatar{ width:52px; height:52px; border-radius:50%; flex-shrink:0; background:var(--border); }
@@ -324,6 +332,7 @@
   .sst-item.active{ color:#04222f; }
   .sst-badge{ display:inline-flex; align-items:center; justify-content:center; min-width:16px; height:16px; padding:0 4px; border-radius:999px; background:rgba(34,216,230,0.18); color:#22d8e6; font-size:10px; font-weight:800; }
   .sst-item.active .sst-badge{ background:rgba(4,34,47,0.18); color:#04222f; }
+  .sst-dot{ width:7px; height:7px; border-radius:50%; background:#2f6fed; box-shadow:0 0 0 2px rgba(47,111,237,0.25); flex-shrink:0; }
   .sst-indicator{ position:absolute; z-index:1; top:4px; left:4px; width:calc(50% - 4px); height:calc(100% - 8px); border-radius:9px; background:linear-gradient(135deg,#22d8e6,#5be8c9); box-shadow:0 2px 10px rgba(34,216,230,0.35); transition:transform .28s cubic-bezier(.4,0,.2,1); }
   .status-subpanel{ display:none; }
   .status-subpanel.active{ display:block; }
@@ -376,7 +385,7 @@
     <div class="status-subtabs" id="statusSubtabs">
       <div class="sst-indicator" id="sstIndicator"></div>
       <div class="sst-item active" data-sst="saya"><span>Status Saya</span><span class="sst-badge" id="sstMyCount" style="display:none;"></span></div>
-      <div class="sst-item" data-sst="kontak"><span>Status Kontak</span><span class="sst-badge" id="sstKontakCount" style="display:none;"></span></div>
+      <div class="sst-item" data-sst="kontak"><span>Status Kontak</span><span class="sst-dot" id="sstKontakDot" style="display:none;"></span><span class="sst-badge" id="sstKontakCount" style="display:none;"></span></div>
     </div>
     <div id="myStatusPinned" class="status-subpanel active"></div>
     <div id="statusList" class="status-subpanel"></div>
@@ -439,7 +448,7 @@
   </div>
   <div class="tabbar">
     <div class="tabitem active" id="tabChats"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg><span class="tlabel">Chat</span></div>
-    <div class="tabitem" id="tabStatus"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 12h.01" stroke-width="3"/></svg><span class="tlabel">Status</span></div>
+    <div class="tabitem" id="tabStatus"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 12h.01" stroke-width="3"/></svg><span class="tlabel">Status</span><span class="badge status-newdot" id="tabStatusDot" style="display:none;"></span></div>
     <div class="tabitem" id="tabKontak"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span class="tlabel">Kontak</span></div>
     <div class="tabitem" id="tabNotif"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><span class="tlabel">Notifikasi</span><span class="badge" id="notifBadge" style="display:none;"></span></div>
   </div>
@@ -565,12 +574,28 @@ function timeAgo(iso){
   const myStatusInput=document.getElementById('myStatusInput'),postStatusBtn=document.getElementById('postStatusBtn'),myStatusMsg=document.getElementById('myStatusMsg'),photoBtn=document.getElementById('photoBtn');
   photoBtn.addEventListener('click',()=>{myStatusMsg.textContent='Fitur unggah foto belum tersedia.';myStatusMsg.className='search-msg err';});
   let statusSubtab='saya';
+  let latestKontakStatusTs=null;
+  function getStatusLastSeen(){ try{return localStorage.getItem('statusKontakLastSeen')||'';}catch(e){return '';} }
+  function markStatusKontakSeen(){
+    if(latestKontakStatusTs){ try{localStorage.setItem('statusKontakLastSeen',latestKontakStatusTs);}catch(e){} }
+    const tDot=document.getElementById('tabStatusDot'),sDot=document.getElementById('sstKontakDot');
+    if(tDot)tDot.style.display='none';if(sDot)sDot.style.display='none';
+  }
+  function updateStatusNewIndicator(otherRows){
+    latestKontakStatusTs=(otherRows&&otherRows.length>0)?otherRows[0].created_at:null;
+    const tDot=document.getElementById('tabStatusDot'),sDot=document.getElementById('sstKontakDot');
+    const hasNew=!!latestKontakStatusTs&&latestKontakStatusTs>getStatusLastSeen();
+    if(tDot)tDot.style.display=hasNew?'block':'none';
+    if(sDot)sDot.style.display=hasNew?'inline-block':'none';
+    if(hasNew&&statusSubtab==='kontak')markStatusKontakSeen();
+  }
   function setStatusSubtab(tab){
     statusSubtab=tab;
     document.querySelectorAll('.sst-item').forEach(el=>el.classList.toggle('active',el.dataset.sst===tab));
     const ind=document.getElementById('sstIndicator');if(ind)ind.style.transform=tab==='kontak'?'translateX(100%)':'translateX(0)';
     document.getElementById('myStatusPinned').classList.toggle('active',tab==='saya');
     document.getElementById('statusList').classList.toggle('active',tab==='kontak');
+    if(tab==='kontak')markStatusKontakSeen();
   }
   document.querySelectorAll('.sst-item').forEach(el=>el.addEventListener('click',()=>setStatusSubtab(el.dataset.sst)));
   postStatusBtn.addEventListener('click',async()=>{
@@ -636,6 +661,7 @@ function timeAgo(iso){
     if(!sRows||sRows.length===0){
       pinnedWrap.innerHTML=STATUS_EMPTY_MINE;sList.innerHTML=STATUS_EMPTY_KONTAK;
       myCountBadge.style.display='none';kontakCountBadge.style.display='none';
+      updateStatusNewIndicator([]);
       setStatusSubtab(statusSubtab);return;
     }
     const uIds=sRows.map(s=>s.user_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',uIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p);
@@ -653,6 +679,7 @@ function timeAgo(iso){
     sList.innerHTML=otherRows.length>0?otherRows.map(s=>statusCardHTML(s,reactionCountMap,myReactionMap,pMap,session.user.id)).join(''):STATUS_EMPTY_KONTAK;
     if(mineRows.length>0){myCountBadge.textContent=mineRows.length;myCountBadge.style.display='';}else{myCountBadge.style.display='none';}
     if(otherRows.length>0){kontakCountBadge.textContent=otherRows.length;kontakCountBadge.style.display='';}else{kontakCountBadge.style.display='none';}
+    updateStatusNewIndicator(otherRows);
     setStatusSubtab(statusSubtab);
     document.querySelectorAll('#statusList .status-card .sc-avatar').forEach(a=>{
       const card=a.closest('.status-card');
