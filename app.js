@@ -265,6 +265,42 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 async function initPushNotifications(userId) {
+  // ==== Native app (TWA) flow ====
+  // LauncherActivity.java nyisipin ?fcm_token=... ke URL waktu app dibuka.
+  // Kalau ketemu, simpan ke Supabase dan SKIP Web Push biasa di bawah,
+  // biar notifikasi gak dobel (satu dari FCM native, satu dari web push).
+  const urlParams = new URLSearchParams(window.location.search);
+  const fcmToken = urlParams.get('fcm_token');
+  const isTWA = document.referrer.startsWith('android-app://');
+
+  if (fcmToken) {
+    try {
+      await supabaseClient.from('push_subscriptions').upsert(
+        {
+          user_id: userId,
+          endpoint: 'fcm:' + fcmToken, // prefix biar gak bentrok sama endpoint web push
+          fcm_token: fcmToken,
+          p256dh: null,
+          auth: null
+        },
+        { onConflict: 'endpoint' }
+      );
+      console.log('FCM token (native app) tersimpan.');
+    } catch (err) {
+      console.error('Gagal simpan FCM token:', err);
+    }
+
+    // Bersihkan token dari URL biar gak nyangkut di history/address bar
+    urlParams.delete('fcm_token');
+    const cleanQuery = urlParams.toString();
+    const cleanUrl = window.location.pathname + (cleanQuery ? '?' + cleanQuery : '');
+    window.history.replaceState({}, '', cleanUrl);
+  }
+
+  // Lagi jalan di dalam app native -> FCM yang nanganin, gak perlu Web Push lagi
+  if (isTWA) return;
+
+  // ==== Browser biasa (bukan app native): tetap pakai Web Push standar ====
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     console.log('Push notification tidak didukung di browser ini.');
     return;
