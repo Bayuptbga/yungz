@@ -163,11 +163,13 @@
   .fab{ position:absolute; right:18px; bottom:calc(96px + env(safe-area-inset-bottom)); width:56px; height:56px; border-radius:50%; background:var(--bbm-blue); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.5); cursor:pointer; }
   .fab svg{width:24px;height:24px;}
   .icon-btn{position:relative;}
-  .dropdown-menu{ position:absolute; top:38px; right:0; background:var(--card-bg); color:var(--ink); border-radius:8px; box-shadow:0 4px 18px rgba(0,0,0,0.5); min-width:170px; padding:6px 0; opacity:0; transform:translateY(-6px); pointer-events:none; transition:opacity .15s ease, transform .15s ease; z-index:50; border:1px solid var(--border); }
+  .dropdown-menu{ position:absolute; top:38px; right:0; background:var(--card-bg); color:var(--ink); border-radius:8px; box-shadow:0 4px 18px rgba(0,0,0,0.5); min-width:200px; padding:6px 0; opacity:0; transform:translateY(-6px); pointer-events:none; transition:opacity .15s ease, transform .15s ease; z-index:50; border:1px solid var(--border); }
   .dropdown-menu.open{ opacity:1; transform:translateY(0); pointer-events:auto; }
   .dropdown-menu .dd-item{ padding:11px 16px; font-size:14px; cursor:pointer; display:flex; align-items:center; gap:10px; }
   .dropdown-menu .dd-item:active{ background:var(--border); }
   .dropdown-menu .dd-item svg{ width:18px;height:18px; flex-shrink:0; stroke:var(--ink); }
+  .dropdown-menu .dd-sep{ height:1px; background:var(--border); margin:6px 0; }
+  .profile-avatar-btn{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:12px; background:var(--bbm-blue); flex-shrink:0; }
   .pin-modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:60; padding:24px; }
   .pin-modal-overlay.open{ opacity:1; pointer-events:auto; }
   .pin-modal{ background:var(--card-bg); border-radius:14px; padding:26px 22px; width:100%; max-width:300px; text-align:center; border:1px solid var(--border); }
@@ -356,7 +358,20 @@
   <div id="offlineBanner"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.58 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg><span>Anda sedang offline</span></div>
   <div class="appbar">
     <div class="left"><h1 class="brand">Baku Chat</h1></div>
-    <div class="right"><div class="icon-btn" id="searchOpenBtn" title="Cari"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div></div>
+    <div class="right">
+      <div class="icon-btn" id="profileBtn" title="Profil">
+        <div class="profile-avatar-btn" id="profileAvatarBtn">?</div>
+        <div class="dropdown-menu" id="profileDropdown">
+          <div class="dd-item" onclick="location.href='profil.html'"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg><span>Edit Profil</span></div>
+          <div class="dd-item" onclick="location.href='setelan.html#privasi'"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><span>Privasi &amp; Keamanan</span></div>
+          <div class="dd-item" onclick="location.href='setelan.html#data'"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 5v6c0 1.7-4 3-9 3s-9-1.3-9-3V5"/><path d="M3 11v6c0 1.7 4 3 9 3s9-1.3 9-3v-6"/></svg><span>Data &amp; Penyimpanan</span></div>
+          <div class="dd-item" onclick="location.href='setelan.html'"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg><span>Setelan Lainnya</span></div>
+          <div class="dd-sep"></div>
+          <div class="dd-item" id="profileLogoutBtn" style="color:var(--error);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/></svg><span>Keluar</span></div>
+        </div>
+      </div>
+      <div class="icon-btn" id="searchOpenBtn" title="Cari"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+    </div>
     <div class="search-bar" id="searchBar">
       <div class="search-close" id="searchCloseBtn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
       <div class="search-wrap"><input type="text" id="searchInput" placeholder="Cari..."></div>
@@ -452,7 +467,6 @@
     <div class="tabitem" id="tabStatus"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 12h.01" stroke-width="3"/></svg><span class="tlabel">Status</span><span class="badge status-newdot" id="tabStatusDot" style="display:none;"></span></div>
     <div class="tabitem" id="tabKontak"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span class="tlabel">Kontak</span></div>
     <div class="tabitem" id="tabNotif"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><span class="tlabel">Notifikasi</span><span class="badge" id="notifBadge" style="display:none;"></span></div>
-    <div class="tabitem" id="tabSetelan"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span class="tlabel">Setelan</span></div>
   </div>
 </div>
 <script>
@@ -513,7 +527,7 @@
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session){window.location.replace('index.html');return;}
     const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, pin, avatar_url').eq('id',session.user.id).maybeSingle();
     if(profErr){console.error('Gagal memuat profil:',profErr);}
-    if(prof){currentUserPin=prof.pin;applyAvatarEl(document.getElementById('composerAvatar'),session.user.id,prof.username,prof.avatar_url);}
+    if(prof){currentUserPin=prof.pin;applyAvatarEl(document.getElementById('composerAvatar'),session.user.id,prof.username,prof.avatar_url);applyAvatarEl(document.getElementById('profileAvatarBtn'),session.user.id,prof.username,prof.avatar_url);}
     initPushNotifications(session.user.id);trackOnlinePresence(session.user.id);
     const {count:pCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('addressee_id',session.user.id).eq('status','pending');
     const {count:uCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('requester_id',session.user.id).in('status',['accepted','declined']).eq('seen_by_requester',false);
@@ -984,7 +998,16 @@ function timeAgo(iso){
       goToStep(order[nextIdx]);
     }, {passive:true});
   })();
-  document.getElementById('tabSetelan').addEventListener('click',()=>{window.location.href='setelan.html';});
+  // ---- Ikon profil (di samping search bar) -> dropdown berisi menu dari Setelan ----
+  const profileBtn=document.getElementById('profileBtn'),profileDropdown=document.getElementById('profileDropdown');
+  profileBtn.addEventListener('click',(e)=>{e.stopPropagation();profileDropdown.classList.toggle('open');});
+  document.addEventListener('click',()=>{profileDropdown.classList.remove('open');});
+  document.getElementById('profileLogoutBtn').addEventListener('click',async(e)=>{
+    e.stopPropagation();profileDropdown.classList.remove('open');
+    if(!confirm('Yakin ingin keluar?'))return;
+    await supabaseClient.auth.signOut();
+    window.location.replace('index.html');
+  });
   document.getElementById('fabNewChat').addEventListener('click',openNewChatSheet);
   let ncwAllContacts=[];
   async function openNewChatSheet(){
