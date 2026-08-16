@@ -131,6 +131,10 @@
   .bubble-row.theirs .bubble{ background:var(--card-bg); border:1px solid var(--border); border-top-left-radius:4px; }
   .bubble .txt{ align-self:stretch; min-width:36px; text-align:left; white-space:pre-wrap; word-wrap:break-word; }
   .bubble .meta{ display:flex; align-items:center; gap:4px; margin-top:3px; font-size:10.5px; color:var(--ink-soft); white-space:nowrap; }
+  .tick{ display:inline-flex; align-items:center; line-height:0; }
+  .tick svg{ display:block; }
+  .tick.tick-pop{ animation:tickPop .38s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes tickPop{ 0%{ transform:scale(.55); opacity:.45; } 55%{ transform:scale(1.2); } 100%{ transform:scale(1); opacity:1; } }
   .bubble-row.pressing .bubble{ transform:scale(0.96); transition:transform .12s ease; }
   .reply-quote{ align-self:stretch; display:flex; flex-direction:column; gap:1px; padding:6px 9px; margin-bottom:5px; border-radius:7px; background:rgba(255,255,255,0.07); border-left:3px solid #22d8e6; cursor:pointer; max-width:100%; }
   .bubble-row.mine .reply-quote{ border-left-color:#5fd6b0; background:rgba(0,0,0,0.15); }
@@ -260,11 +264,16 @@
   .pin-banner .pb-dismiss{ background:none; border:none; color:var(--muted); font-size:12px; font-weight:600; cursor:pointer; padding:8px 4px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="offline-db.js?v=__VERSION__"></script>
 <script src="app.js?v=__VERSION__"></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js');});}</script>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="tickReadGrad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#22d8e6"/>
+    <stop offset="100%" stop-color="#0a84ff"/>
+  </linearGradient>
+</defs></svg>
 <div class="phone">
   <div id="authGate"><div class="spinner"></div></div>
   <div class="appbar">
@@ -342,7 +351,6 @@
   const peerId = (rawUid && UUID_RE.test(rawUid)) ? rawUid : null;
   let currentUserId = null; let peerUsername = params.get('uname') || '';
   let myPrivateKey = null, myPublicKeyB64 = null, peerPublicKeyB64 = null;
-  let convoKey = null; // diisi begitu currentUserId & peerId diketahui, dipakai buat kunci cache offline
   const msgArea = document.getElementById('msgArea'), msgInput = document.getElementById('msgInput'), sendBtn = document.getElementById('sendBtn'), peerAvatar = document.getElementById('peerAvatar'), peerUnameEl = document.getElementById('peerUname');
   const replyBar = document.getElementById('replyBar'), rbName = document.getElementById('rbName'), rbText = document.getElementById('rbText'), rbClose = document.getElementById('rbClose');
   const messagesById = new Map(); // id -> {id, sender_id, content}  (buat render kutipan reply)
@@ -367,10 +375,13 @@
     document.getElementById('peerWho').addEventListener('click',goProfil);
   }
   function dayLabel(iso){const d=new Date(iso),t=new Date(),y=new Date();y.setDate(t.getDate()-1);const s=(a,b)=>a.toDateString()===b.toDateString();if(s(d,t))return'Hari ini';if(s(d,y))return'Kemarin';return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});}
-  function tickSvg(del,read){
-    if(read) return `<svg viewBox="0 0 20 15" width="16" height="12" fill="none" stroke="#22d8e6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
-    if(del) return `<svg viewBox="0 0 20 15" width="16" height="12" fill="none" stroke="#7ea0b7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
-    return `<svg viewBox="0 0 16 15" width="13" height="12" fill="none" stroke="#7ea0b7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L14 3"/></svg>`;
+  // Status: 'sent' (centang 1, abu), 'delivered' (centang 2, abu), 'read' (centang 2, gradient cyan->biru)
+  function tickStatus(del,read){ return read?'read':(del?'delivered':'sent'); }
+  function tickSvg(status){
+    const attrs='width="16" height="12" viewBox="0 0 22 16" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+    if(status==='sent') return `<svg ${attrs} stroke="#7ea0b7"><path d="M4 9.3l4.1 4.1L21 3.6"/></svg>`;
+    const strokeColor = status==='read' ? 'url(#tickReadGrad)' : '#7ea0b7';
+    return `<svg ${attrs} stroke="${strokeColor}"><path d="M1 9.3l4.1 4.1L14 4.6"/><path d="M8 9.3l4.1 4.1L22 4"/></svg>`;
   }
   async function init(){
     try{
@@ -379,32 +390,16 @@
       if(sessErr) throw sessErr;
       if(!session){window.location.replace('index.html');return;}
       currentUserId=session.user.id;
-      convoKey=OfflineDB.convoKey(currentUserId,peerId);
-      OfflineBanner.init(()=>{ loadMessages(false); }); // begitu online lagi: muat ulang pesan terbaru
       // Device baru otomatis dapat keypair baru (tidak ada restore/backup PIN,
       // mirip default WhatsApp: chat lama tidak terbaca lagi di device baru).
       let kp=await E2E.ensureKeypair(currentUserId);
       myPrivateKey=kp.privateKey;myPublicKeyB64=kp.publicKeyB64;
       document.getElementById('authGate').style.display='none';
-      let rel=null, prof=null;
-      try{
-        const {data:relData,error:relErr}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
-        if(relErr) throw relErr;
-        rel=relData;
-        const {data:profData,error:profErr}=await supabaseClient.from('profiles').select('username, public_key, avatar_url').eq('id',peerId).maybeSingle();
-        if(profErr) throw profErr;
-        prof=profData;
-        // Simpan hasil terbaru ke cache supaya chat ini masih bisa dibuka saat offline nanti.
-        await OfflineDB.setCache('peerProfile-'+peerId,{rel:true,prof});
-      }catch(netErr){
-        // Gagal karena offline/network -> coba pakai data yang pernah tersimpan di device ini.
-        const cached=await OfflineDB.getCache('peerProfile-'+peerId);
-        if(!cached){throw netErr;} // belum pernah buka chat ini sebelumnya & offline -> memang tidak bisa
-        OfflineBanner.show();
-        rel=cached.rel?{status:'accepted'}:null;
-        prof=cached.prof;
-      }
+      const {data:rel,error:relErr}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
+      if(relErr) throw relErr;
       if(!rel){msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#7ea0b7" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.6 3-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/><path d="M18 8v5M15.5 10.5h5"/></svg></div><div class="es-title">Belum berteman</div><span>Tambahkan lewat tab Kontak dulu ya.</span></div>`;return;}
+      const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, public_key, avatar_url').eq('id',peerId).maybeSingle();
+      if(profErr) throw profErr;
       if(!peerUsername) peerUsername=prof?prof.username:'Pengguna';
       peerPublicKeyB64=prof&&prof.public_key?prof.public_key:null;
       document.getElementById('keyChangeInfoText').textContent='Kode keamanan enkripsi kamu dengan '+(peerUsername||'kontak ini')+' sudah berubah sejak percakapan terakhir. Ini biasanya terjadi kalau dia memasang ulang aplikasi, ganti HP, atau menghapus data aplikasi. Kalau ragu, coba konfirmasi lewat cara lain sebelum membagikan info sensitif.';
@@ -453,34 +448,18 @@
     if(isOnline){peerSubEl.textContent='Online';peerSubEl.classList.add('online');statusDotEl.classList.add('online');}else{peerSubEl.textContent='Offline';peerSubEl.classList.remove('online');statusDotEl.classList.remove('online');}
   }
   let clearedBefore=null;
-  const E2E_BANNER='<div class="e2e-banner" id="e2eBanner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Pesan terenkripsi secara end-to-end. Hanya orang di obrolan ini yang bisa membaca atau membagikannya. <span class="e2e-learn">Pelajari selengkapnya</span>.</span></div>';
   async function loadMessages(showKeyChangeNotice){
+    const {data:clearRow}=await supabaseClient.from('chat_clears').select('cleared_before').eq('user_id',currentUserId).eq('peer_id',peerId).maybeSingle();
+    clearedBefore=clearRow?clearRow.cleared_before:null;
+    let query=supabaseClient.from('messages').select('id, sender_id, content, created_at, delivered_at, read_at, reply_to_id').or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`).order('created_at',{ascending:true});
+    if(clearedBefore)query=query.gt('created_at',clearedBefore);
+    const {data:rows,error}=await query;
+    const banner=`<div class="e2e-banner" id="e2eBanner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Pesan terenkripsi secara end-to-end. Hanya orang di obrolan ini yang bisa membaca atau membagikannya. <span class="e2e-learn">Pelajari selengkapnya</span>.</span></div>`;
     const keyNotice=showKeyChangeNotice?keyChangeNoticeHTML(peerUsername):'';
-    let rows=null, fromCache=false;
-    try{
-      const {data:clearRow,error:clearErr}=await supabaseClient.from('chat_clears').select('cleared_before').eq('user_id',currentUserId).eq('peer_id',peerId).maybeSingle();
-      if(clearErr) throw clearErr;
-      clearedBefore=clearRow?clearRow.cleared_before:null;
-      let query=supabaseClient.from('messages').select('id, sender_id, content, created_at, delivered_at, read_at, reply_to_id').or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${currentUserId})`).order('created_at',{ascending:true});
-      if(clearedBefore)query=query.gt('created_at',clearedBefore);
-      const {data:fetched,error}=await query;
-      if(error) throw error;
-      rows=fetched||[];
-      for(const m of rows){m.content=await E2E.decryptMessage(myPrivateKey,m.content,m.sender_id===currentUserId,peerPublicKeyB64);}
-      await OfflineDB.saveMessages(convoKey,rows); // simpan versi sudah didekripsi buat dibaca offline nanti
-    }catch(netErr){
-      const cached=await OfflineDB.getMessages(convoKey);
-      if(cached===null){ // belum pernah ada cache -> memang gagal, tampilkan pesan error seperti biasa
-        msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#f15c6d" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div><div class="es-title">Gagal memuat percakapan</div><span>Cek koneksi internet lalu tarik-turun atau buka ulang chat ini.</span></div>`;
-        return;
-      }
-      rows=cached; fromCache=true; OfflineBanner.show();
-    }
-    if(rows.length===0 && !fromCache){msgArea.innerHTML=E2E_BANNER+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#7ea0b7" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`+keyNotice;
-    }else{
-      msgArea.innerHTML=E2E_BANNER;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});
-      if(keyNotice){const div=document.createElement('div');div.innerHTML=keyNotice;msgArea.appendChild(div.firstElementChild);}
-    }
+    if(error||!rows||rows.length===0){msgArea.innerHTML=banner+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#7ea0b7" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`+keyNotice;return;}
+    for(const m of rows){m.content=await E2E.decryptMessage(myPrivateKey,m.content,m.sender_id===currentUserId,peerPublicKeyB64);}
+    msgArea.innerHTML=banner;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});
+    if(keyNotice){const div=document.createElement('div');div.innerHTML=keyNotice;msgArea.appendChild(div.firstElementChild);}
     scrollToBottom();
   }
   function replyQuoteHTML(replyToId){
@@ -514,7 +493,7 @@
       contentHTML = `<div class="txt"></div>`;
     }
 
-    row.innerHTML=`<div class="swipe-reply-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#22d8e6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17l-5-5 5-5"/><path d="M4 12h10a5 5 0 015 5v1"/></svg></div><div class="bubble">${replyQuoteHTML(m.reply_to_id)}${contentHTML}<div class="meta"><span>${timeLabel(m.created_at)}</span>${mine?`<span class="tick">${tickSvg(m.delivered_at,m.read_at)}</span>`:''}</div></div>`;
+    row.innerHTML=`<div class="swipe-reply-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#22d8e6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17l-5-5 5-5"/><path d="M4 12h10a5 5 0 015 5v1"/></svg></div><div class="bubble">${replyQuoteHTML(m.reply_to_id)}${contentHTML}<div class="meta"><span>${timeLabel(m.created_at)}</span>${mine?`<span class="tick" data-status="${tickStatus(m.delivered_at,m.read_at)}">${tickSvg(tickStatus(m.delivered_at,m.read_at))}</span>`:''}</div></div>`;
     
     if (!isInviteContent(m.content)) {
       row.querySelector('.txt').textContent=normalizeText(m.content);
@@ -649,7 +628,14 @@
       const n=new Date().toISOString();if(document.visibilityState==='visible')await supabaseClient.from('messages').update({delivered_at:n,read_at:n}).eq('id',m.id);else await supabaseClient.from('messages').update({delivered_at:n}).eq('id',m.id).is('delivered_at',null);
     }).on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:`sender_id=eq.${currentUserId}`},async(p)=>{
       const row=msgArea.querySelector(`.bubble-row[data-id="${p.new.id}"]`);if(!row)return;
-      const t=row.querySelector('.tick');if(t)t.innerHTML=tickSvg(p.new.delivered_at,p.new.read_at);
+      const t=row.querySelector('.tick');
+      if(t){
+        const newStatus=tickStatus(p.new.delivered_at,p.new.read_at);
+        const justRead = t.dataset.status!=='read' && newStatus==='read';
+        t.dataset.status=newStatus;
+        t.innerHTML=tickSvg(newStatus);
+        if(justRead){ t.classList.remove('tick-pop'); void t.offsetWidth; t.classList.add('tick-pop'); }
+      }
       const card=row.querySelector('.invite-card');
       if(card){
         const decrypted=await E2E.decryptMessage(myPrivateKey,p.new.content,true,peerPublicKeyB64);
