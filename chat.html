@@ -271,12 +271,6 @@
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js');});}</script>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-  <linearGradient id="tickReadGrad" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0%" stop-color="#0a84ff"/>
-    <stop offset="100%" stop-color="#22d8e6"/>
-  </linearGradient>
-</defs></svg>
 <div class="phone">
   <div id="authGate"><div class="spinner"></div></div>
   <div class="appbar">
@@ -378,17 +372,17 @@
     document.getElementById('peerWho').addEventListener('click',goProfil);
   }
   function dayLabel(iso){const d=new Date(iso),t=new Date(),y=new Date();y.setDate(t.getDate()-1);const s=(a,b)=>a.toDateString()===b.toDateString();if(s(d,t))return'Hari ini';if(s(d,y))return'Kemarin';return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});}
-  // Status: 'sent' (badge outline, centang 1), 'delivered' (badge abu terisi, centang 2), 'read' (badge putih terisi, centang 2 gradient)
+  // Status: 'sent' (badge abu, centang 1 putih), 'delivered' (badge biru, centang 2 putih), 'read' (badge hijau, centang 2 biru)
   function tickStatus(del,read){ return read?'read':(del?'delivered':'sent'); }
   function tickSvg(status){
     const attrs='width="15" height="15" viewBox="0 0 24 24" fill="none"';
     if(status==='sent'){
-      return `<svg ${attrs}><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.55)" stroke-width="1.3"/><path d="M7.3 12.3l2.7 2.7L16.8 8.4" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+      return `<svg ${attrs}><circle cx="12" cy="12" r="10" fill="#8a97a3"/><path d="M7.3 12.3l2.7 2.7L16.8 8.4" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
     }
     if(status==='delivered'){
-      return `<svg ${attrs}><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.32)"/><path d="M5.8 12.3l2.6 2.6L14 9" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M10.8 12.3l2.6 2.6L19 9" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+      return `<svg ${attrs}><circle cx="12" cy="12" r="10" fill="#0a84ff"/><path d="M5.8 12.3l2.6 2.6L14 9" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M10.8 12.3l2.6 2.6L19 9" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
     }
-    return `<svg ${attrs}><circle cx="12" cy="12" r="10" fill="#ffffff"/><path d="M5.8 12.3l2.6 2.6L14 9" stroke="url(#tickReadGrad)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M10.8 12.3l2.6 2.6L19 9" stroke="url(#tickReadGrad)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+    return `<svg ${attrs}><circle cx="12" cy="12" r="10" fill="#2ecc71"/><path d="M5.8 12.3l2.6 2.6L14 9" stroke="#0a84ff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M10.8 12.3l2.6 2.6L19 9" stroke="#0a84ff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
   }
   async function init(){
     try{
