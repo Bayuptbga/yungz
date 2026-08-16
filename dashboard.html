@@ -283,7 +283,7 @@
   .my-status-editor{padding:0 16px 16px; background:var(--card-bg); border-bottom:8px solid var(--bg);}
   /* ---- Status sebagai feed card rapi (avatar+nama+waktu, konten, reaksi) ---- */
   @keyframes cardIn{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:translateY(0); } }
-  .status-card{ background:linear-gradient(180deg, var(--card-bg), #0f2c46); border-radius:16px; margin:0 12px 14px; overflow:hidden; border:1px solid var(--border); box-shadow:0 4px 16px rgba(0,0,0,0.3); animation:cardIn .28s ease both; }
+  .status-card{ background:linear-gradient(180deg, var(--card-bg), #0f2c46); border-radius:16px; margin:0 16px 14px; overflow:hidden; border:1px solid var(--border); box-shadow:0 4px 16px rgba(0,0,0,0.3); animation:cardIn .28s ease both; }
   .status-card .sc-head{ display:flex; align-items:center; gap:12px; padding:14px 15px 12px; }
   .sc-avatar-wrap{ width:42px; height:42px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
   .sc-avatar-wrap.ring{ background:linear-gradient(135deg,#22d8e6,#2a7de1); padding:2px; }
@@ -324,16 +324,16 @@
   .composer-icon:active{ background:var(--border); }
   .composer-icon.send{ background:var(--bbm-blue); }
   .composer-icon.send.disabled{ opacity:.5; pointer-events:none; }
-  #myStatusMsg{ margin:6px 18px 0; }
-  /* ---- Sub-tab Status Saya / Status Kontak ---- */
-  .status-subtabs{ position:relative; display:flex; margin:14px 16px 4px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:4px; }
-  .sst-item{ position:relative; z-index:2; flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 8px; border-radius:9px; font-size:12.5px; font-weight:700; color:var(--muted); cursor:pointer; user-select:none; transition:color .25s ease; }
+  #myStatusMsg{ margin:0 18px; min-height:0; }
+  #myStatusMsg:empty{ display:none; }
+  /* ---- Sub-tab Saya / Kontak: chip pil kecil ---- */
+  .status-subtabs{ display:flex; gap:8px; margin:12px 16px 14px; }
+  .sst-item{ display:flex; align-items:center; gap:5px; padding:6px 13px; border-radius:999px; font-size:12px; font-weight:700; color:var(--muted); background:var(--card-bg); border:1px solid var(--border); cursor:pointer; user-select:none; transition:color .2s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease; }
   .sst-item:active{ opacity:.8; }
-  .sst-item.active{ color:#04222f; }
-  .sst-badge{ display:inline-flex; align-items:center; justify-content:center; min-width:16px; height:16px; padding:0 4px; border-radius:999px; background:rgba(34,216,230,0.18); color:#22d8e6; font-size:10px; font-weight:800; }
+  .sst-item.active{ color:#04222f; background:linear-gradient(135deg,#22d8e6,#5be8c9); border-color:transparent; box-shadow:0 2px 10px rgba(34,216,230,0.35); }
+  .sst-badge{ display:inline-flex; align-items:center; justify-content:center; min-width:15px; height:15px; padding:0 4px; border-radius:999px; background:rgba(34,216,230,0.18); color:#22d8e6; font-size:9.5px; font-weight:800; }
   .sst-item.active .sst-badge{ background:rgba(4,34,47,0.18); color:#04222f; }
-  .sst-dot{ width:7px; height:7px; border-radius:50%; background:#2f6fed; box-shadow:0 0 0 2px rgba(47,111,237,0.25); flex-shrink:0; }
-  .sst-indicator{ position:absolute; z-index:1; top:4px; left:4px; width:calc(50% - 4px); height:calc(100% - 8px); border-radius:9px; background:linear-gradient(135deg,#22d8e6,#5be8c9); box-shadow:0 2px 10px rgba(34,216,230,0.35); transition:transform .28s cubic-bezier(.4,0,.2,1); }
+  .sst-dot{ width:6px; height:6px; border-radius:50%; background:#2f6fed; box-shadow:0 0 0 2px rgba(47,111,237,0.25); flex-shrink:0; }
   .status-subpanel{ display:none; }
   .status-subpanel.active{ display:block; }
 </style>
@@ -383,9 +383,8 @@
     </div>
     <div class="search-msg" id="myStatusMsg"></div>
     <div class="status-subtabs" id="statusSubtabs">
-      <div class="sst-indicator" id="sstIndicator"></div>
-      <div class="sst-item active" data-sst="saya"><span>Status Saya</span><span class="sst-badge" id="sstMyCount" style="display:none;"></span></div>
-      <div class="sst-item" data-sst="kontak"><span>Status Kontak</span><span class="sst-dot" id="sstKontakDot" style="display:none;"></span><span class="sst-badge" id="sstKontakCount" style="display:none;"></span></div>
+      <div class="sst-item active" data-sst="saya"><span>Saya</span><span class="sst-badge" id="sstMyCount" style="display:none;"></span></div>
+      <div class="sst-item" data-sst="kontak"><span>Kontak</span><span class="sst-dot" id="sstKontakDot" style="display:none;"></span><span class="sst-badge" id="sstKontakCount" style="display:none;"></span></div>
     </div>
     <div id="myStatusPinned" class="status-subpanel active"></div>
     <div id="statusList" class="status-subpanel"></div>
@@ -592,7 +591,6 @@ function timeAgo(iso){
   function setStatusSubtab(tab){
     statusSubtab=tab;
     document.querySelectorAll('.sst-item').forEach(el=>el.classList.toggle('active',el.dataset.sst===tab));
-    const ind=document.getElementById('sstIndicator');if(ind)ind.style.transform=tab==='kontak'?'translateX(100%)':'translateX(0)';
     document.getElementById('myStatusPinned').classList.toggle('active',tab==='saya');
     document.getElementById('statusList').classList.toggle('active',tab==='kontak');
     if(tab==='kontak')markStatusKontakSeen();
