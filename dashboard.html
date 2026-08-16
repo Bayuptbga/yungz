@@ -317,6 +317,16 @@
   .composer-icon.send{ background:var(--bbm-blue); }
   .composer-icon.send.disabled{ opacity:.5; pointer-events:none; }
   #myStatusMsg{ margin:6px 18px 0; }
+  /* ---- Sub-tab Status Saya / Status Kontak ---- */
+  .status-subtabs{ position:relative; display:flex; margin:14px 16px 4px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:4px; gap:2px; }
+  .sst-item{ position:relative; z-index:2; flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 8px; border-radius:9px; font-size:12.5px; font-weight:700; color:var(--muted); cursor:pointer; user-select:none; transition:color .25s ease; }
+  .sst-item:active{ opacity:.8; }
+  .sst-item.active{ color:#04222f; }
+  .sst-badge{ display:inline-flex; align-items:center; justify-content:center; min-width:16px; height:16px; padding:0 4px; border-radius:999px; background:rgba(34,216,230,0.18); color:#22d8e6; font-size:10px; font-weight:800; }
+  .sst-item.active .sst-badge{ background:rgba(4,34,47,0.18); color:#04222f; }
+  .sst-indicator{ position:absolute; z-index:1; top:4px; left:4px; width:calc(50% - 5px); height:calc(100% - 8px); border-radius:9px; background:linear-gradient(135deg,#22d8e6,#5be8c9); box-shadow:0 2px 10px rgba(34,216,230,0.35); transition:transform .28s cubic-bezier(.4,0,.2,1); }
+  .status-subpanel{ display:none; }
+  .status-subpanel.active{ display:block; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js?v=__VERSION__"></script>
@@ -363,10 +373,13 @@
       </div>
     </div>
     <div class="search-msg" id="myStatusMsg"></div>
-    <div class="section-title status-toggle" id="myStatusTitle" style="display:none;"><span>Status Saya</span><span id="myStatusCount" class="count-badge" style="display:none;"></span><svg id="myStatusArrow" class="status-toggle-arrow" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-    <div id="myStatusPinned"></div>
-    <div class="section-title">Pembaruan Kontak</div>
-    <div id="statusList"></div>
+    <div class="status-subtabs" id="statusSubtabs">
+      <div class="sst-indicator" id="sstIndicator"></div>
+      <div class="sst-item active" data-sst="saya"><span>Status Saya</span><span class="sst-badge" id="sstMyCount" style="display:none;"></span></div>
+      <div class="sst-item" data-sst="kontak"><span>Status Kontak</span><span class="sst-badge" id="sstKontakCount" style="display:none;"></span></div>
+    </div>
+    <div id="myStatusPinned" class="status-subpanel active"></div>
+    <div id="statusList" class="status-subpanel"></div>
   </div>
   <div class="tab-panel" id="panelKontak">
     <div class="fab" title="Tambah kontak" id="fabAddContact"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 20c0-4 3-7 7-7s7 3 7 7"/><path d="M17 8h5M19.5 5.5v5"/></svg></div>
@@ -433,7 +446,6 @@
 </div>
 <script>
   let currentUserPin=null,myPrivateKey=null;const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
-  let myStatusCollapsed=false;
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return(u||'?').slice(0,2).toUpperCase();}
   // Helper foto profil: dipakai di template string (avatarStyle/avatarInner) dan di DOM langsung (applyAvatarEl).
@@ -552,11 +564,15 @@ function timeAgo(iso){
   }
   const myStatusInput=document.getElementById('myStatusInput'),postStatusBtn=document.getElementById('postStatusBtn'),myStatusMsg=document.getElementById('myStatusMsg'),photoBtn=document.getElementById('photoBtn');
   photoBtn.addEventListener('click',()=>{myStatusMsg.textContent='Fitur unggah foto belum tersedia.';myStatusMsg.className='search-msg err';});
-  document.getElementById('myStatusTitle').addEventListener('click',()=>{
-    myStatusCollapsed=!myStatusCollapsed;
-    document.getElementById('myStatusTitle').classList.toggle('collapsed',myStatusCollapsed);
-    document.getElementById('myStatusPinned').style.display=myStatusCollapsed?'none':'';
-  });
+  let statusSubtab='saya';
+  function setStatusSubtab(tab){
+    statusSubtab=tab;
+    document.querySelectorAll('.sst-item').forEach(el=>el.classList.toggle('active',el.dataset.sst===tab));
+    const ind=document.getElementById('sstIndicator');if(ind)ind.style.transform=tab==='kontak'?'translateX(100%)':'translateX(0)';
+    document.getElementById('myStatusPinned').classList.toggle('active',tab==='saya');
+    document.getElementById('statusList').classList.toggle('active',tab==='kontak');
+  }
+  document.querySelectorAll('.sst-item').forEach(el=>el.addEventListener('click',()=>setStatusSubtab(el.dataset.sst)));
   postStatusBtn.addEventListener('click',async()=>{
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
     const content=myStatusInput.value.trim();
@@ -606,15 +622,22 @@ function timeAgo(iso){
       </div>
     </div>`;
   }
+  const STATUS_EMPTY_MINE='<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Anda belum memposting status.</div>';
+  const STATUS_EMPTY_KONTAK='<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada pembaruan dari kontak.</div>';
   async function loadStatusTab(showSkeleton=true){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
-    const sList=document.getElementById('statusList');if(showSkeleton)sList.innerHTML=skeletonRow().repeat(3);
-    const pinnedWrap=document.getElementById('myStatusPinned'),pinnedTitle=document.getElementById('myStatusTitle');
+    const sList=document.getElementById('statusList'),pinnedWrap=document.getElementById('myStatusPinned');
+    if(showSkeleton){sList.innerHTML=skeletonRow().repeat(3);pinnedWrap.innerHTML=skeletonRow().repeat(2);}
     const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
     const oIds=(rows||[]).map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
     const allIds=[session.user.id,...oIds];
     const {data:sRows}=await supabaseClient.from('statuses').select('id, user_id, content, created_at, expires_at').in('user_id',allIds).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
-    if(!sRows||sRows.length===0){pinnedTitle.style.display='none';pinnedWrap.style.display='none';pinnedWrap.innerHTML='';sList.innerHTML='<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada pembaruan status.</div>';return;}
+    const myCountBadge=document.getElementById('sstMyCount'),kontakCountBadge=document.getElementById('sstKontakCount');
+    if(!sRows||sRows.length===0){
+      pinnedWrap.innerHTML=STATUS_EMPTY_MINE;sList.innerHTML=STATUS_EMPTY_KONTAK;
+      myCountBadge.style.display='none';kontakCountBadge.style.display='none';
+      setStatusSubtab(statusSubtab);return;
+    }
     const uIds=sRows.map(s=>s.user_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',uIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p);
     const sIds=sRows.map(s=>s.id);const {data:likeRows}=await supabaseClient.from('status_likes').select('status_id, user_id, reaction').in('status_id',sIds);
     const reactionCountMap={},myReactionMap={};
@@ -626,20 +649,11 @@ function timeAgo(iso){
     });
     const mineRows=sRows.filter(s=>s.user_id===session.user.id);
     const otherRows=sRows.filter(s=>s.user_id!==session.user.id);
-    if(mineRows.length>0){
-      pinnedTitle.style.display='';
-      pinnedWrap.innerHTML=mineRows.map(s=>statusCardHTML(s,reactionCountMap,myReactionMap,pMap,session.user.id)).join('');
-      pinnedWrap.style.display=myStatusCollapsed?'none':'';
-      pinnedTitle.classList.toggle('collapsed',myStatusCollapsed);
-      const countBadge=document.getElementById('myStatusCount');
-      if(mineRows.length>1){countBadge.textContent=mineRows.length;countBadge.style.display='';}
-      else{countBadge.style.display='none';}
-    }else{
-      pinnedTitle.style.display='none';pinnedWrap.style.display='none';pinnedWrap.innerHTML='';
-    }
-    sList.innerHTML=otherRows.length>0
-      ? otherRows.map(s=>statusCardHTML(s,reactionCountMap,myReactionMap,pMap,session.user.id)).join('')
-      : '<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada pembaruan dari kontak.</div>';
+    pinnedWrap.innerHTML=mineRows.length>0?mineRows.map(s=>statusCardHTML(s,reactionCountMap,myReactionMap,pMap,session.user.id)).join(''):STATUS_EMPTY_MINE;
+    sList.innerHTML=otherRows.length>0?otherRows.map(s=>statusCardHTML(s,reactionCountMap,myReactionMap,pMap,session.user.id)).join(''):STATUS_EMPTY_KONTAK;
+    if(mineRows.length>0){myCountBadge.textContent=mineRows.length;myCountBadge.style.display='';}else{myCountBadge.style.display='none';}
+    if(otherRows.length>0){kontakCountBadge.textContent=otherRows.length;kontakCountBadge.style.display='';}else{kontakCountBadge.style.display='none';}
+    setStatusSubtab(statusSubtab);
     document.querySelectorAll('#statusList .status-card .sc-avatar').forEach(a=>{
       const card=a.closest('.status-card');
       if(!card.dataset.uid||card.dataset.uid===session.user.id)return;
