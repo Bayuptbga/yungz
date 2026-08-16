@@ -160,3 +160,38 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
+// ==== Auto-recovery kalau browser diam-diam ganti/expire subscription ====
+// Ini sering jadi penyebab notif "hilang" tanpa ketahuan: browser rotasi
+// endpoint push, subscription lama jadi mati, tapi app.js gak pernah tau
+// karena event ini kejadian di background, bukan pas app dibuka.
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(
+    (async () => {
+      try {
+        const applicationServerKey = event.oldSubscription
+          ? event.oldSubscription.options.applicationServerKey
+          : null;
+
+        const newSubscription = await self.registration.pushManager.subscribe(
+          applicationServerKey
+            ? { userVisibleOnly: true, applicationServerKey }
+            : { userVisibleOnly: true }
+        );
+
+        // Simpan flag + subscription baru, nanti disinkron ke Supabase oleh
+        // app.js begitu halaman dibuka lagi (SW gak punya akses langsung ke
+        // sesi login user).
+        const clientsList = await self.clients.matchAll({ type: 'window' });
+        for (const client of clientsList) {
+          client.postMessage({
+            type: 'PUSH_SUBSCRIPTION_CHANGED',
+            subscription: newSubscription.toJSON()
+          });
+        }
+      } catch (err) {
+        console.warn('Gagal resubscribe otomatis:', err);
+      }
+    })()
+  );
+});
