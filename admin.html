@@ -8,92 +8,86 @@
 <meta name="theme-color" content="#0b0f17">
 <style>
   :root{
-    --bbm-blue-dark:#3f7bff;
     --bbm-blue:#5b93ff;
     --bbm-blue-light:#84aeff;
     --bg:#0b0f17;
     --card-bg:#141a24;
+    --card-bg-2:#1a2130;
     --ink:#e9edf5;
-    --muted:#8894a6;
-    --border:#242c3a;
+    --muted:#7c899c;
+    --border:#232b3a;
     --ok:#34c17a;
     --error:#f2495c;
     --warn:#e0a634;
   }
   *{box-sizing:border-box;}
-  body{margin:0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+  body{margin:0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
   a{color:inherit;}
 
-  /* ---------- Login gate ---------- */
-  #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
-  .login-card{width:100%;max-width:340px;background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:28px 24px;box-shadow:0 10px 30px rgba(0,0,0,0.35);}
-  .login-card h1{font-size:19px;margin:0 0 4px;font-weight:800;background:linear-gradient(90deg,var(--bbm-blue),var(--bbm-blue-light));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-  .login-card p{margin:0 0 20px;font-size:12.5px;color:var(--muted);}
-  .field{margin-bottom:14px;}
-  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;}
-  .field input{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:14.5px;font-family:inherit;outline:none;background:var(--bg);color:var(--ink);}
-  .field input:focus{border-color:var(--bbm-blue);}
-  .login-btn{width:100%;padding:12px 0;background:var(--bbm-blue);color:#fff;border:none;border-radius:10px;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:4px;}
-  .login-btn:disabled{opacity:.6;cursor:default;}
-  .login-err{font-size:12.5px;color:var(--error);margin-top:10px;display:none;}
-  .login-err.show{display:block;}
+  /* ---------- Gate (memeriksa akses) ---------- */
+  #gateScreen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--muted);font-size:13px;}
+  #gateScreen .spin{width:24px;height:24px;border-radius:50%;border:2.5px solid var(--border);border-top-color:var(--bbm-blue);animation:gateSpin .75s linear infinite;}
+  @keyframes gateSpin{to{transform:rotate(360deg);}}
 
-  /* ---------- Admin shell ---------- */
+  /* ---------- Shell ---------- */
   #adminShell{display:none;min-height:100vh;flex-direction:column;}
-  .topbar{background:var(--card-bg);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
-  .topbar h1{font-size:17px;margin:0;font-weight:800;background:linear-gradient(90deg,var(--bbm-blue),var(--bbm-blue-light));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-  .topbar .sub{font-size:11.5px;color:var(--muted);font-weight:600;}
-  .logout-btn{background:none;border:1.5px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;}
-  .logout-btn:active{background:var(--border);}
+  .topbar{background:var(--card-bg);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+  .topbar h1{font-size:16.5px;margin:0;font-weight:800;background:linear-gradient(90deg,var(--bbm-blue),var(--bbm-blue-light));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.1px;}
+  .topbar .sub{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px;}
+  .logout-btn{background:none;border:1px solid var(--border);color:var(--muted);border-radius:9px;padding:8px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .logout-btn:active{background:var(--card-bg-2);}
 
-  .content{flex:1;padding:20px;max-width:960px;width:100%;margin:0 auto;}
+  .content{flex:1;padding:18px;max-width:820px;width:100%;margin:0 auto;}
 
-  .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;}
-  .stat-card{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:16px;}
-  .stat-card .n{font-size:22px;font-weight:800;color:var(--ink);}
-  .stat-card .l{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px;}
+  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+  .stat-card{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:14px 14px;}
+  .stat-card .n{font-size:20px;font-weight:800;color:var(--ink);line-height:1.1;}
+  .stat-card .l{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:4px;}
+  .stat-card.warn-stat .n{color:var(--warn);}
 
-  .toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
-  .search-wrap{flex:1;min-width:200px;position:relative;}
-  .search-wrap input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--border);border-radius:10px;font-size:13.5px;font-family:inherit;outline:none;background:var(--card-bg);}
+  .toolbar{display:flex;gap:8px;margin-bottom:14px;}
+  .search-wrap{flex:1;position:relative;}
+  .search-wrap input{width:100%;padding:11px 14px 11px 38px;border:1px solid var(--border);border-radius:11px;font-size:13.5px;font-family:inherit;outline:none;background:var(--card-bg);color:var(--ink);}
+  .search-wrap input::placeholder{color:var(--muted);}
   .search-wrap input:focus{border-color:var(--bbm-blue);}
-  .search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);}
-  .filter-select{padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--card-bg);color:var(--ink);outline:none;}
+  .search-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;}
+  .filter-pills{display:flex;gap:6px;background:var(--card-bg);border:1px solid var(--border);border-radius:11px;padding:3px;flex-shrink:0;}
+  .filter-pills button{border:none;background:none;color:var(--muted);font-size:12px;font-weight:600;font-family:inherit;padding:7px 11px;border-radius:8px;cursor:pointer;white-space:nowrap;}
+  .filter-pills button.active{background:var(--bbm-blue);color:#fff;}
 
-  .user-table{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
-  .u-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);}
-  .u-row:last-child{border-bottom:none;}
-  .u-row.head{background:var(--bg);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;padding:10px 16px;}
-  .avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;}
+  .user-list{display:flex;flex-direction:column;gap:8px;}
+  .u-card{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:13px 14px;}
+  .u-top{display:flex;align-items:center;gap:11px;}
+  .avatar{width:42px;height:42px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;background-size:cover;background-position:center;}
   .u-main{flex:1;min-width:0;}
-  .u-name{font-size:14.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px;}
-  .u-meta{font-size:11.5px;color:var(--muted);margin-top:2px;}
-  .badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;}
-  .badge.active{background:rgba(52,193,122,0.16);color:var(--ok);}
-  .badge.banned{background:rgba(242,73,92,0.16);color:var(--error);}
-  .u-actions{display:flex;gap:6px;flex-shrink:0;}
-  .u-actions button{border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink);border-radius:8px;padding:7px 11px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
-  .u-actions button:active{background:var(--border);}
-  .u-actions button.danger{color:var(--error);border-color:rgba(242,73,92,0.4);}
-  .u-actions button.warn{color:var(--warn);border-color:rgba(224,166,52,0.4);}
+  .u-name{font-size:14.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .u-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+  .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;flex-shrink:0;}
+  .badge.active{background:rgba(52,193,122,0.14);color:var(--ok);}
+  .badge.banned{background:rgba(242,73,92,0.14);color:var(--error);}
+  .u-actions{display:flex;gap:7px;margin-top:11px;}
+  .u-actions button{flex:1;border:1px solid var(--border);background:var(--card-bg-2);color:var(--ink);border-radius:9px;padding:9px 4px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .u-actions button:active{filter:brightness(1.2);}
+  .u-actions button.warn{color:var(--warn);border-color:rgba(224,166,52,0.35);}
+  .u-actions button.danger{color:var(--error);border-color:rgba(242,73,92,0.35);}
 
-  .empty-state,.loading-state{padding:50px 20px;text-align:center;color:var(--muted);font-size:13px;}
+  .empty-state,.loading-state{padding:60px 20px;text-align:center;color:var(--muted);font-size:13px;}
 
-  .pager{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:16px;}
-  .pager button{border:1.5px solid var(--border);background:var(--card-bg);border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--ink);}
-  .pager button:disabled{opacity:.4;cursor:default;}
-  .pager span{font-size:12.5px;color:var(--muted);}
+  .pager{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px;}
+  .pager button{border:1px solid var(--border);background:var(--card-bg);border-radius:9px;padding:9px 15px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--ink);}
+  .pager button:disabled{opacity:.35;cursor:default;}
+  .pager span{font-size:12px;color:var(--muted);}
 
-  /* ---------- Modal / confirm ---------- */
+  /* ---------- Modal ---------- */
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s ease;z-index:100;padding:20px;}
   .overlay.open{opacity:1;pointer-events:auto;}
-  .modal{background:var(--card-bg);border-radius:16px;width:100%;max-width:340px;padding:22px 20px;transform:translateY(8px);transition:transform .18s ease;}
+  .modal{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;width:100%;max-width:340px;padding:22px 20px;transform:translateY(8px);transition:transform .18s ease;}
   .overlay.open .modal{transform:translateY(0);}
   .modal h2{font-size:16px;margin:0 0 4px;font-weight:700;}
-  .modal p{font-size:13px;color:var(--muted);margin:0 0 18px;line-height:1.5;}
-  .modal .actions{display:flex;gap:10px;justify-content:flex-end;}
+  .modal p{font-size:13px;color:var(--muted);margin:0 0 16px;line-height:1.5;}
+  .modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
   .modal .actions button{border:none;border-radius:10px;padding:10px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;}
-  .btn-cancel{background:var(--border);color:var(--ink);}
+  .btn-cancel{background:var(--card-bg-2);color:var(--ink);}
   .btn-danger{background:var(--error);color:#fff;}
   .btn-warn{background:var(--warn);color:#fff;}
 
@@ -108,13 +102,10 @@
 </head>
 <body>
 
-<div id="loginScreen">
-  <div class="login-card" style="text-align:center;">
-    <div class="gate-spinner" style="width:26px;height:26px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--bbm-blue);animation:gateSpin .75s linear infinite;margin:0 auto 14px;"></div>
-    <p style="margin:0;">Memeriksa akses...</p>
-  </div>
+<div id="gateScreen">
+  <div class="spin"></div>
+  <div>Memeriksa akses...</div>
 </div>
-<style>@keyframes gateSpin{to{transform:rotate(360deg);}}</style>
 
 <div id="adminShell">
   <div class="topbar">
@@ -127,31 +118,24 @@
 
   <div class="content">
     <div class="stats-row">
-      <div class="stat-card"><div class="n" id="statTotal">-</div><div class="l">Total Pengguna</div></div>
+      <div class="stat-card"><div class="n" id="statTotal">-</div><div class="l">Total</div></div>
       <div class="stat-card"><div class="n" id="statActive">-</div><div class="l">Aktif</div></div>
-      <div class="stat-card"><div class="n" id="statBanned">-</div><div class="l">Disuspend</div></div>
+      <div class="stat-card warn-stat"><div class="n" id="statBanned">-</div><div class="l">Disuspend</div></div>
     </div>
 
     <div class="toolbar">
       <div class="search-wrap">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="text" id="searchInput" placeholder="Cari username...">
       </div>
-      <select class="filter-select" id="filterSelect">
-        <option value="all">Semua status</option>
-        <option value="active">Aktif</option>
-        <option value="banned">Disuspend</option>
-      </select>
+    </div>
+    <div class="filter-pills" id="filterPills" style="margin-bottom:14px;">
+      <button class="active" data-val="all">Semua</button>
+      <button data-val="active">Aktif</button>
+      <button data-val="banned">Disuspend</button>
     </div>
 
-    <div class="user-table">
-      <div class="u-row head">
-        <div style="width:40px;"></div>
-        <div class="u-main">Pengguna</div>
-        <div style="width:220px;">Aksi</div>
-      </div>
-      <div id="userList"><div class="loading-state">Memuat data pengguna...</div></div>
-    </div>
+    <div class="user-list" id="userList"><div class="loading-state">Memuat data pengguna...</div></div>
 
     <div class="pager">
       <button id="prevBtn">← Sebelumnya</button>
@@ -164,9 +148,9 @@
 <div class="overlay" id="detailOverlay">
   <div class="modal">
     <h2 id="detailName">Detail Pengguna</h2>
-    <p style="margin-bottom:14px;">Informasi akun.</p>
+    <p>Informasi akun.</p>
     <div id="detailBody"></div>
-    <div class="actions" style="margin-top:18px;">
+    <div class="actions">
       <button class="btn-cancel" id="detailCloseBtn">Tutup</button>
     </div>
   </div>
@@ -191,7 +175,6 @@
   const SUPABASE_URL = 'https://pxwrbwfpkuuwioythqpt.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_LcTHxYsZJsvZWkdsdQWfoQ_JsV7ahbT';
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  function usernameToEmail(username){ return username.trim().toLowerCase() + '@bbmchat.app'; }
 
   const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
@@ -216,33 +199,23 @@
     });
   }
 
-  // ===== Gate akses: TIDAK ada form login di halaman ini.
-  // Admin panel hanya bisa dimasuki lewat sesi yang sudah aktif (login dari
-  // index.html, lalu buka lewat tombol "Panel Admin" di profil.html).
-  // Kalau belum login sama sekali, atau login tapi bukan admin -> dialihkan
-  // diam-diam ke index.html, tanpa pesan error apa pun (biar tidak kelihatan
-  // ada halaman admin sama sekali dari luar).
+  // ===== Gate akses: tanpa form login. Admin panel hanya bisa dimasuki lewat
+  // sesi yang sudah aktif (login dari index.html, lalu buka lewat tombol
+  // "Panel Admin" di profil.html). Kalau belum login / bukan admin -> dialihkan
+  // diam-diam ke index.html.
   async function checkAdminAndEnter(){
     const {data:{session}}=await supabaseClient.auth.getSession();
-    if(!session){
-      window.location.replace('index.html');
-      return;
-    }
+    if(!session){ window.location.replace('index.html'); return; }
     const {data:prof,error}=await supabaseClient.from('profiles').select('is_admin').eq('id',session.user.id).maybeSingle();
-    if(error || !prof || prof.is_admin!==true){
-      window.location.replace('index.html');
-      return;
-    }
-    document.getElementById('loginScreen').style.display='none';
+    if(error || !prof || prof.is_admin!==true){ window.location.replace('index.html'); return; }
+    document.getElementById('gateScreen').style.display='none';
     document.getElementById('adminShell').style.display='flex';
     loadUsers();
   }
-
   document.getElementById('logoutBtn').addEventListener('click', async ()=>{
     await supabaseClient.auth.signOut();
     window.location.replace('index.html');
   });
-
   checkAdminAndEnter();
 
   // ===== Data pengguna =====
@@ -273,15 +246,18 @@
     document.getElementById('nextBtn').disabled = (currentPage+1)*PAGE_SIZE >= totalCount;
     if(!data || data.length===0){ listEl.innerHTML='<div class="empty-state">Tidak ada pengguna ditemukan.</div>'; return; }
     listEl.innerHTML = data.map(u=>{
-      const bg = u.avatar_url ? `background:url(${u.avatar_url}) center/cover no-repeat;` : `background:${colorFor(u.id)};`;
+      const bg = u.avatar_url ? `background-image:url(${u.avatar_url});` : `background-color:${colorFor(u.id)};`;
       const inner = u.avatar_url ? '' : escapeHtml(initials(u.username));
       const statusBadge = u.is_banned ? '<span class="badge banned">Disuspend</span>' : '<span class="badge active">Aktif</span>';
       return `
-      <div class="u-row" data-id="${u.id}">
-        <div class="avatar" style="${bg}">${inner}</div>
-        <div class="u-main">
-          <div class="u-name">${escapeHtml(u.username||'Pengguna')} ${statusBadge}</div>
-          <div class="u-meta">Bergabung ${fmtDate(u.created_at)}</div>
+      <div class="u-card" data-id="${u.id}">
+        <div class="u-top">
+          <div class="avatar" style="${bg}">${inner}</div>
+          <div class="u-main">
+            <div class="u-name">${escapeHtml(u.username||'Pengguna')}</div>
+            <div class="u-meta">Bergabung ${fmtDate(u.created_at)}</div>
+          </div>
+          ${statusBadge}
         </div>
         <div class="u-actions">
           <button class="detail-btn">Detail</button>
@@ -292,17 +268,17 @@
     }).join('');
 
     listEl.querySelectorAll('.detail-btn').forEach(btn=>btn.addEventListener('click',(e)=>{
-      const id=e.target.closest('.u-row').dataset.id;
+      const id=e.target.closest('.u-card').dataset.id;
       const u=data.find(x=>x.id===id);
       openDetail(u);
     }));
     listEl.querySelectorAll('.ban-btn').forEach(btn=>btn.addEventListener('click',async (e)=>{
-      const id=e.target.closest('.u-row').dataset.id;
+      const id=e.target.closest('.u-card').dataset.id;
       const u=data.find(x=>x.id===id);
       await toggleBan(u);
     }));
     listEl.querySelectorAll('.delete-btn').forEach(btn=>btn.addEventListener('click',async (e)=>{
-      const id=e.target.closest('.u-row').dataset.id;
+      const id=e.target.closest('.u-card').dataset.id;
       const u=data.find(x=>x.id===id);
       await deleteUser(u);
     }));
@@ -347,7 +323,6 @@
     if(!ok) return;
     const {error}=await supabaseClient.rpc('admin_delete_user_full', {target_id: u.id});
     if(error){ showToast('Gagal menghapus: '+error.message); return; }
-    // Best effort hapus foto profil di storage (boleh gagal diam-diam, tidak kritikal).
     try{ await supabaseClient.storage.from('avatars').remove([u.id+'.jpg']); }catch(e){}
     showToast('Pengguna & seluruh datanya dihapus.');
     loadUsers();
@@ -358,8 +333,12 @@
     clearTimeout(searchTimer);
     searchTimer=setTimeout(()=>{ currentSearch=e.target.value.trim(); currentPage=0; loadUsers(); }, 350);
   });
-  document.getElementById('filterSelect').addEventListener('change',(e)=>{
-    currentFilter=e.target.value; currentPage=0; loadUsers();
+  document.querySelectorAll('#filterPills button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('#filterPills button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter=btn.dataset.val; currentPage=0; loadUsers();
+    });
   });
   document.getElementById('prevBtn').addEventListener('click',()=>{ if(currentPage>0){ currentPage--; loadUsers(); } });
   document.getElementById('nextBtn').addEventListener('click',()=>{ if((currentPage+1)*PAGE_SIZE<totalCount){ currentPage++; loadUsers(); } });
