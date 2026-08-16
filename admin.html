@@ -109,23 +109,12 @@
 <body>
 
 <div id="loginScreen">
-  <div class="login-card">
-    <h1>Baku Chat Admin</h1>
-    <p>Masuk dengan akun admin untuk mengelola pengguna.</p>
-    <form id="loginForm">
-      <div class="field">
-        <label>Username</label>
-        <input type="text" id="loginUsername" autocomplete="username" required>
-      </div>
-      <div class="field">
-        <label>Kata sandi</label>
-        <input type="password" id="loginPassword" autocomplete="current-password" required>
-      </div>
-      <button type="submit" class="login-btn" id="loginBtn">Masuk</button>
-      <div class="login-err" id="loginErr"></div>
-    </form>
+  <div class="login-card" style="text-align:center;">
+    <div class="gate-spinner" style="width:26px;height:26px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--bbm-blue);animation:gateSpin .75s linear infinite;margin:0 auto 14px;"></div>
+    <p style="margin:0;">Memeriksa akses...</p>
   </div>
 </div>
+<style>@keyframes gateSpin{to{transform:rotate(360deg);}}</style>
 
 <div id="adminShell">
   <div class="topbar">
@@ -227,32 +216,21 @@
     });
   }
 
-  // ===== Login gate: harus login + profiles.is_admin = true =====
-  const loginForm=document.getElementById('loginForm'), loginBtn=document.getElementById('loginBtn'), loginErr=document.getElementById('loginErr');
-
-  loginForm.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    loginErr.classList.remove('show');
-    loginBtn.disabled=true; loginBtn.textContent='Memeriksa...';
-    const u=document.getElementById('loginUsername').value.trim();
-    const p=document.getElementById('loginPassword').value;
-    const {data,error}=await supabaseClient.auth.signInWithPassword({email:usernameToEmail(u), password:p});
-    if(error){
-      loginErr.textContent='Username atau kata sandi salah.'; loginErr.classList.add('show');
-      loginBtn.disabled=false; loginBtn.textContent='Masuk';
-      return;
-    }
-    await checkAdminAndEnter();
-  });
-
+  // ===== Gate akses: TIDAK ada form login di halaman ini.
+  // Admin panel hanya bisa dimasuki lewat sesi yang sudah aktif (login dari
+  // index.html, lalu buka lewat tombol "Panel Admin" di profil.html).
+  // Kalau belum login sama sekali, atau login tapi bukan admin -> dialihkan
+  // diam-diam ke index.html, tanpa pesan error apa pun (biar tidak kelihatan
+  // ada halaman admin sama sekali dari luar).
   async function checkAdminAndEnter(){
     const {data:{session}}=await supabaseClient.auth.getSession();
-    if(!session){ return; }
-    const {data:prof,error}=await supabaseClient.from('profiles').select('is_admin, username').eq('id',session.user.id).maybeSingle();
+    if(!session){
+      window.location.replace('index.html');
+      return;
+    }
+    const {data:prof,error}=await supabaseClient.from('profiles').select('is_admin').eq('id',session.user.id).maybeSingle();
     if(error || !prof || prof.is_admin!==true){
-      loginErr.textContent='Akun ini tidak punya akses admin.'; loginErr.classList.add('show');
-      loginBtn.disabled=false; loginBtn.textContent='Masuk';
-      await supabaseClient.auth.signOut();
+      window.location.replace('index.html');
       return;
     }
     document.getElementById('loginScreen').style.display='none';
@@ -262,10 +240,9 @@
 
   document.getElementById('logoutBtn').addEventListener('click', async ()=>{
     await supabaseClient.auth.signOut();
-    location.reload();
+    window.location.replace('index.html');
   });
 
-  // Kalau sudah ada sesi tersimpan (buka ulang tab), langsung cek admin.
   checkAdminAndEnter();
 
   // ===== Data pengguna =====
