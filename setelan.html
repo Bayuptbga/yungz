@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<script src="device-gate.js?v=__VERSION__"></script>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Baku Chat - Setelan</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Baku Chat">
+<style>
+  /* ===================================================================
+     CATATAN: file ini gabungan dari 3 halaman lama:
+     setelan.html + privasi-keamanan.html + data-penyimpanan.html
+     Digabung jadi satu file dengan sistem "sub-halaman" (lihat script
+     switchView() di bawah) supaya lebih gampang di-maintain -- 1 file
+     CSS/style, 1 device-gate, 1 boot(), bukan 3x duplikat.
+     Navigasi antar sub-halaman pakai hash URL (#privasi, #data) supaya
+     tombol back browser & reload tetap jalan normal.
+     =================================================================== */
+  @view-transition { navigation: auto; }
+  :root{
+    --bbm-blue-dark:#0039f0;
+    --bbm-blue:#0564f5;
+    --bg:#f4f7fb;
+    --card-bg:#ffffff;
+    --ink:#101f33;
+    --muted:#66798d;
+    --border:#e2e8f1;
+    --ok:#189a56;
+    --error:#e4394f;
+    --accent:#0564f5;
+  }
+  *{box-sizing:border-box;}
+  html{ overscroll-behavior:none; -webkit-tap-highlight-color:transparent; }
+  body{
+    margin:0; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink);
+    min-height:100vh; display:flex; justify-content:center; -webkit-font-smoothing:antialiased; position:relative;
+  }
+  input{user-select:text;}
+  .phone{ width:100%; max-width:420px; min-height:100vh; background:var(--bg); display:flex; flex-direction:column; position:relative; }
+  /* ---- Breakpoint bertingkat: HP kecil -> phablet -> tablet Android kecil -> tablet Android besar ---- */
+  /* Phablet / HP layar besar (mis. Galaxy S Ultra, Note) */
+  @media (min-width:480px){ .phone{ max-width:480px; } }
+  /* Tablet Android portrait/landscape kecil (mis. Tab A, Tab S kecil) */
+  @media (min-width:700px){ .phone{ max-width:640px; } }
+  /* Tablet Android besar (mis. Tab S8+/S9 Ultra) */
+  @media (min-width:1000px){ .phone{ max-width:720px; } }
+  /* HP diputar ke landscape (viewport pendek) -> jangan biarkan phone melebar penuh,
+     supaya proporsi tetap wajar dan konten tidak terlalu meregang ke samping */
+  @media (orientation:landscape) and (max-height:480px){ .phone{ max-width:480px; } }
+  #authGate{ position:absolute; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center; }
+  #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent); animation:authSpin .75s linear infinite; }
+  @keyframes authSpin{ to{ transform:rotate(360deg); } }
+
+  .appbar{ background:#ffffff; color:var(--ink); padding:calc(14px + env(safe-area-inset-top)) 16px 14px; display:flex; gap:16px; align-items:center; flex-shrink:0; border-bottom:1px solid var(--border); box-shadow:0 1px 3px rgba(16,31,51,0.04); }
+  .appbar .back{ cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .appbar .back svg{ width:22px; height:22px; }
+  .appbar h1{ margin:0; font-size:19px; font-weight:600; }
+
+  .content{ flex:1; overflow-y:auto; padding:18px 16px 40px; }
+  .view{ display:none; }
+  .view.active{ display:block; }
+  .section-title{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; margin:22px 4px 8px; }
+  .section-title:first-child{ margin-top:0; }
+
+  .card{ background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:16px; }
+  .field{ margin-bottom:14px; }
+  .field:last-of-type{ margin-bottom:0; }
+  .field label{ display:block; font-size:11px; font-weight:700; color:var(--muted); margin-bottom:7px; text-transform:uppercase; letter-spacing:0.5px; }
+  .field-note{ font-size:11.5px; color:var(--muted); margin-top:6px; }
+  .input-wrap{ display:flex; align-items:center; gap:2px; border:1.5px solid var(--border); border-radius:10px; background:var(--bg); padding:0 12px; }
+  .input-wrap:focus-within{ border-color:var(--accent); }
+  .input-wrap input{ border:none; outline:none; background:transparent; padding:12px 8px; font-size:14.5px; width:100%; color:var(--ink); }
+  .toggle-pw{ font-size:10.5px; color:var(--accent); font-weight:700; cursor:pointer; letter-spacing:0.4px; flex-shrink:0; }
+  .hint{ font-size:12px; color:var(--muted); margin-top:9px; min-height:14px; }
+  .hint.err{ color:var(--error); }
+  .hint.ok{ color:var(--ok); }
+
+  .btn{ margin-top:14px; width:100%; padding:12.5px 0; background:linear-gradient(135deg,var(--accent) 0%,#0039f0 100%); color:#ffffff; border:none; border-radius:10px; font-size:14.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .btn:active{ transform:scale(0.98); }
+  .btn:disabled{ opacity:0.7; cursor:default; }
+  .btn .spinner{ width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,0.35); border-top-color:#ffffff; animation:spin .7s linear infinite; display:none; }
+  .btn.loading .spinner{ display:inline-block; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .setting-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:4px 0; }
+  .setting-row + .setting-row{ margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
+  .setting-row .s-label{ font-size:14.5px; font-weight:600; }
+  .setting-row .s-sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .setting-row .s-value{ font-size:13px; color:var(--muted); font-family:'Courier New',monospace; }
+  .btn-small{ background:rgba(5,100,245,0.14); color:var(--accent); border:1px solid rgba(5,100,245,0.3); border-radius:8px; padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer; }
+  .btn-small:active{ transform:scale(0.97); }
+  .installed-badge{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ok); font-weight:600; }
+  .installed-badge svg{ width:16px; height:16px; }
+
+  .danger-title{ color:var(--error) !important; }
+  .danger-note{ font-size:12.5px; color:var(--muted); line-height:1.6; margin-bottom:16px; }
+  .danger-note b{ color:var(--error); }
+  .btn-danger{ background:linear-gradient(135deg,#e4394f,#c0392b); color:#ffffff; }
+
+  .empty-note{ text-align:center; padding:36px 12px; color:var(--muted); }
+  .empty-note svg{ width:36px; height:36px; stroke:var(--muted); margin-bottom:12px; }
+  .empty-note .en-title{ font-size:14.5px; font-weight:600; color:var(--ink); margin-bottom:6px; }
+  .empty-note .en-sub{ font-size:12.5px; line-height:1.6; }
+
+  /* ---- Popup "Informasi Tentang Aplikasi Ini" ---- */
+  .e2e-info-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:flex-end; justify-content:center; z-index:320; opacity:0; pointer-events:none; transition:opacity .2s ease; }
+  .e2e-info-overlay.open{ opacity:1; pointer-events:auto; }
+  .e2e-info-sheet{ width:100%; max-width:420px; background:var(--card-bg); border:1px solid var(--border); border-top-left-radius:22px; border-top-right-radius:22px; padding:10px 24px calc(28px + env(safe-area-inset-bottom)); box-shadow:0 -10px 40px rgba(0,0,0,0.5); transform:translateY(16px); transition:transform .2s ease; text-align:center; }
+  .e2e-info-overlay.open .e2e-info-sheet{ transform:translateY(0); }
+  .e2e-info-grip{ width:36px; height:4px; border-radius:3px; background:var(--border); margin:0 auto 18px; }
+  .e2e-info-icon{ width:64px; height:64px; border-radius:18px; background:rgba(5,100,245,0.14); display:flex; align-items:center; justify-content:center; margin:0 auto 18px; }
+  .e2e-info-icon svg{ width:30px; height:30px; }
+  .e2e-info-sheet h3{ font-size:18px; font-weight:700; color:var(--ink); margin:0 0 12px; line-height:1.35; }
+  .e2e-info-sheet p{ font-size:13.5px; color:var(--ink-soft,var(--muted)); line-height:1.6; margin:0 0 22px; }
+  .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(5,100,245,0.14); color:#0564f5; border:1px solid rgba(5,100,245,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .e2e-info-close-btn:active{ background:rgba(5,100,245,0.22); }
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js?v=__VERSION__"></script>
+</head>
+<body>
+<div class="phone">
+  <div id="authGate"><div class="spinner"></div></div>
+  <div class="appbar">
+    <div class="back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <h1 id="appbarTitle">Setelan</h1>
+  </div>
+
+  <!-- ============ VIEW: MENU UTAMA (dulu setelan.html) ============ -->
+  <div class="content view active" id="viewMain">
+    <div class="section-title">Foto Profil</div>
+    <div class="card">
+      <div class="setting-row" style="cursor:pointer;" onclick="location.href='profil.html'">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div id="avatarPreview" style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#ffffff;background:var(--bbm-blue);flex-shrink:0;">?</div>
+          <div><div class="s-label">Edit Profil</div><div class="s-sub">Ubah foto &amp; info profilmu</div></div>
+        </div>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+
+    <div class="section-title">Umum</div>
+    <div class="card">
+      <div class="setting-row" style="cursor:pointer;" onclick="switchView('privasi')">
+        <div><div class="s-label">Privasi &amp; Keamanan</div><div class="s-sub">Kata sandi &amp; hapus akun</div></div>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="setting-row" style="cursor:pointer;" onclick="switchView('data')">
+        <div><div class="s-label">Data &amp; Penyimpanan</div><div class="s-sub">Cadangan chat</div></div>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+
+    <div class="section-title">About</div>
+    <div class="card">
+      <div class="setting-row" id="installRow" style="display:none;">
+        <div><div class="s-label">Instal Aplikasi</div><div class="s-sub">Buka lebih cepat langsung dari layar utama</div></div>
+        <button class="btn-small" id="installBtn" type="button">Instal</button>
+      </div>
+      <div class="setting-row" id="installedRow" style="display:none;">
+        <div class="installed-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Aplikasi sudah terpasang</span></div>
+      </div>
+      <div class="setting-row" id="versionRow">
+        <div class="s-label">Versi</div>
+        <div class="s-value" id="versionValue">__VERSION__</div>
+      </div>
+      <div class="setting-row" id="lastUpdatedRow">
+        <div class="s-label">Terakhir Diperbarui</div>
+        <div class="s-value" id="lastUpdatedValue">__BUILD_DATE__</div>
+      </div>
+      <div class="setting-row" id="aboutInfoRow" style="cursor:pointer;">
+        <div class="s-label">Informasi Tentang Aplikasi Ini</div>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="setting-row" id="privacyPolicyRow" style="cursor:pointer;" onclick="window.open('privacy-policy.html','_blank')">
+        <div class="s-label">Kebijakan Privasi</div>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ VIEW: PRIVASI & KEAMANAN (dulu privasi-keamanan.html) ============ -->
+  <div class="content view" id="viewPrivasi">
+    <div class="section-title">Ganti Kata Sandi</div>
+    <div class="card">
+      <form id="pwForm">
+        <div class="field">
+          <label>Kata Sandi Lama</label>
+          <div class="input-wrap"><input type="password" id="oldPassword" autocomplete="current-password"><span class="toggle-pw" onclick="const p=document.getElementById('oldPassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
+        </div>
+        <div class="field">
+          <label>Kata Sandi Baru</label>
+          <div class="input-wrap"><input type="password" id="newPassword" minlength="6" autocomplete="new-password"><span class="toggle-pw" onclick="const p=document.getElementById('newPassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
+          <div class="field-note">Minimal 6 karakter</div>
+        </div>
+        <div class="field">
+          <label>Ulangi Kata Sandi Baru</label>
+          <div class="input-wrap"><input type="password" id="confirmPassword" minlength="6" autocomplete="new-password"></div>
+        </div>
+        <div class="hint" id="pwHint">Minimal 6 karakter</div>
+        <button type="submit" class="btn" id="pwSubmitBtn"><span class="spinner"></span><span class="btn-label">Simpan Kata Sandi</span></button>
+      </form>
+    </div>
+
+    <div class="section-title danger-title">Zona Berbahaya</div>
+    <div class="card">
+      <div class="danger-note">Menghapus akun akan menghapus <b>semua chat, kontak, status, dan data lainnya secara permanen</b>. Tindakan ini tidak bisa dibatalkan.</div>
+      <form id="deleteForm">
+        <div class="field">
+          <label>Konfirmasi Kata Sandi</label>
+          <div class="input-wrap"><input type="password" id="deletePassword" required autocomplete="current-password"><span class="toggle-pw" onclick="const p=document.getElementById('deletePassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
+        </div>
+        <div class="hint" id="deleteHint">Masukkan kata sandi untuk melanjutkan</div>
+        <button type="submit" class="btn btn-danger" id="deleteSubmitBtn"><span class="spinner"></span><span class="btn-label">Hapus Akun Saya</span></button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ VIEW: DATA & PENYIMPANAN (dulu data-penyimpanan.html) ============ -->
+  <div class="content view" id="viewData">
+    <div class="section-title">Cadangan Chat</div>
+    <div class="card">
+      <div class="empty-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <div class="en-title">Belum ada cadangan</div>
+        <div class="en-sub">Fitur pencadangan &amp; pemulihan kunci enkripsi akan segera hadir di sini.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Popup "Informasi Tentang Aplikasi Ini" -->
+<div class="e2e-info-overlay" id="aboutInfoOverlay">
+  <div class="e2e-info-sheet">
+    <div class="e2e-info-grip"></div>
+    <div class="e2e-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="stroke:#0564f5;"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg></div>
+    <h3>Tentang Baku Chat</h3>
+    <p>Baku Chat adalah aplikasi pesan pribadi dengan enkripsi end-to-end, dibuat supaya percakapanmu tetap hanya milikmu dan lawan bicaramu. Tidak ada iklan, tidak ada pelacakan isi pesan.</p>
+    <button type="button" class="e2e-info-close-btn" id="aboutInfoCloseBtn">Mengerti</button>
+  </div>
+</div>
+
+<script>
+  const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
+  function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
+  function initials(u){return(u||'?').slice(0,2).toUpperCase();}
+
+  // ---- Foto Profil: preview saja di sini, edit/ganti fotonya dilakukan di halaman Profil ----
+  const avatarPreview=document.getElementById('avatarPreview');
+
+  function renderAvatarPreview(){
+    if(currentAvatarUrl){
+      avatarPreview.style.background=`url(${currentAvatarUrl}) center/cover no-repeat`;
+      avatarPreview.textContent='';
+    } else {
+      avatarPreview.style.background = currentUserId ? colorFor(currentUserId) : 'var(--border)';
+      avatarPreview.textContent = initials(currentUsername);
+    }
+  }
+
+  // ---- Navigasi sub-halaman di dalam satu file (menggantikan 3 file lama) ----
+  const VIEWS = {
+    main:    { id:'viewMain',    title:'Setelan' },
+    privasi: { id:'viewPrivasi', title:'Privasi & Keamanan' },
+    data:    { id:'viewData',    title:'Data & Penyimpanan' }
+  };
+  function applyView(name){
+    if(!VIEWS[name]) name='main';
+    Object.values(VIEWS).forEach(v=>document.getElementById(v.id).classList.remove('active'));
+    document.getElementById(VIEWS[name].id).classList.add('active');
+    document.getElementById('appbarTitle').textContent = VIEWS[name].title;
+  }
+  function switchView(name){
+    // Push hash biar tombol back browser kembali ke menu utama, bukan langsung keluar halaman.
+    location.hash = name==='main' ? '' : name;
+  }
+  function currentViewFromHash(){
+    const h=(location.hash||'').replace('#','');
+    return VIEWS[h] ? h : 'main';
+  }
+  window.addEventListener('hashchange', ()=>applyView(currentViewFromHash()));
+  applyView(currentViewFromHash());
+
+  function goBack(){
+    // Selalu mundur lewat history browser yang sesungguhnya (bukan cuma reset
+    // hash ke ''), supaya urutannya benar untuk kedua kasus:
+    // 1) Dibuka langsung dari drawer dashboard ke sub-halaman (mis. #data):
+    //    history-nya [..., dashboard, setelan#data] -> back = balik ke dashboard.
+    // 2) Dibuka dari menu utama Setelan lalu klik ke sub-halaman:
+    //    switchView() di atas sudah nambah entry baru saat itu, jadi history-nya
+    //    [..., dashboard, setelan(main), setelan#privasi] -> back = balik ke
+    //    menu utama Setelan dulu (hashchange event yang urus tampilannya),
+    //    baru back sekali lagi = balik ke dashboard.
+    // Reset hash manual (location.hash='') TIDAK dipakai lagi karena itu malah
+    // NAMBAH entry history baru alih-alih mundur, sehingga tombol back jadi
+    // "mantul" dan terasa stuck di halaman Setelan.
+    if(window.history.length>1){ window.history.back(); }
+    else { window.location.href='dashboard.html'; }
+  }
+
+  let currentUsername=null;
+  let currentUserId=null;
+  let currentAvatarUrl=null;
+
+  async function boot(){
+    const {data:{session}} = await supabaseClient.auth.getSession();
+    if(!session){ window.location.replace('index.html'); return; }
+    currentUserId = session.user.id;
+    const {data:prof} = await supabaseClient.from('profiles').select('username, avatar_url').eq('id', session.user.id).maybeSingle();
+    if(prof){ currentUsername = prof.username; currentAvatarUrl = prof.avatar_url || null; }
+    renderAvatarPreview();
+    document.getElementById('authGate').style.display = 'none';
+  }
+  boot();
+
+  // Tombol Keluar sudah dipindah ke profil.html (bagian profil sendiri).
+
+  // ---- Instal Aplikasi (PWA) ----
+  let deferredPrompt = null;
+  const installRow = document.getElementById('installRow'), installedRow = document.getElementById('installedRow');
+  function isStandalone(){
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  if(isStandalone()){ installedRow.style.display='flex'; }
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if(!isStandalone()){ installRow.style.display='flex'; }
+  });
+  document.getElementById('installBtn').addEventListener('click', async () => {
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const {outcome} = await deferredPrompt.userChoice;
+    if(outcome === 'accepted'){ installRow.style.display='none'; installedRow.style.display='flex'; }
+    deferredPrompt = null;
+  });
+  window.addEventListener('appinstalled', () => {
+    installRow.style.display='none'; installedRow.style.display='flex';
+  });
+
+  // ---- Popup "Informasi Tentang Aplikasi Ini" ----
+  const aboutInfoOverlay=document.getElementById('aboutInfoOverlay');
+  document.getElementById('aboutInfoRow').addEventListener('click',()=>aboutInfoOverlay.classList.add('open'));
+  document.getElementById('aboutInfoCloseBtn').addEventListener('click',()=>aboutInfoOverlay.classList.remove('open'));
+  aboutInfoOverlay.addEventListener('click',(e)=>{ if(e.target===aboutInfoOverlay) aboutInfoOverlay.classList.remove('open'); });
+
+  // ---- Hapus Akun ----
+  // Alur: re-auth pakai kata sandi (memastikan yang minta hapus benar pemilik akun,
+  // bukan sesi yang ke-tinggal login di device orang lain) -> konfirmasi eksplisit
+  // (irreversible) -> panggil RPC delete_own_account() yang jalan di server dengan
+  // hak akses lebih tinggi (SECURITY DEFINER) untuk hapus semua data + akun auth-nya.
+  // Anon key di browser TIDAK PERNAH bisa hapus baris auth.users langsung -- itu
+  // sengaja dibatasi Supabase, makanya harus lewat fungsi database ini.
+  document.getElementById('deleteForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pw=document.getElementById('deletePassword').value,
+          b=document.getElementById('deleteSubmitBtn'), hint=document.getElementById('deleteHint');
+    if(!pw){ hint.textContent='Masukkan kata sandi.'; hint.className='hint err'; return; }
+    if(!currentUsername){ hint.textContent='Gagal memuat data akun, coba muat ulang halaman.'; hint.className='hint err'; return; }
+    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Memeriksa...';
+    const {error:reauthErr} = await supabaseClient.auth.signInWithPassword({email: usernameToEmail(currentUsername), password: pw});
+    if(reauthErr){
+      hint.textContent='Kata sandi salah.'; hint.className='hint err';
+      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Hapus Akun Saya';
+      return;
+    }
+    const confirmed=confirm('Yakin ingin menghapus akun secara permanen?\n\nSemua chat, kontak, dan status akan hilang dan TIDAK BISA dikembalikan.');
+    if(!confirmed){
+      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Hapus Akun Saya';
+      return;
+    }
+    b.querySelector('.btn-label').textContent='Menghapus...';
+    const {error:delErr} = await supabaseClient.rpc('delete_own_account');
+    if(delErr){
+      hint.textContent='Gagal menghapus akun: '+delErr.message; hint.className='hint err';
+      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Hapus Akun Saya';
+      return;
+    }
+    await supabaseClient.auth.signOut();
+    window.location.replace('index.html');
+  });
+
+  // ---- Ganti Kata Sandi (dulu di privasi-keamanan.html) ----
+  function translatePwError(msg){
+    const m=(msg||'').toLowerCase();
+    if(m.includes('at least 6')) return 'Kata sandi minimal 6 karakter.';
+    if(m.includes('same') && m.includes('password')) return 'Kata sandi baru harus beda dari yang lama.';
+    if(m.includes('rate limit')) return 'Terlalu banyak percobaan, coba lagi sebentar lagi.';
+    return 'Gagal menyimpan kata sandi, coba lagi.';
+  }
+  function translateOldPwError(msg){
+    const m=(msg||'').toLowerCase();
+    if(m.includes('rate limit')) return 'Terlalu banyak percobaan, coba lagi sebentar lagi.';
+    return 'Kata sandi lama salah.';
+  }
+  document.getElementById('pwForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const p0=document.getElementById('oldPassword').value, p1=document.getElementById('newPassword').value, p2=document.getElementById('confirmPassword').value,
+          b=document.getElementById('pwSubmitBtn'), hint=document.getElementById('pwHint');
+    if(!p0){ hint.textContent='Masukkan kata sandi lama.'; hint.className='hint err'; return; }
+    if(p1.length<6){ hint.textContent='Kata sandi minimal 6 karakter.'; hint.className='hint err'; return; }
+    if(p1!==p2){ hint.textContent='Kata sandi tidak cocok.'; hint.className='hint err'; return; }
+    if(!currentUsername){ hint.textContent='Gagal memuat data akun, coba muat ulang halaman.'; hint.className='hint err'; return; }
+    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Memeriksa...';
+    const {error:reauthErr} = await supabaseClient.auth.signInWithPassword({email: usernameToEmail(currentUsername), password: p0});
+    if(reauthErr){
+      hint.textContent=translateOldPwError(reauthErr.message); hint.className='hint err';
+      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan Kata Sandi';
+      return;
+    }
+    b.querySelector('.btn-label').textContent='Menyimpan...';
+    const {error} = await supabaseClient.auth.updateUser({password:p1});
+    b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan Kata Sandi';
+    if(error){ hint.textContent=translatePwError(error.message); hint.className='hint err'; return; }
+    hint.textContent='Kata sandi berhasil diperbarui.'; hint.className='hint ok';
+    document.getElementById('pwForm').reset();
+  });
+</script>
+</body>
+</html>

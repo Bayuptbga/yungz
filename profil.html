@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<script src="device-gate.js?v=__VERSION__"></script>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Baku Chat - Profil</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Baku Chat">
+<style>
+  @view-transition { navigation: auto; }
+  :root{
+    --bbm-blue-dark:#0039f0;
+    --bbm-blue:#0564f5;
+    --bg:#f4f7fb;
+    --card-bg:#ffffff;
+    --ink:#101f33;
+    --muted:#66798d;
+    --border:#e2e8f1;
+    --ok:#189a56;
+    --error:#e4394f;
+    --accent:#0564f5;
+  }
+  *{box-sizing:border-box;}
+  html{ overscroll-behavior:none; -webkit-tap-highlight-color:transparent; }
+  body{
+    margin:0; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink);
+    min-height:100vh; display:flex; justify-content:center; -webkit-font-smoothing:antialiased; position:relative;
+  }
+  .phone{ width:100%; max-width:420px; min-height:100vh; background:var(--bg); display:flex; flex-direction:column; position:relative; }
+  /* ---- Breakpoint bertingkat: HP kecil -> phablet -> tablet Android kecil -> tablet Android besar ---- */
+  /* Phablet / HP layar besar (mis. Galaxy S Ultra, Note) */
+  @media (min-width:480px){ .phone{ max-width:480px; } }
+  /* Tablet Android portrait/landscape kecil (mis. Tab A, Tab S kecil) */
+  @media (min-width:700px){ .phone{ max-width:640px; } }
+  /* Tablet Android besar (mis. Tab S8+/S9 Ultra) */
+  @media (min-width:1000px){ .phone{ max-width:720px; } }
+  /* HP diputar ke landscape (viewport pendek) -> jangan biarkan phone melebar penuh,
+     supaya proporsi tetap wajar dan konten tidak terlalu meregang ke samping */
+  @media (orientation:landscape) and (max-height:480px){ .phone{ max-width:480px; } }
+  #authGate{ position:absolute; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center; }
+  #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent); animation:authSpin .75s linear infinite; }
+  @keyframes authSpin{ to{ transform:rotate(360deg); } }
+
+  .appbar{ background:#ffffff; color:var(--ink); padding:calc(14px + env(safe-area-inset-top)) 16px 14px; display:flex; gap:16px; align-items:center; flex-shrink:0; border-bottom:1px solid var(--border); box-shadow:0 1px 3px rgba(16,31,51,0.04); }
+  .appbar .back{ cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .appbar .back svg{ width:22px; height:22px; }
+  .appbar h1{ margin:0; font-size:19px; font-weight:600; }
+
+  .content{ flex:1; overflow-y:auto; padding:26px 16px 40px; }
+
+  .hero{ display:flex; flex-direction:column; align-items:center; text-align:center; margin-bottom:26px; }
+  .hero .h-avatar{ width:92px; height:92px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:32px; color:#ffffff; background:var(--bbm-blue); box-shadow:0 6px 18px rgba(0,0,0,0.35); flex-shrink:0; }
+  .hero .h-uname{ font-size:20px; font-weight:700; margin-top:14px; word-break:break-word; }
+  .hero .h-joined{ font-size:12.5px; color:var(--muted); margin-top:4px; }
+
+  .stats-row{ display:flex; gap:10px; margin-bottom:22px; }
+  .stat-card{ flex:1; background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:14px 10px; text-align:center; }
+  .stat-card .st-num{ font-size:20px; font-weight:700; color:var(--accent); }
+  .stat-card .st-label{ font-size:11px; color:var(--muted); margin-top:3px; text-transform:uppercase; letter-spacing:0.4px; }
+
+  .section-title{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px; margin:0 4px 8px; }
+
+  .card{ background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:4px 16px; margin-bottom:22px; }
+  .info-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 0; }
+  .info-row + .info-row{ border-top:1px solid var(--border); }
+  .info-row .i-label{ font-size:13.5px; color:var(--muted); }
+  .info-row .i-value{ font-size:14px; font-weight:600; font-family:'Courier New',monospace; letter-spacing:1px; }
+  .pin-copy-btn{ background:rgba(5,100,245,0.14); color:var(--accent); border:1px solid rgba(5,100,245,0.3); border-radius:7px; padding:5px 11px; font-size:11.5px; font-weight:700; cursor:pointer; font-family:'Segoe UI',sans-serif; flex-shrink:0; }
+  .pin-copy-btn:active{ transform:scale(0.96); }
+
+  .action-row{ display:flex; gap:10px; margin-bottom:22px; }
+  .action-btn{ flex:1; padding:14px 6px 12px; background:rgba(5,100,245,0.14); color:var(--accent); border:1px solid rgba(5,100,245,0.3); border-radius:14px; font-size:11.5px; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; font-family:inherit; text-align:center; }
+  .action-btn.danger{ background:rgba(241,92,109,0.12); color:#e4394f; border:1px solid rgba(241,92,109,0.3); }
+  .action-btn .a-icon{ width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(5,100,245,0.16); flex-shrink:0; }
+  .action-btn.danger .a-icon{ background:rgba(241,92,109,0.16); }
+  .action-btn .a-icon svg{ width:17px; height:17px; }
+  .action-btn:active{ transform:scale(0.96); }
+  .action-btn span{ line-height:13px; }
+  .confirm-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity .18s ease; padding:24px; }
+  .confirm-overlay.open{ opacity:1; pointer-events:auto; }
+  .confirm-box{ background:var(--card-bg); border:1px solid var(--border); border-radius:16px; width:100%; max-width:320px; padding:22px 20px 16px; box-shadow:0 10px 40px rgba(0,0,0,0.5); transform:translateY(10px) scale(0.97); transition:transform .18s ease; }
+  .confirm-overlay.open .confirm-box{ transform:translateY(0) scale(1); }
+  .confirm-title{ font-size:16px; font-weight:700; color:var(--ink); margin-bottom:8px; }
+  .confirm-msg{ font-size:13.5px; line-height:19px; color:var(--ink-soft); margin-bottom:20px; }
+  .confirm-actions{ display:flex; gap:10px; justify-content:flex-end; }
+  .confirm-actions button{ border:none; border-radius:10px; padding:10px 16px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .confirm-cancel{ background:var(--border); color:var(--ink); }
+  .confirm-cancel:active{ background:var(--border); }
+  .confirm-ok{ background:#e4394f; color:#fdecee; }
+  .confirm-ok:active{ background:#e14758; }
+  .btn{ display:flex; align-items:center; justify-content:center; gap:9px; width:100%; background:var(--card-bg); color:var(--ink); border:1px solid var(--border); border-radius:14px; padding:14px; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; margin-bottom:22px; }
+  .btn:active{ transform:scale(0.98); }
+  .btn svg{ width:17px; height:17px; flex-shrink:0; }
+
+  /* ---- Kartu info keamanan enkripsi end-to-end ---- */
+  .e2e-card{ display:flex; align-items:flex-start; gap:14px; background:linear-gradient(135deg,rgba(5,100,245,0.13),rgba(5,100,245,0.05)); border:1px solid rgba(5,100,245,0.28); border-radius:16px; padding:16px; margin-bottom:22px; cursor:pointer; transition:background-color .15s ease; }
+  .e2e-card:active{ background:rgba(5,100,245,0.16); }
+  .e2e-card-icon{ width:42px; height:42px; border-radius:50%; background:rgba(5,100,245,0.18); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .e2e-card-icon svg{ width:20px; height:20px; stroke:var(--accent); }
+  .e2e-card-body{ flex:1; min-width:0; }
+  .e2e-card-title{ font-size:14.5px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:6px; }
+  .e2e-card-title .e2e-badge{ width:15px; height:15px; border-radius:50%; background:var(--ok); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .e2e-card-title .e2e-badge svg{ width:9px; height:9px; stroke:#eafaf0; stroke-width:3.5; }
+  .e2e-card-desc{ font-size:12.5px; color:var(--muted); line-height:1.5; margin-top:5px; }
+  .e2e-card-link{ font-size:12.5px; font-weight:700; color:var(--accent); margin-top:9px; text-decoration:underline; }
+
+  /* ---- Popup "Pelajari selengkapnya" enkripsi E2E (konsisten dgn chat.html) ---- */
+  .e2e-info-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:flex-end; justify-content:center; z-index:220; opacity:0; pointer-events:none; transition:opacity .2s ease; }
+  .e2e-info-overlay.open{ opacity:1; pointer-events:auto; }
+  .e2e-info-sheet{ width:100%; max-width:420px; background:var(--card-bg); border:1px solid var(--border); border-top-left-radius:22px; border-top-right-radius:22px; padding:10px 24px calc(28px + env(safe-area-inset-bottom)); box-shadow:0 -10px 40px rgba(0,0,0,0.5); transform:translateY(16px); transition:transform .2s ease; text-align:center; }
+  .e2e-info-overlay.open .e2e-info-sheet{ transform:translateY(0); }
+  .e2e-info-grip{ width:36px; height:4px; border-radius:3px; background:var(--border); margin:0 auto 18px; }
+  .e2e-info-icon{ width:64px; height:64px; border-radius:18px; background:rgba(5,100,245,0.14); display:flex; align-items:center; justify-content:center; margin:0 auto 18px; }
+  .e2e-info-icon svg{ width:30px; height:30px; stroke:var(--accent); }
+  .e2e-info-sheet h3{ font-size:18px; font-weight:700; color:var(--ink); margin:0 0 12px; line-height:1.35; }
+  .e2e-info-sheet p{ font-size:13.5px; color:var(--muted); line-height:1.6; margin:0 0 14px; text-align:left; }
+  .e2e-info-sheet .e2e-info-points{ text-align:left; margin:0 0 22px; padding:0; list-style:none; }
+  .e2e-info-sheet .e2e-info-points li{ display:flex; gap:10px; align-items:flex-start; font-size:13px; color:var(--ink); line-height:1.5; margin-bottom:12px; }
+  .e2e-info-sheet .e2e-info-points li svg{ width:16px; height:16px; stroke:var(--accent); flex-shrink:0; margin-top:1px; }
+  .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(5,100,245,0.14); color:var(--accent); border:1px solid rgba(5,100,245,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .e2e-info-close-btn:active{ background:rgba(5,100,245,0.22); }
+
+  /* ---- Cropper foto profil: fullscreen ala WhatsApp ---- */
+  .crop-overlay{ position:fixed; inset:0; background:#000; z-index:300; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:opacity .16s ease; }
+  .crop-overlay.open{ opacity:1; pointer-events:auto; }
+  .crop-topbar{ flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:14px 14px; padding-top:calc(14px + env(safe-area-inset-top,0px)); }
+  .crop-topbar-title{ color:#ffffff; font-size:15.5px; font-weight:600; }
+  .crop-icon-btn{ width:40px; height:40px; border-radius:50%; border:none; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-tap-highlight-color:transparent; padding:0; flex-shrink:0; }
+  .crop-icon-btn:active{ background:rgba(255,255,255,0.18); }
+  .crop-icon-btn svg{ width:19px; height:19px; }
+  .crop-confirm-btn{ background:var(--accent); }
+  .crop-confirm-btn:disabled{ opacity:0.5; pointer-events:none; }
+  .crop-stage{ position:relative; flex:1; min-height:0; overflow:hidden; touch-action:none; background:#000; }
+  .crop-stage img{ position:absolute; left:0; top:0; transform-origin:0 0; user-select:none; -webkit-user-drag:none; pointer-events:none; will-change:transform; }
+  .crop-circle{ position:absolute; box-shadow:0 0 0 2000px rgba(0,0,0,0.6); border:1.5px solid rgba(255,255,255,0.9); border-radius:50%; box-sizing:border-box; pointer-events:none; }
+  .crop-bottombar{ flex-shrink:0; display:flex; align-items:center; gap:14px; padding:18px 24px calc(22px + env(safe-area-inset-bottom,0px)); }
+  .crop-bottombar svg{ stroke:#ffffff; opacity:0.8; flex-shrink:0; width:17px; height:17px; }
+  .crop-bottombar svg.big{ width:22px; height:22px; }
+  #cropZoomRange{ flex:1; -webkit-appearance:none; appearance:none; height:3px; border-radius:2px; background:rgba(255,255,255,0.28); outline:none; margin:0; }
+  #cropZoomRange::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.4); }
+  #cropZoomRange::-moz-range-thumb{ width:18px; height:18px; border-radius:50%; background:var(--accent); border:none; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.4); }
+  .crop-hint{ text-align:center; color:rgba(255,255,255,0.55); font-size:12px; padding:0 24px 4px; flex-shrink:0; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js?v=__VERSION__"></script>
+</head>
+<body>
+<div class="phone">
+  <div id="authGate"><div class="spinner"></div></div>
+  <div class="appbar">
+    <div class="back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <h1 id="pageTitle">Profil</h1>
+  </div>
+  <div class="content">
+    <div class="hero">
+      <div style="position:relative; width:92px; height:92px;">
+        <div class="h-avatar" id="hAvatar">?</div>
+        <div id="avatarEditBadge" style="display:none; position:absolute; right:-2px; bottom:-2px; width:30px;height:30px;border-radius:50%;background:var(--accent);align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--bg);">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+      </div>
+      <input type="file" id="avatarFileInput" accept="image/*" style="display:none;">
+      <div class="h-uname" id="hUname">—</div>
+      <div id="avatarHint" style="font-size:11.5px; color:var(--muted); min-height:14px; margin-top:2px;"></div>
+      <div id="avatarRemoveRow" style="display:none; margin-top:2px;">
+        <span style="font-size:11.5px; color:var(--accent); font-weight:700; cursor:pointer;" id="avatarRemoveBtn">Hapus Foto</span>
+      </div>
+      <div class="h-joined" id="hJoined">Bergabung —</div>
+    </div>
+
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card"><div class="st-num" id="stKontak">—</div><div class="st-label">Kontak</div></div>
+      <div class="stat-card"><div class="st-num" id="stStatus">—</div><div class="st-label">Status Aktif</div></div>
+    </div>
+
+    <div id="ownOnlySection">
+    <div class="section-title">Info Akun</div>
+    <div class="card">
+      <div class="info-row">
+        <div class="i-label">PIN</div>
+        <div style="display:flex;align-items:center;gap:10px;"><div class="i-value" id="iPin">—</div><button class="pin-copy-btn" id="pinCopyBtn" type="button">Salin</button></div>
+      </div>
+    </div>
+
+    <button class="btn" onclick="location.href='setelan.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      <span>Buka Setelan</span>
+    </button>
+
+    <button class="btn" id="logoutBtn" style="color:var(--error); border-color:rgba(228,57,79,0.35); margin-bottom:0;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/></svg>
+      <span>Keluar</span>
+    </button>
+    </div>
+
+    <div class="action-row">
+      <button class="action-btn" id="msgBtn" style="display:none;">
+        <div class="a-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div>
+        <span>Kirim Pesan</span>
+      </button>
+
+      <button class="action-btn danger" id="clearChatBtn" style="display:none;">
+        <div class="a-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg></div>
+        <span>Bersihkan Obrolan</span>
+      </button>
+
+      <button class="action-btn danger" id="deleteContactBtn" style="display:none;">
+        <div class="a-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8l-4 4m0-4l4 4"/></svg></div>
+        <span>Hapus Kontak</span>
+      </button>
+    </div>
+
+    <div class="section-title">Keamanan</div>
+    <div class="e2e-card" id="e2eCard">
+      <div class="e2e-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
+      <div class="e2e-card-body">
+        <div class="e2e-card-title">Enkripsi end-to-end<span class="e2e-badge"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></div>
+        <div class="e2e-card-desc" id="e2eCardDesc">Pesanmu di Baku Chat dilindungi enkripsi end-to-end.</div>
+        <div class="e2e-card-link">Pelajari Selengkapnya</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="e2e-info-overlay" id="e2eInfoOverlay">
+  <div class="e2e-info-sheet">
+    <div class="e2e-info-grip"></div>
+    <div class="e2e-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
+    <h3>Enkripsi End-to-End</h3>
+    <p id="e2eInfoText">Semua pesan pribadi di Baku Chat dilindungi enkripsi end-to-end secara otomatis.</p>
+    <ul class="e2e-info-points">
+      <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6l8-4z"/></svg><span>Hanya kamu dan lawan bicaramu yang punya kunci untuk membuka pesan. Kunci itu tersimpan di perangkat masing-masing, tidak pernah dikirim ke server.</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M4.9 4.9l14.2 14.2"/></svg><span>Server Baku Chat hanya meneruskan pesan yang sudah terenkripsi. Kami tidak bisa membaca isi obrolanmu, kapan pun.</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg><span>Kalau kode keamanan berubah (misalnya lawan bicara ganti HP atau pasang ulang aplikasi), kamu akan diberi tahu di dalam obrolan.</span></li>
+    </ul>
+    <button type="button" class="e2e-info-close-btn" id="e2eInfoCloseBtn">Mengerti</button>
+  </div>
+</div>
+
+<div class="crop-overlay" id="cropOverlay">
+  <div class="crop-topbar">
+    <button class="crop-icon-btn" id="cropCancelBtn" type="button" aria-label="Batal">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="crop-topbar-title">Sesuaikan Foto</div>
+    <button class="crop-icon-btn crop-confirm-btn" id="cropOkBtn" type="button" aria-label="Pakai foto">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+    </button>
+  </div>
+  <div class="crop-stage" id="cropStageWrap">
+    <img id="cropImgEl" draggable="false" alt="">
+    <div class="crop-circle" id="cropCircle"></div>
+  </div>
+  <div class="crop-hint">Geser untuk memindahkan &middot; cubit atau tarik slider untuk memperbesar</div>
+  <div class="crop-bottombar">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/></svg>
+    <input type="range" id="cropZoomRange" min="1" max="3" step="0.01" value="1">
+    <svg class="big" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg>
+  </div>
+</div>
+
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirmTitle">Konfirmasi</div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" id="confirmCancelBtn">Batal</button>
+      <button class="confirm-ok" id="confirmOkBtn">Hapus</button>
+    </div>
+  </div>
+</div>
+<script>
+  const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
+  function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
+  function initials(u){return(u||'?').slice(0,2).toUpperCase();}
+  function setAvatar(el, id, username, avatarUrl){
+    if(avatarUrl){ el.style.background=`url(${avatarUrl}) center/cover no-repeat`; el.textContent=''; }
+    else { el.style.background=colorFor(id); el.textContent=initials(username); }
+  }
+  function formatJoined(iso){
+    if(!iso)return'Bergabung —';
+    const d=new Date(iso);
+    const bulan=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    return 'Bergabung sejak '+d.getDate()+' '+bulan[d.getMonth()]+' '+d.getFullYear();
+  }
+
+  let currentPin=null;
+  let currentUserId=null;
+  let currentUsername=null;
+  let currentAvatarUrl=null;
+
+  function getParam(name){return new URLSearchParams(window.location.search).get(name);}
+
+  function goBack(){
+    // Kalau ada riwayat navigasi (misalnya dibuka dari chat.html), kembali ke halaman
+    // sebelumnya persis (termasuk percakapan chat yang sedang dibuka).
+    // Fallback ke dashboard hanya kalau halaman ini dibuka tanpa riwayat sebelumnya.
+    if(window.history.length>1){ window.history.back(); }
+    else { window.location.href='dashboard.html'; }
+  }
+  const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  function showConfirm(title,msg,okLabel){
+    return new Promise((resolve)=>{
+      const ov=document.getElementById('confirmOverlay'),ok=document.getElementById('confirmOkBtn'),cancel=document.getElementById('confirmCancelBtn');
+      document.getElementById('confirmTitle').textContent=title;document.getElementById('confirmMsg').textContent=msg;ok.textContent=okLabel||'Hapus';
+      ov.classList.add('open');
+      function cleanup(result){ov.classList.remove('open');ok.removeEventListener('click',onOk);cancel.removeEventListener('click',onCancel);ov.removeEventListener('click',onOverlay);resolve(result);}
+      function onOk(){cleanup(true);} function onCancel(){cleanup(false);} function onOverlay(e){if(e.target===ov)cleanup(false);}
+      ok.addEventListener('click',onOk);cancel.addEventListener('click',onCancel);ov.addEventListener('click',onOverlay);
+    });
+  }
+
+  async function boot(){
+    const {data:{session}} = await supabaseClient.auth.getSession();
+    if(!session){ window.location.replace('index.html'); return; }
+    const myUid=session.user.id;
+    const rawParam=getParam('uid');
+    const viewUid=(rawParam && UUID_RE.test(rawParam) && rawParam!==myUid) ? rawParam : myUid;
+    const isOwn = viewUid===myUid;
+
+    if(!isOwn){
+      document.getElementById('pageTitle').textContent='Profil Kontak';
+      document.getElementById('ownOnlySection').style.display='none';
+      document.getElementById('statsRow').style.display='none';
+      const msgBtn=document.getElementById('msgBtn');
+      msgBtn.style.display='flex';
+      const clearChatBtn=document.getElementById('clearChatBtn');
+      const deleteContactBtn=document.getElementById('deleteContactBtn');
+      clearChatBtn.style.display='flex';
+      deleteContactBtn.style.display='flex';
+      const {data:prof,error:profErr} = await supabaseClient.from('profiles').select('username, created_at, avatar_url').eq('id', viewUid).maybeSingle();
+      if(profErr){ console.error('Gagal memuat profil kontak:',profErr); }
+      if(!prof){ document.getElementById('hUname').textContent='Pengguna tidak ditemukan'; document.getElementById('authGate').style.display='none'; return; }
+      document.getElementById('hUname').textContent = prof.username;
+      setAvatar(document.getElementById('hAvatar'), viewUid, prof.username, prof.avatar_url);
+      document.getElementById('hJoined').textContent = formatJoined(prof.created_at);
+      document.getElementById('e2eCardDesc').textContent = 'Pesan antara kamu dan '+prof.username+' dilindungi enkripsi end-to-end.';
+      document.getElementById('e2eInfoText').textContent = 'Semua pesan antara kamu dan '+prof.username+' dilindungi enkripsi end-to-end secara otomatis.';
+      msgBtn.addEventListener('click',()=>{window.location.href=`chat.html?uid=${viewUid}&uname=${encodeURIComponent(prof.username)}`;});
+      clearChatBtn.addEventListener('click',async()=>{
+        const ok=await showConfirm('Hapus Untuk Semua Orang','Semua percakapan ini akan di hapus untuk semua orang','Hapus Permanen');
+        if(!ok)return;
+        const {error}=await supabaseClient.from('messages').delete().or(`and(sender_id.eq.${myUid},receiver_id.eq.${viewUid}),and(sender_id.eq.${viewUid},receiver_id.eq.${myUid})`);
+        if(error){alert('Gagal menghapus permanen. Coba lagi.');return;}
+        await supabaseClient.from('chat_clears').delete().eq('user_id',myUid).eq('peer_id',viewUid);
+        window.location.href=`chat.html?uid=${viewUid}&uname=${encodeURIComponent(prof.username)}`;
+      });
+      deleteContactBtn.addEventListener('click',async()=>{
+        const ok=await showConfirm('Hapus Kontak Ini?','Menghapus kontak akan menghapus juga kontak anda dari teman ini.','Hapus');
+        if(!ok)return;
+        const {error}=await supabaseClient.from('contacts').delete().or(`and(requester_id.eq.${myUid},addressee_id.eq.${viewUid}),and(requester_id.eq.${viewUid},addressee_id.eq.${myUid})`);
+        if(!error)window.location.href='dashboard.html';
+      });
+      document.getElementById('authGate').style.display = 'none';
+      return;
+    }
+
+    const {data:prof} = await supabaseClient.from('profiles').select('username, pin, avatar_url').eq('id', myUid).maybeSingle();
+    if(prof){
+      currentPin = prof.pin;
+      currentUserId = myUid;
+      currentAvatarUrl = prof.avatar_url || null;
+      document.getElementById('hUname').textContent = prof.username;
+      currentUsername = prof.username;
+      document.getElementById('iPin').textContent = prof.pin;
+      setAvatar(document.getElementById('hAvatar'), myUid, prof.username, currentAvatarUrl);
+    }
+    document.getElementById('avatarEditBadge').style.display = 'flex';
+    updateAvatarRemoveRow();
+    document.getElementById('hJoined').textContent = formatJoined(session.user.created_at);
+    document.getElementById('e2eCardDesc').textContent = 'Semua pesanmu di Baku Chat dilindungi enkripsi end-to-end. Bahkan kami pun tidak bisa membacanya.';
+    document.getElementById('e2eInfoText').textContent = 'Semua pesan pribadi di Baku Chat dilindungi enkripsi end-to-end secara otomatis, di setiap obrolan yang kamu punya.';
+
+    const {data:cRows} = await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${myUid},addressee_id.eq.${myUid}`);
+    document.getElementById('stKontak').textContent = (cRows||[]).length;
+
+    const {count:sCount} = await supabaseClient.from('statuses').select('id',{count:'exact',head:true}).eq('user_id',myUid).gt('expires_at', new Date().toISOString());
+    document.getElementById('stStatus').textContent = sCount ?? 0;
+
+    document.getElementById('logoutBtn').addEventListener('click', async()=>{
+      const ok = await showConfirm('Keluar dari Akun?','Kamu perlu masuk lagi untuk membuka Baku Chat.','Keluar');
+      if(!ok) return;
+      await supabaseClient.auth.signOut();
+      window.location.replace('index.html');
+    });
+
+    document.getElementById('authGate').style.display = 'none';
+  }
+  boot();
+
+  // ---- Foto Profil: resize di client lalu upload ke Supabase Storage (bucket "avatars"),
+  // kolom profiles.avatar_url hanya menyimpan URL publiknya. Hanya untuk profil sendiri. ----
+  const avatarFileInput=document.getElementById('avatarFileInput'), avatarEditBadge=document.getElementById('avatarEditBadge'), avatarHint=document.getElementById('avatarHint'),
+        avatarRemoveRow=document.getElementById('avatarRemoveRow'), avatarRemoveBtn=document.getElementById('avatarRemoveBtn');
+  avatarEditBadge.addEventListener('click', ()=>avatarFileInput.click());
+  function updateAvatarRemoveRow(){ avatarRemoveRow.style.display = currentAvatarUrl ? 'block' : 'none'; }
+  avatarRemoveBtn.addEventListener('click', async ()=>{
+    if(!currentUserId) return;
+    if(!confirm('Hapus foto profil?')) return;
+    await supabaseClient.storage.from('avatars').remove([currentUserId + '.jpg']);
+    const {error}=await supabaseClient.from('profiles').update({avatar_url:null}).eq('id', currentUserId);
+    if(error){ avatarHint.textContent='Gagal menghapus foto: '+error.message; avatarHint.style.color='var(--error)'; return; }
+    currentAvatarUrl=null;
+    setAvatar(document.getElementById('hAvatar'), currentUserId, currentUsername, currentAvatarUrl);
+    updateAvatarRemoveRow();
+    avatarHint.textContent='Foto profil dihapus.'; avatarHint.style.color='var(--ok)';
+  });
+
+  // ---- Crop foto: layar penuh ala WhatsApp. Foto bisa digeser (drag/pan) dan
+  // diperbesar (pinch dua jari, scroll wheel, atau slider), area lingkaran di tengah
+  // menandai bagian yang akan dipakai sebagai foto profil. ----
+  const CROP_OUTPUT=400, CROP_MIN_ZOOM=1, CROP_MAX_ZOOM=3;
+  const cropOverlay=document.getElementById('cropOverlay'), cropImgEl=document.getElementById('cropImgEl'),
+        cropOkBtn=document.getElementById('cropOkBtn'), cropCancelBtn=document.getElementById('cropCancelBtn'),
+        cropStageWrap=document.getElementById('cropStageWrap'), cropCircle=document.getElementById('cropCircle'),
+        cropZoomRange=document.getElementById('cropZoomRange');
+  let cropImg=null, cropObjectUrl=null;
+  let stageW=0, stageH=0, circleR=0, circleCX=0, circleCY=0, baseScale=1;
+  let zoom=1, cx=0, cy=0; // titik tengah gambar, dalam koordinat px stage
+  const cropPointers=new Map();
+  let dragStart=null, pinchStart=null;
+
+  function measureStage(){
+    const r=cropStageWrap.getBoundingClientRect();
+    stageW=r.width; stageH=r.height;
+    circleR=Math.min(stageW,stageH)*0.42;
+    circleCX=stageW/2; circleCY=stageH/2;
+    cropCircle.style.width=cropCircle.style.height=(circleR*2)+'px';
+    cropCircle.style.left=(circleCX-circleR)+'px';
+    cropCircle.style.top=(circleCY-circleR)+'px';
+  }
+  function applyTransform(){
+    const dispW=cropImg.width*baseScale*zoom, dispH=cropImg.height*baseScale*zoom;
+    cropImgEl.style.width=dispW+'px'; cropImgEl.style.height=dispH+'px';
+    cropImgEl.style.transform=`translate(${(cx-dispW/2)}px, ${(cy-dispH/2)}px)`;
+  }
+  function clampCenter(){
+    const dispW=cropImg.width*baseScale*zoom, dispH=cropImg.height*baseScale*zoom;
+    const minCx=circleCX+circleR-dispW/2, maxCx=circleCX-circleR+dispW/2;
+    const minCy=circleCY+circleR-dispH/2, maxCy=circleCY-circleR+dispH/2;
+    cx=Math.max(minCx,Math.min(maxCx,cx));
+    cy=Math.max(minCy,Math.min(maxCy,cy));
+  }
+  function setZoom(newZoom, anchorX, anchorY){
+    newZoom=Math.max(CROP_MIN_ZOOM,Math.min(CROP_MAX_ZOOM,newZoom));
+    if(anchorX==null){ anchorX=circleCX; anchorY=circleCY; }
+    const oldDispW=cropImg.width*baseScale*zoom, oldDispH=cropImg.height*baseScale*zoom;
+    const relX=(anchorX-(cx-oldDispW/2))/oldDispW, relY=(anchorY-(cy-oldDispH/2))/oldDispH;
+    zoom=newZoom;
+    const newDispW=cropImg.width*baseScale*zoom, newDispH=cropImg.height*baseScale*zoom;
+    cx=anchorX-relX*newDispW+newDispW/2; cy=anchorY-relY*newDispH+newDispH/2;
+    clampCenter();
+    applyTransform();
+    cropZoomRange.value=zoom;
+  }
+  function openCropper(file){
+    cropObjectUrl=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{
+      cropImg=img;
+      cropOverlay.classList.add('open');
+      document.body.style.overflow='hidden';
+      requestAnimationFrame(()=>{
+        measureStage();
+        baseScale=(circleR*2)/Math.min(img.width,img.height);
+        zoom=1; cx=circleCX; cy=circleCY;
+        cropZoomRange.value=1;
+        cropImgEl.src=cropObjectUrl;
+        applyTransform();
+      });
+    };
+    img.onerror=()=>{ avatarHint.textContent='Gagal memuat gambar.'; avatarHint.style.color='var(--error)'; URL.revokeObjectURL(cropObjectUrl); };
+    img.src=cropObjectUrl;
+  }
+  function closeCropper(){
+    cropOverlay.classList.remove('open');
+    document.body.style.overflow='';
+    if(cropObjectUrl){ URL.revokeObjectURL(cropObjectUrl); cropObjectUrl=null; }
+    cropImg=null; cropPointers.clear(); dragStart=null; pinchStart=null;
+    cropImgEl.removeAttribute('src');
+  }
+  cropStageWrap.addEventListener('pointerdown',(e)=>{
+    if(!cropImg)return;
+    cropStageWrap.setPointerCapture(e.pointerId);
+    cropPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(cropPointers.size===1){
+      dragStart={x:e.clientX,y:e.clientY,cx,cy};
+    } else if(cropPointers.size===2){
+      dragStart=null;
+      const pts=[...cropPointers.values()];
+      const dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+      const rect=cropStageWrap.getBoundingClientRect();
+      pinchStart={dist, zoom, cx, cy, midX:(pts[0].x+pts[1].x)/2-rect.left, midY:(pts[0].y+pts[1].y)/2-rect.top};
+    }
+  });
+  cropStageWrap.addEventListener('pointermove',(e)=>{
+    if(!cropImg||!cropPointers.has(e.pointerId))return;
+    cropPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(cropPointers.size===1&&dragStart){
+      cx=dragStart.cx+(e.clientX-dragStart.x); cy=dragStart.cy+(e.clientY-dragStart.y);
+      clampCenter(); applyTransform();
+    } else if(cropPointers.size===2&&pinchStart){
+      const pts=[...cropPointers.values()];
+      const dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+      cx=pinchStart.cx; cy=pinchStart.cy;
+      setZoom(pinchStart.zoom*(dist/pinchStart.dist), pinchStart.midX, pinchStart.midY);
+    }
+  });
+  function cropPointerEnd(e){
+    cropPointers.delete(e.pointerId);
+    if(cropPointers.size<2) pinchStart=null;
+    if(cropPointers.size===1){
+      const remaining=[...cropPointers.values()][0];
+      dragStart={x:remaining.x,y:remaining.y,cx,cy};
+    } else if(cropPointers.size===0){ dragStart=null; }
+  }
+  cropStageWrap.addEventListener('pointerup',cropPointerEnd);
+  cropStageWrap.addEventListener('pointercancel',cropPointerEnd);
+  cropStageWrap.addEventListener('wheel',(e)=>{
+    if(!cropImg)return;
+    e.preventDefault();
+    const rect=cropStageWrap.getBoundingClientRect();
+    setZoom(zoom-e.deltaY*0.0015, e.clientX-rect.left, e.clientY-rect.top);
+  },{passive:false});
+  cropZoomRange.addEventListener('input',()=>{ if(cropImg) setZoom(parseFloat(cropZoomRange.value)); });
+  window.addEventListener('resize',()=>{ if(cropImg){ measureStage(); clampCenter(); applyTransform(); } });
+  cropCancelBtn.addEventListener('click', ()=>{ closeCropper(); avatarFileInput.value=''; });
+
+  function cropToBlob(){
+    return new Promise((resolve,reject)=>{
+      const s=baseScale*zoom;
+      const dispW=cropImg.width*s, dispH=cropImg.height*s;
+      const circleLeft=circleCX-circleR, circleTop=circleCY-circleR;
+      const srcX=(circleLeft-(cx-dispW/2))/s, srcY=(circleTop-(cy-dispH/2))/s, srcSize=(circleR*2)/s;
+      const outCanvas=document.createElement('canvas');
+      outCanvas.width=CROP_OUTPUT; outCanvas.height=CROP_OUTPUT;
+      const outCtx=outCanvas.getContext('2d');
+      outCtx.drawImage(cropImg,srcX,srcY,srcSize,srcSize,0,0,CROP_OUTPUT,CROP_OUTPUT);
+      outCanvas.toBlob(blob=>{ blob?resolve(blob):reject(new Error('Gagal memproses gambar')); }, 'image/jpeg', 0.9);
+    });
+  }
+
+  cropOkBtn.addEventListener('click', async ()=>{
+    if(!cropImg || !currentUserId) return;
+    cropOkBtn.disabled=true;
+    avatarHint.textContent='Mengunggah foto...'; avatarHint.style.color='var(--muted)';
+    try{
+      const blob=await cropToBlob();
+      closeCropper();
+      const path=currentUserId+'.jpg';
+      const {error:upErr}=await supabaseClient.storage.from('avatars').upload(path, blob, {contentType:'image/jpeg', upsert:true});
+      if(upErr){ avatarHint.textContent='Gagal mengunggah foto: '+upErr.message; avatarHint.style.color='var(--error)'; return; }
+      const {data:urlData}=supabaseClient.storage.from('avatars').getPublicUrl(path);
+      const publicUrl=urlData.publicUrl+'?v='+Date.now();
+      const {error}=await supabaseClient.from('profiles').update({avatar_url:publicUrl}).eq('id', currentUserId);
+      if(error){ avatarHint.textContent='Gagal menyimpan foto: '+error.message; avatarHint.style.color='var(--error)'; return; }
+      currentAvatarUrl=publicUrl;
+      setAvatar(document.getElementById('hAvatar'), currentUserId, currentUsername, currentAvatarUrl);
+      updateAvatarRemoveRow();
+      avatarHint.textContent='Foto profil diperbarui.'; avatarHint.style.color='var(--ok)';
+    }catch(err){
+      avatarHint.textContent='Gagal memproses foto.'; avatarHint.style.color='var(--error)';
+    }finally{
+      cropOkBtn.disabled=false;
+      avatarFileInput.value='';
+    }
+  });
+
+  avatarFileInput.addEventListener('change', ()=>{
+    const file=avatarFileInput.files[0];
+    if(!file || !currentUserId) return;
+    if(!file.type.startsWith('image/')){ avatarHint.textContent='File harus berupa gambar.'; avatarHint.style.color='var(--error)'; avatarFileInput.value=''; return; }
+    avatarHint.textContent=''; 
+    openCropper(file);
+  });
+
+  document.getElementById('pinCopyBtn').addEventListener('click', async () => {
+    if(!currentPin) return;
+    const btn = document.getElementById('pinCopyBtn');
+    try{ await navigator.clipboard.writeText(currentPin); btn.textContent='Tersalin ✓'; }
+    catch(e){ btn.textContent='Gagal'; }
+    setTimeout(()=>{ btn.textContent='Salin'; }, 1600);
+  });
+
+  document.getElementById('e2eCard').addEventListener('click', () => {
+    document.getElementById('e2eInfoOverlay').classList.add('open');
+  });
+  document.getElementById('e2eInfoCloseBtn').addEventListener('click', () => {
+    document.getElementById('e2eInfoOverlay').classList.remove('open');
+  });
+  document.getElementById('e2eInfoOverlay').addEventListener('click', (e) => {
+    if(e.target.id==='e2eInfoOverlay') document.getElementById('e2eInfoOverlay').classList.remove('open');
+  });
+</script>
+</body>
+</html>
