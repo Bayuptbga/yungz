@@ -494,8 +494,20 @@
   const contactAvatarMap={};
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
   function timeLabel(iso){const d=new Date(iso),t=new Date();if(d.toDateString()===t.toDateString())return d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});}
-  function tickSvg(del,read){if(read)return `<svg viewBox="0 0 20 15" width="15" height="11" fill="none" stroke="#0564f5" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;if(del)return `<svg viewBox="0 0 20 15" width="15" height="11" fill="none" stroke="#66798d" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;return `<svg viewBox="0 0 16 15" width="12" height="11" fill="none" stroke="#66798d" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L14 3"/></svg>`;}
-  function statusIconHTML(chat){if(!chat.mine)return'';return `<span class="status-icon" style="background:none;">${tickSvg(chat.deliveredAt,chat.readAt)}</span>`;}
+  // Sama persis dengan gaya badge di chat.html: 'sent' (abu, centang 1 putih),
+  // 'delivered' (biru, centang 2 putih), 'read' (hijau, centang 2 putih).
+  function tickStatus(del,read){ return read?'read':(del?'delivered':'sent'); }
+  function tickSvg(status){
+    const attrs='width="14" height="14" viewBox="0 0 24 24" fill="none"';
+    if(status==='sent'){
+      return `<svg ${attrs}><circle cx="12" cy="12" r="10" fill="#8a97a3"/><path d="M7.3 12.3l2.7 2.7L16.8 8.4" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+    }
+    if(status==='delivered'){
+      return `<svg ${attrs}><circle cx="12" cy="12" r="10" fill="#0a84ff"/><path d="M5.8 12.3l2.6 2.6L14 9" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M10.8 12.3l2.6 2.6L19 9" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+    }
+    return `<svg ${attrs}><circle cx="12" cy="12" r="10" fill="#189a56"/><path d="M5.8 12.3l2.6 2.6L14 9" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M10.8 12.3l2.6 2.6L19 9" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+  }
+  function statusIconHTML(chat){if(!chat.mine)return'';return `<span class="status-icon" style="background:none;">${tickSvg(tickStatus(chat.deliveredAt,chat.readAt))}</span>`;}
   function render(chats){
     const list=document.getElementById('chatlist');if(!chats||chats.length===0){list.innerHTML=`<div class="panel-empty">Belum ada percakapan.</div>`;return;}
     chats.forEach(chat=>{contactAvatarMap[chat.uid]=chat.avatarUrl||null;});
