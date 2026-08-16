@@ -85,6 +85,26 @@
   .appbar h1.brand{ color:var(--bbm-blue); font-weight:800; letter-spacing:.2px; background:linear-gradient(90deg,var(--bbm-blue),var(--bbm-blue-light)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
   .appbar .right{ display:flex; align-items:center; gap:20px; }
   .appbar .icon-btn{ cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .sel-bar{ position:absolute; inset:0; background:var(--bg); display:none; align-items:center; gap:4px; padding:0 6px; }
+  .appbar.selmode .left,.appbar.selmode .right{ visibility:hidden; }
+  .appbar.selmode .sel-bar{ display:flex; }
+  .sel-bar .sb-close{ width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; color:var(--ink); }
+  .sel-bar .sb-close:active{ background:var(--border); }
+  .sel-bar .sb-count{ flex:1; font-size:17px; font-weight:700; color:var(--ink); }
+  .sel-bar .sb-action{ width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; color:var(--ink); }
+  .sel-bar .sb-action:active{ background:var(--border); }
+  .confirm-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:400; opacity:0; pointer-events:none; transition:opacity .18s ease; padding:24px; }
+  .confirm-overlay.open{ opacity:1; pointer-events:auto; }
+  .confirm-box{ background:var(--card-bg); border:1px solid var(--border); border-radius:16px; width:100%; max-width:320px; padding:22px 20px 16px; box-shadow:0 10px 40px rgba(0,0,0,0.5); transform:translateY(10px) scale(0.97); transition:transform .18s ease; }
+  .confirm-overlay.open .confirm-box{ transform:translateY(0) scale(1); }
+  .confirm-title{ font-size:16px; font-weight:700; color:var(--ink); margin-bottom:8px; }
+  .confirm-msg{ font-size:13.5px; line-height:19px; color:var(--muted); margin-bottom:20px; }
+  .confirm-actions{ display:flex; gap:10px; justify-content:flex-end; }
+  .confirm-actions button{ border:none; border-radius:10px; padding:10px 16px; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .confirm-cancel{ background:var(--border); color:var(--ink); }
+  .confirm-cancel:active{ background:var(--bbm-blue-light); }
+  .confirm-ok{ background:#e4394f; color:#fdecee; }
+  .confirm-ok:active{ background:#e14758; }
   .search-bar{ display:none; align-items:center; gap:10px; background:var(--bbm-blue); padding:14px 16px; flex-shrink:0; position:absolute; inset:0; z-index:5; }
   .search-bar.show{ display:flex; }
   .search-bar .search-close{ cursor:pointer; color:#ffffff; display:flex; align-items:center; justify-content:center; flex-shrink:0; width:32px; height:32px; }
@@ -150,12 +170,19 @@
   }
   @keyframes skelShimmer{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
   @media (prefers-reduced-motion:reduce){ .skel-avatar::after,.skel-line::after{animation:none;} }
-  .chat-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; cursor:pointer; }
+  .chat-item{ position:relative; display:flex; align-items:center; gap:14px; padding:12px 16px; cursor:pointer; transition:background-color .15s ease; }
   .chat-item:active{ background:var(--border); }
+  .chat-item.selected{ background:rgba(5,100,245,0.1); }
+  .avatar-wrap{ position:relative; flex-shrink:0; }
   .avatar{ width:52px; height:52px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px; color:#ffffff; }
+  .sel-check{ position:absolute; right:-2px; bottom:-2px; width:21px; height:21px; border-radius:50%; background:var(--bbm-blue); border:2.5px solid var(--card-bg); display:none; align-items:center; justify-content:center; }
+  .chat-item.selected .sel-check{ display:flex; }
   .chat-main{ flex:1; min-width:0; }
   .chat-top{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
-  .chat-name{ font-size:16.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .chat-name{ font-size:16.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:5px; min-width:0; }
+  .chat-name .pin-ic{ flex-shrink:0; color:var(--muted); }
+  .chat-name .pin-ic svg{ width:13px; height:13px; }
+  .chat-name .txt{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .chat-bottom{ display:flex; align-items:center; gap:6px; margin-top:3px; }
   .status-icon{ width:16px; height:16px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#ffffff; }
   .status-icon.broadcast{background:none;}
@@ -362,7 +389,13 @@
 <div class="phone">
   <div id="authGate"><div class="spinner"></div></div>
   <div id="offlineBanner"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.58 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg><span>Anda sedang offline</span></div>
-  <div class="appbar">
+  <div class="appbar" id="appbar">
+    <div class="sel-bar" id="selBar">
+      <div class="sb-close" id="selCloseBtn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
+      <div class="sb-count" id="selCount">1</div>
+      <div class="sb-action" id="selPinBtn" title="Pin"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24V16a1 1 0 001 1h12a1 1 0 001-1v-.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V7a1 1 0 011-1 1 1 0 001-1V3a1 1 0 00-1-1H8a1 1 0 00-1 1v2a1 1 0 001 1 1 1 0 011 1z"/></svg></div>
+      <div class="sb-action" id="selDeleteBtn" title="Hapus"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg></div>
+    </div>
     <div class="left"><h1 class="brand">Baku Chat</h1></div>
     <div class="right">
       <div class="icon-btn" id="profileBtn" title="Profil">
@@ -448,6 +481,16 @@
     <div class="rx-picker-item" data-type="laugh">😂</div>
     <div class="rx-picker-item" data-type="angry">😡</div>
   </div>
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-box">
+      <div class="confirm-title" id="confirmTitle">Konfirmasi</div>
+      <div class="confirm-msg" id="confirmMsg"></div>
+      <div class="confirm-actions">
+        <button class="confirm-cancel" id="confirmCancelBtn">Batal</button>
+        <button class="confirm-ok" id="confirmOkBtn">Hapus</button>
+      </div>
+    </div>
+  </div>
   <div class="cprev-overlay" id="cprevOverlay">
     <div class="cprev-card">
       <div class="cprev-top"><div class="cprev-avatar" id="cprevBanner">?</div></div>
@@ -509,13 +552,98 @@
     return `<svg ${attrs}><circle cx="12" cy="12" r="10" fill="#189a56"/><path d="M5.8 12.3l2.6 2.6L14 9" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M10.8 12.3l2.6 2.6L19 9" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
   }
   function statusIconHTML(chat){if(!chat.mine)return'';return `<span class="status-icon" style="background:none;">${tickSvg(tickStatus(chat.deliveredAt,chat.readAt))}</span>`;}
+  const pinIcSvg='<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" stroke="none"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24V16a1 1 0 001 1h12a1 1 0 001-1v-.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V7a1 1 0 011-1 1 1 0 001-1V3a1 1 0 00-1-1H8a1 1 0 00-1 1v2a1 1 0 001 1 1 1 0 011 1z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function render(chats){
     const list=document.getElementById('chatlist');if(!chats||chats.length===0){list.innerHTML=`<div class="panel-empty">Belum ada percakapan.</div>`;return;}
     chats.forEach(chat=>{contactAvatarMap[chat.uid]=chat.avatarUrl||null;});
-    list.innerHTML=chats.map(chat=>`<div class="chat-item" data-uid="${escapeHtml(chat.uid)}" data-uname="${escapeHtml(chat.uname)}"><div class="avatar" style="${avatarStyle(chat.uid,chat.avatarUrl)}">${avatarInner(chat.uname,chat.avatarUrl)}</div><div class="chat-main"><div class="chat-top"><div class="chat-name" style="${chat.unread?'font-weight:700;':''}">${escapeHtml(chat.uname)}</div><div style="font-size:11.5px;color:var(--muted);">${escapeHtml(timeLabel(chat.time))}</div></div><div class="chat-bottom">${statusIconHTML(chat)}<div class="chat-msg" style="${chat.unread?'color:var(--ink);font-weight:600;':''}">${escapeHtml(chat.preview)}</div></div></div></div>`).join('');
-    document.querySelectorAll('.chat-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
-    document.querySelectorAll('.chat-item .avatar').forEach(a=>a.addEventListener('click',e=>{e.stopPropagation();const item=a.closest('.chat-item');openContactPreview(item.dataset.uid,item.dataset.uname);}));
+    list.innerHTML=chats.map(chat=>`<div class="chat-item" data-uid="${escapeHtml(chat.uid)}" data-uname="${escapeHtml(chat.uname)}" data-pinned="${chat.pinned?'1':'0'}"><div class="avatar-wrap"><div class="avatar" style="${avatarStyle(chat.uid,chat.avatarUrl)}">${avatarInner(chat.uname,chat.avatarUrl)}</div><div class="sel-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div></div><div class="chat-main"><div class="chat-top"><div class="chat-name" style="${chat.unread?'font-weight:700;':''}">${chat.pinned?`<span class="pin-ic">${pinIcSvg}</span>`:''}<span class="txt">${escapeHtml(chat.uname)}</span></div><div style="font-size:11.5px;color:var(--muted);flex-shrink:0;">${escapeHtml(timeLabel(chat.time))}</div></div><div class="chat-bottom">${statusIconHTML(chat)}<div class="chat-msg" style="${chat.unread?'color:var(--ink);font-weight:600;':''}">${escapeHtml(chat.preview)}</div></div></div></div>`).join('');
+    document.querySelectorAll('.chat-item').forEach(i=>{
+      i.addEventListener('click',()=>{
+        if(selMode){toggleSelect(i.dataset.uid);return;}
+        window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`;
+      });
+      let pressTimer=null,longFired=false,sx=0,sy=0;
+      i.addEventListener('pointerdown',e=>{
+        if(e.pointerType==='mouse'&&e.button!==0)return;
+        longFired=false;sx=e.clientX;sy=e.clientY;
+        pressTimer=setTimeout(()=>{longFired=true;if(navigator.vibrate)navigator.vibrate(35);enterSelMode(i.dataset.uid);},450);
+      });
+      i.addEventListener('pointermove',e=>{if(!pressTimer)return;if(Math.abs(e.clientX-sx)>12||Math.abs(e.clientY-sy)>12){clearTimeout(pressTimer);pressTimer=null;}});
+      i.addEventListener('pointerup',()=>{if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}});
+      i.addEventListener('pointercancel',()=>{if(pressTimer){clearTimeout(pressTimer);pressTimer=null;}});
+    });
+    document.querySelectorAll('.chat-item .avatar').forEach(a=>a.addEventListener('click',e=>{
+      e.stopPropagation();const item=a.closest('.chat-item');
+      if(selMode){toggleSelect(item.dataset.uid);return;}
+      openContactPreview(item.dataset.uid,item.dataset.uname);
+    }));
+    applySelectionUI();
   }
+  function showConfirm(title,msg,okLabel){
+    return new Promise((resolve)=>{
+      const ov=document.getElementById('confirmOverlay'),ok=document.getElementById('confirmOkBtn'),cancel=document.getElementById('confirmCancelBtn');
+      document.getElementById('confirmTitle').textContent=title;document.getElementById('confirmMsg').textContent=msg;ok.textContent=okLabel||'Hapus';
+      ov.classList.add('open');
+      function cleanup(result){ov.classList.remove('open');ok.removeEventListener('click',onOk);cancel.removeEventListener('click',onCancel);ov.removeEventListener('click',onOverlay);resolve(result);}
+      function onOk(){cleanup(true);} function onCancel(){cleanup(false);} function onOverlay(e){if(e.target===ov)cleanup(false);}
+      ok.addEventListener('click',onOk);cancel.addEventListener('click',onCancel);ov.addEventListener('click',onOverlay);
+    });
+  }
+  // ---- Mode seleksi (long-press): pilih banyak chat lalu Pin/Hapus ----
+  let selMode=false; const selectedUids=new Set();
+  function applySelectionUI(){
+    document.querySelectorAll('.chat-item').forEach(i=>i.classList.toggle('selected',selectedUids.has(i.dataset.uid)));
+  }
+  function updateSelBar(){
+    document.getElementById('selCount').textContent=selectedUids.size;
+    const allPinned=[...selectedUids].every(uid=>{const el=document.querySelector(`.chat-item[data-uid="${CSS.escape(uid)}"]`);return el&&el.dataset.pinned==='1';});
+    const pinBtn=document.getElementById('selPinBtn');
+    pinBtn.title=allPinned?'Lepas pin':'Pin ke atas';
+    pinBtn.innerHTML=allPinned
+      ?'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24V16a1 1 0 001 1h12a1 1 0 001-1v-.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V7a1 1 0 011-1 1 1 0 001-1V3a1 1 0 00-1-1H8a1 1 0 00-1 1v2a1 1 0 001 1 1 1 0 011 1z"/><path d="M3 3l18 18" stroke="var(--error)"/></svg>'
+      :'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24V16a1 1 0 001 1h12a1 1 0 001-1v-.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V7a1 1 0 011-1 1 1 0 001-1V3a1 1 0 00-1-1H8a1 1 0 00-1 1v2a1 1 0 001 1 1 1 0 011 1z"/></svg>';
+  }
+  function enterSelMode(uid){
+    selMode=true;selectedUids.clear();selectedUids.add(uid);
+    document.getElementById('appbar').classList.add('selmode');
+    applySelectionUI();updateSelBar();
+  }
+  function exitSelMode(){
+    selMode=false;selectedUids.clear();
+    document.getElementById('appbar').classList.remove('selmode');
+    applySelectionUI();
+  }
+  function toggleSelect(uid){
+    if(selectedUids.has(uid))selectedUids.delete(uid);else selectedUids.add(uid);
+    if(selectedUids.size===0){exitSelMode();return;}
+    applySelectionUI();updateSelBar();
+  }
+  document.getElementById('selCloseBtn').addEventListener('click',exitSelMode);
+  document.getElementById('selDeleteBtn').addEventListener('click',async()=>{
+    if(selectedUids.size===0)return;
+    const n=selectedUids.size;
+    const ok=await showConfirm(n>1?`Hapus ${n} Percakapan?`:'Hapus Percakapan?','Percakapan akan dihapus dari daftar chat kamu. Pesan tetap tersimpan untuk lawan bicara.','Hapus');
+    if(!ok)return;
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
+    const uids=[...selectedUids];const nowIso=new Date().toISOString();
+    await Promise.all(uids.map(peerId=>supabaseClient.from('chat_clears').upsert({user_id:session.user.id,peer_id:peerId,cleared_before:nowIso},{onConflict:'user_id,peer_id'})));
+    exitSelMode();
+    loadChats(session.user.id);
+  });
+  document.getElementById('selPinBtn').addEventListener('click',async()=>{
+    if(selectedUids.size===0)return;
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
+    const uids=[...selectedUids];
+    const allPinned=uids.every(uid=>{const el=document.querySelector(`.chat-item[data-uid="${CSS.escape(uid)}"]`);return el&&el.dataset.pinned==='1';});
+    if(allPinned){
+      await supabaseClient.from('chat_pins').delete().eq('user_id',session.user.id).in('peer_id',uids);
+    }else{
+      const nowIso=new Date().toISOString();
+      await supabaseClient.from('chat_pins').upsert(uids.map(peerId=>({user_id:session.user.id,peer_id:peerId,pinned_at:nowIso})),{onConflict:'user_id,peer_id'});
+    }
+    exitSelMode();
+    loadChats(session.user.id);
+  });
   function skeletonRow(){return `<div class="skel-item"><div class="skel-avatar"></div><div class="skel-lines"><div class="skel-line w60"></div><div class="skel-line w40"></div></div></div>`;}
   function looksEncrypted(content){try{const o=JSON.parse(content);return !!(o&&(o.e2e===1||o.e2e===2));}catch(e){return false;}}
   async function loadChats(userId){
@@ -526,6 +654,8 @@
     const {data:msgRows}=await supabaseClient.from('messages').select('sender_id, receiver_id, content, created_at, delivered_at, read_at').or(`sender_id.eq.${userId},receiver_id.eq.${userId}`).order('created_at',{ascending:false}).limit(300);
     const {data:clearRows}=await supabaseClient.from('chat_clears').select('peer_id, cleared_before').eq('user_id',userId);
     const clearedMap=new Map((clearRows||[]).map(c=>[c.peer_id,c.cleared_before]));
+    const {data:pinRows}=await supabaseClient.from('chat_pins').select('peer_id').eq('user_id',userId);
+    const pinnedSet=new Set((pinRows||[]).map(p=>p.peer_id));
     const lastByPartner=new Map();
     (msgRows||[]).forEach(m=>{const p=m.sender_id===userId?m.receiver_id:m.sender_id;if(!acceptedIds.has(p))return;const cutoff=clearedMap.get(p);if(cutoff&&m.created_at<=cutoff)return;if(!lastByPartner.has(p))lastByPartner.set(p,m);});
     if(lastByPartner.size===0){render([]);return;}
@@ -541,8 +671,11 @@
       }
       if(previewText==='[INVITE_CALL]') previewText='📞 Panggilan suara';
       if(previewText==='[CALL_REJECTED]') previewText='📞 Panggilan ditolak';
-      return {uid:pid,uname:prof.username||'Pengguna',avatarUrl:prof.avatar_url||null,preview:previewText,time:m.created_at,mine,deliveredAt:m.delivered_at,readAt:m.read_at,unread:!mine&&!m.read_at};
+      return {uid:pid,uname:prof.username||'Pengguna',avatarUrl:prof.avatar_url||null,preview:previewText,time:m.created_at,mine,deliveredAt:m.delivered_at,readAt:m.read_at,unread:!mine&&!m.read_at,pinned:pinnedSet.has(pid)};
     }));
+    // Chat yang di-pin selalu tampil paling atas. Sort stabil (bawaan JS modern)
+    // menjaga urutan waktu terbaru di dalam masing-masing kelompok (pinned/tidak).
+    chats.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
     render(chats);
   }
   async function markInboxDelivered(userId){await supabaseClient.from('messages').update({delivered_at:new Date().toISOString()}).eq('receiver_id',userId).is('delivered_at',null);}
@@ -904,7 +1037,7 @@ function timeAgo(iso){
   const tabDefs={chats:{tabEl:'tabChats',panelEl:'panelChats',title:'Baku Chat'},status:{tabEl:'tabStatus',panelEl:'panelStatus',title:'Status'},kontak:{tabEl:'tabKontak',panelEl:'panelKontak',title:'Kontak'},notif:{tabEl:'tabNotif',panelEl:'panelNotif',title:'Notifikasi'}};
   let activeTab='chats',onNonChatTab=false;
   function switchTab(name,fromPopstate){
-    if(!tabDefs[name])return;activeTab=name;
+    if(!tabDefs[name])return;if(selMode)exitSelMode();activeTab=name;
     if(!fromPopstate){if(name!=='chats'){if(!onNonChatTab)history.pushState({tab:name},'',location.href);else history.replaceState({tab:name},'',location.href);onNonChatTab=true;}else if(onNonChatTab){history.back();return;}}
     Object.entries(tabDefs).forEach(([k,d])=>{
       const t=document.getElementById(d.tabEl),p=document.getElementById(d.panelEl),ia=k===name;t.classList.toggle('active',ia);p.classList.toggle('active',ia);
