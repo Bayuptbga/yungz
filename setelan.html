@@ -162,15 +162,6 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="setting-row" style="cursor:pointer;" id="logoutRow">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--error)" stroke-width="2"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/></svg>
-          <div class="s-label" style="color:var(--error);">Keluar</div>
-        </div>
-      </div>
-    </div>
-
     <div class="section-title">About</div>
     <div class="card">
       <div class="setting-row" id="installRow" style="display:none;">
@@ -333,11 +324,7 @@
   }
   boot();
 
-  document.getElementById('logoutRow').addEventListener('click', async()=>{
-    if(!confirm('Yakin ingin keluar?')) return;
-    await supabaseClient.auth.signOut();
-    window.location.replace('index.html');
-  });
+  // Tombol Keluar sudah dipindah ke profil.html (bagian profil sendiri).
 
   // ---- Instal Aplikasi (PWA) ----
   let deferredPrompt = null;
