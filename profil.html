@@ -192,6 +192,11 @@
       </div>
     </div>
 
+    <button class="btn" id="adminBtn" style="display:none; color:var(--accent); border-color:rgba(5,100,245,0.35);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span>Panel Admin</span>
+    </button>
+
     <button class="btn" onclick="location.href='setelan.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
       <span>Buka Setelan</span>
@@ -366,7 +371,7 @@
       return;
     }
 
-    const {data:prof} = await supabaseClient.from('profiles').select('username, pin, avatar_url').eq('id', myUid).maybeSingle();
+    const {data:prof} = await supabaseClient.from('profiles').select('username, pin, avatar_url, is_admin').eq('id', myUid).maybeSingle();
     if(prof){
       currentPin = prof.pin;
       currentUserId = myUid;
@@ -375,6 +380,11 @@
       currentUsername = prof.username;
       document.getElementById('iPin').textContent = prof.pin;
       setAvatar(document.getElementById('hAvatar'), myUid, prof.username, currentAvatarUrl);
+      if(prof.is_admin===true){
+        const adminBtn=document.getElementById('adminBtn');
+        adminBtn.style.display='flex';
+        adminBtn.addEventListener('click',()=>{ window.location.href='admin.html'; });
+      }
     }
     document.getElementById('avatarEditBadge').style.display = 'flex';
     updateAvatarRemoveRow();
