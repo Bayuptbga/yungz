@@ -342,7 +342,7 @@
   const peerId = (rawUid && UUID_RE.test(rawUid)) ? rawUid : null;
   let currentUserId = null; let peerUsername = params.get('uname') || '';
   let myPrivateKey = null, myPublicKeyB64 = null, peerPublicKeyB64 = null;
-  let convoKey = null; // diisi begitu currentUserId & peerId diketahui, dipakai buat cache & outbox offline
+  let convoKey = null; // diisi begitu currentUserId & peerId diketahui, dipakai buat kunci cache offline
   const msgArea = document.getElementById('msgArea'), msgInput = document.getElementById('msgInput'), sendBtn = document.getElementById('sendBtn'), peerAvatar = document.getElementById('peerAvatar'), peerUnameEl = document.getElementById('peerUname');
   const replyBar = document.getElementById('replyBar'), rbName = document.getElementById('rbName'), rbText = document.getElementById('rbText'), rbClose = document.getElementById('rbClose');
   const messagesById = new Map(); // id -> {id, sender_id, content}  (buat render kutipan reply)
@@ -372,12 +372,6 @@
     if(del) return `<svg viewBox="0 0 20 15" width="16" height="12" fill="none" stroke="#7ea0b7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L11.2 3"/><path d="M6.2 7.6l3.3 3.3L18.5 3"/></svg>`;
     return `<svg viewBox="0 0 16 15" width="13" height="12" fill="none" stroke="#7ea0b7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7.6l3.3 3.3L14 3"/></svg>`;
   }
-  // Ikon jam (mirip WhatsApp) buat pesan yang masih di antrian/belum benar-benar
-  // sampai ke server -- baik yang sedang dikirim (network ok) maupun yang
-  // tertahan karena offline (masuk outbox).
-  function pendingSvg(){
-    return `<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#7ea0b7" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.4"/><path d="M8 4.6V8l2.6 1.6"/></svg>`;
-  }
   async function init(){
     try{
       if(!peerId){window.location.href='dashboard.html';return;}
@@ -386,7 +380,7 @@
       if(!session){window.location.replace('index.html');return;}
       currentUserId=session.user.id;
       convoKey=OfflineDB.convoKey(currentUserId,peerId);
-      OfflineBanner.init(()=>{ loadMessages(false); flushOutbox(); }); // begitu online lagi: muat ulang & kirim antrian
+      OfflineBanner.init(()=>{ loadMessages(false); }); // begitu online lagi: muat ulang pesan terbaru
       // Device baru otomatis dapat keypair baru (tidak ada restore/backup PIN,
       // mirip default WhatsApp: chat lama tidak terbaca lagi di device baru).
       let kp=await E2E.ensureKeypair(currentUserId);
@@ -432,7 +426,7 @@
       const showKeyChangeNotice = localStorage.getItem(keyChangeNoticeLS)==='1';
       applyAvatarEl(peerAvatar,peerId,peerUsername,prof&&prof.avatar_url);peerUnameEl.textContent=peerUsername;
       updateInputAvailability();
-      await loadMessages(showKeyChangeNotice);flushOutbox();await markIncomingAsRead();subscribeRealtime();subscribePresence();subscribePeerKeyChange();
+      await loadMessages(showKeyChangeNotice);await markIncomingAsRead();subscribeRealtime();subscribePresence();subscribePeerKeyChange();
     }catch(err){
       console.error('init error:',err);
       document.getElementById('authGate').style.display='none';
@@ -487,33 +481,7 @@
       msgArea.innerHTML=E2E_BANNER;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});
       if(keyNotice){const div=document.createElement('div');div.innerHTML=keyNotice;msgArea.appendChild(div.firstElementChild);}
     }
-    await renderPendingOutbox(); // tampilkan pesan yang masih tertunda di antrian (belum sempat terkirim)
     scrollToBottom();
-  }
-  // ---- Pesan yang gagal/belum terkirim (mis. saat offline) disimpan di outbox
-  // dan dicoba kirim ulang otomatis begitu koneksi kembali. ----
-  async function renderPendingOutbox(){
-    const pending=await OfflineDB.getOutboxFor(convoKey);
-    pending.forEach(item=>{
-      if(msgArea.querySelector(`[data-id="${item.localId}"]`))return; // sudah dirender
-      appendBubble({id:item.localId,sender_id:currentUserId,content:item.plainContent,created_at:item.createdAtIso,reply_to_id:item.replyToId},true);
-    });
-  }
-  let flushingOutbox=false;
-  async function flushOutbox(){
-    if(flushingOutbox || !navigator.onLine) return;
-    flushingOutbox=true;
-    try{
-      const pending=await OfflineDB.getOutboxFor(convoKey);
-      for(const item of pending){
-        const {data,error}=await supabaseClient.from('messages').insert({sender_id:item.senderId,receiver_id:item.receiverId,content:item.encryptedContent,reply_to_id:item.replyToId}).select().single();
-        if(error) break; // masih gagal (mis. baru online sebentar lalu putus lagi) -> hentikan, coba lagi nanti
-        await OfflineDB.removeOutbox(item.localId);
-        const tempRow=msgArea.querySelector(`[data-id="${item.localId}"]`);
-        if(tempRow)tempRow.remove();
-        data.content=item.plainContent;appendBubble(data);
-      }
-    }finally{ flushingOutbox=false; }
   }
   function replyQuoteHTML(replyToId){
     if(!replyToId) return '';
@@ -546,7 +514,7 @@
       contentHTML = `<div class="txt"></div>`;
     }
 
-    row.innerHTML=`<div class="swipe-reply-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#22d8e6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17l-5-5 5-5"/><path d="M4 12h10a5 5 0 015 5v1"/></svg></div><div class="bubble">${replyQuoteHTML(m.reply_to_id)}${contentHTML}<div class="meta"><span>${timeLabel(m.created_at)}</span>${mine?`<span class="tick">${sending?pendingSvg():tickSvg(m.delivered_at,m.read_at)}</span>`:''}</div></div>`;
+    row.innerHTML=`<div class="swipe-reply-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#22d8e6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17l-5-5 5-5"/><path d="M4 12h10a5 5 0 015 5v1"/></svg></div><div class="bubble">${replyQuoteHTML(m.reply_to_id)}${contentHTML}<div class="meta"><span>${timeLabel(m.created_at)}</span>${mine?`<span class="tick">${tickSvg(m.delivered_at,m.read_at)}</span>`:''}</div></div>`;
     
     if (!isInviteContent(m.content)) {
       row.querySelector('.txt').textContent=normalizeText(m.content);
@@ -722,20 +690,9 @@
     if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';const tempId='temp-'+Date.now();
     appendBubble({id:tempId,sender_id:currentUserId,content:text,created_at:new Date().toISOString(),reply_to_id:replyToId},true);scrollToBottom();
     const encrypted=await E2E.encryptMessage(myPublicKeyB64,peerPublicKeyB64,text);
-    msgInput.focus();
-    // Kalau memang sedang offline, jangan repot coba network dulu -> langsung antre di outbox.
-    if(!navigator.onLine){
-      await OfflineDB.addOutbox({localId:tempId,convoKey,senderId:currentUserId,receiverId:peerId,encryptedContent:encrypted,plainContent:text,replyToId,createdAtIso:new Date().toISOString(),createdAtMs:Date.now()});
-      return;
-    }
     const {data,error}=await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted,reply_to_id:replyToId}).select().single();
-    const tempRow=msgArea.querySelector(`[data-id="${tempId}"]`);
-    if(error){
-      // Gagal terkirim (biasanya karena koneksi putus tepat saat kirim) -> simpan ke outbox,
-      // biarkan bubble tetap dalam status "sending", akan otomatis dicoba lagi saat online.
-      await OfflineDB.addOutbox({localId:tempId,convoKey,senderId:currentUserId,receiverId:peerId,encryptedContent:encrypted,plainContent:text,replyToId,createdAtIso:new Date().toISOString(),createdAtMs:Date.now()});
-      return;
-    }
+    msgInput.focus();const tempRow=msgArea.querySelector(`[data-id="${tempId}"]`);
+    if(error){if(tempRow){tempRow.classList.add('send-failed');tempRow.classList.remove('sending');}msgInput.value=text;return;}
     if(tempRow)tempRow.remove();data.content=text;appendBubble(data);
   }
   function autoResize(){msgInput.style.height='auto';msgInput.style.height=Math.min(msgInput.scrollHeight,100)+'px';}
