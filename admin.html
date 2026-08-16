@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baku Chat - Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{
+    --bbm-blue-dark:#0039f0;
+    --bbm-blue:#0564f5;
+    --bbm-blue-light:#2f7dff;
+    --bg:#f4f7fb;
+    --card-bg:#ffffff;
+    --ink:#101f33;
+    --muted:#66798d;
+    --border:#e2e8f1;
+    --ok:#189a56;
+    --error:#e4394f;
+    --warn:#c8830a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+  a{color:inherit;}
+
+  /* ---------- Login gate ---------- */
+  #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .login-card{width:100%;max-width:340px;background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:28px 24px;box-shadow:0 10px 30px rgba(16,31,51,0.08);}
+  .login-card h1{font-size:19px;margin:0 0 4px;font-weight:800;background:linear-gradient(90deg,var(--bbm-blue),var(--bbm-blue-light));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .login-card p{margin:0 0 20px;font-size:12.5px;color:var(--muted);}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+  .field input{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:14.5px;font-family:inherit;outline:none;background:var(--bg);color:var(--ink);}
+  .field input:focus{border-color:var(--bbm-blue);}
+  .login-btn{width:100%;padding:12px 0;background:var(--bbm-blue);color:#fff;border:none;border-radius:10px;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:4px;}
+  .login-btn:disabled{opacity:.6;cursor:default;}
+  .login-err{font-size:12.5px;color:var(--error);margin-top:10px;display:none;}
+  .login-err.show{display:block;}
+
+  /* ---------- Admin shell ---------- */
+  #adminShell{display:none;min-height:100vh;flex-direction:column;}
+  .topbar{background:var(--card-bg);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
+  .topbar h1{font-size:17px;margin:0;font-weight:800;background:linear-gradient(90deg,var(--bbm-blue),var(--bbm-blue-light));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .topbar .sub{font-size:11.5px;color:var(--muted);font-weight:600;}
+  .logout-btn{background:none;border:1.5px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .logout-btn:active{background:var(--border);}
+
+  .content{flex:1;padding:20px;max-width:960px;width:100%;margin:0 auto;}
+
+  .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;}
+  .stat-card{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:16px;}
+  .stat-card .n{font-size:22px;font-weight:800;color:var(--ink);}
+  .stat-card .l{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px;}
+
+  .toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+  .search-wrap{flex:1;min-width:200px;position:relative;}
+  .search-wrap input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--border);border-radius:10px;font-size:13.5px;font-family:inherit;outline:none;background:var(--card-bg);}
+  .search-wrap input:focus{border-color:var(--bbm-blue);}
+  .search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);}
+  .filter-select{padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--card-bg);color:var(--ink);outline:none;}
+
+  .user-table{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+  .u-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);}
+  .u-row:last-child{border-bottom:none;}
+  .u-row.head{background:var(--bg);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;padding:10px 16px;}
+  .avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;}
+  .u-main{flex:1;min-width:0;}
+  .u-name{font-size:14.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px;}
+  .u-meta{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;}
+  .badge.active{background:rgba(24,154,86,0.12);color:var(--ok);}
+  .badge.banned{background:rgba(228,57,79,0.12);color:var(--error);}
+  .u-actions{display:flex;gap:6px;flex-shrink:0;}
+  .u-actions button{border:1.5px solid var(--border);background:var(--card-bg);color:var(--ink);border-radius:8px;padding:7px 11px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+  .u-actions button:active{background:var(--border);}
+  .u-actions button.danger{color:var(--error);border-color:rgba(228,57,79,0.3);}
+  .u-actions button.warn{color:var(--warn);border-color:rgba(200,131,10,0.3);}
+
+  .empty-state,.loading-state{padding:50px 20px;text-align:center;color:var(--muted);font-size:13px;}
+
+  .pager{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:16px;}
+  .pager button{border:1.5px solid var(--border);background:var(--card-bg);border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--ink);}
+  .pager button:disabled{opacity:.4;cursor:default;}
+  .pager span{font-size:12.5px;color:var(--muted);}
+
+  /* ---------- Modal / confirm ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(16,31,51,0.5);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s ease;z-index:100;padding:20px;}
+  .overlay.open{opacity:1;pointer-events:auto;}
+  .modal{background:var(--card-bg);border-radius:16px;width:100%;max-width:340px;padding:22px 20px;transform:translateY(8px);transition:transform .18s ease;}
+  .overlay.open .modal{transform:translateY(0);}
+  .modal h2{font-size:16px;margin:0 0 4px;font-weight:700;}
+  .modal p{font-size:13px;color:var(--muted);margin:0 0 18px;line-height:1.5;}
+  .modal .actions{display:flex;gap:10px;justify-content:flex-end;}
+  .modal .actions button{border:none;border-radius:10px;padding:10px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+  .btn-cancel{background:var(--border);color:var(--ink);}
+  .btn-danger{background:var(--error);color:#fff;}
+  .btn-warn{background:var(--warn);color:#fff;}
+
+  .detail-row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .detail-row:last-child{border-bottom:none;}
+  .detail-row .k{color:var(--muted);}
+  .detail-row .v{font-weight:600;text-align:right;word-break:break-all;}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s ease, transform .2s ease;z-index:200;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-card">
+    <h1>Baku Chat Admin</h1>
+    <p>Masuk dengan akun admin untuk mengelola pengguna.</p>
+    <form id="loginForm">
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="loginUsername" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label>Kata sandi</label>
+        <input type="password" id="loginPassword" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn">Masuk</button>
+      <div class="login-err" id="loginErr"></div>
+    </form>
+  </div>
+</div>
+
+<div id="adminShell">
+  <div class="topbar">
+    <div>
+      <h1>Baku Chat Admin</h1>
+      <div class="sub">Manajemen Pengguna</div>
+    </div>
+    <button class="logout-btn" id="logoutBtn">Keluar</button>
+  </div>
+
+  <div class="content">
+    <div class="stats-row">
+      <div class="stat-card"><div class="n" id="statTotal">-</div><div class="l">Total Pengguna</div></div>
+      <div class="stat-card"><div class="n" id="statActive">-</div><div class="l">Aktif</div></div>
+      <div class="stat-card"><div class="n" id="statBanned">-</div><div class="l">Disuspend</div></div>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Cari username...">
+      </div>
+      <select class="filter-select" id="filterSelect">
+        <option value="all">Semua status</option>
+        <option value="active">Aktif</option>
+        <option value="banned">Disuspend</option>
+      </select>
+    </div>
+
+    <div class="user-table">
+      <div class="u-row head">
+        <div style="width:40px;"></div>
+        <div class="u-main">Pengguna</div>
+        <div style="width:220px;">Aksi</div>
+      </div>
+      <div id="userList"><div class="loading-state">Memuat data pengguna...</div></div>
+    </div>
+
+    <div class="pager">
+      <button id="prevBtn">← Sebelumnya</button>
+      <span id="pageInfo">Halaman 1</span>
+      <button id="nextBtn">Berikutnya →</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="detailOverlay">
+  <div class="modal">
+    <h2 id="detailName">Detail Pengguna</h2>
+    <p style="margin-bottom:14px;">Informasi akun.</p>
+    <div id="detailBody"></div>
+    <div class="actions" style="margin-top:18px;">
+      <button class="btn-cancel" id="detailCloseBtn">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="confirmOverlay">
+  <div class="modal">
+    <h2 id="confirmTitle">Konfirmasi</h2>
+    <p id="confirmMsg"></p>
+    <div class="actions">
+      <button class="btn-cancel" id="confirmCancelBtn">Batal</button>
+      <button id="confirmOkBtn">Ya</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ===== Koneksi Supabase (sama seperti app.js, disalin supaya admin.html berdiri sendiri) =====
+  const SUPABASE_URL = 'https://pxwrbwfpkuuwioythqpt.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_LcTHxYsZJsvZWkdsdQWfoQ_JsV7ahbT';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  function usernameToEmail(username){ return username.trim().toLowerCase() + '@bbmchat.app'; }
+
+  const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
+  function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
+  function initials(u){return(u||'?').slice(0,2).toUpperCase();}
+  function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function fmtDate(iso){ if(!iso) return '-'; const d=new Date(iso); return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); }
+
+  function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); }
+
+  function showConfirm(title,msg,okLabel,okClass){
+    return new Promise(resolve=>{
+      const ov=document.getElementById('confirmOverlay');
+      document.getElementById('confirmTitle').textContent=title;
+      document.getElementById('confirmMsg').textContent=msg;
+      const okBtn=document.getElementById('confirmOkBtn');
+      okBtn.textContent=okLabel; okBtn.className=okClass;
+      ov.classList.add('open');
+      function cleanup(v){ ov.classList.remove('open'); okBtn.removeEventListener('click',onOk); cancelBtn.removeEventListener('click',onCancel); resolve(v); }
+      const cancelBtn=document.getElementById('confirmCancelBtn');
+      function onOk(){cleanup(true);} function onCancel(){cleanup(false);}
+      okBtn.addEventListener('click',onOk); cancelBtn.addEventListener('click',onCancel);
+    });
+  }
+
+  // ===== Login gate: harus login + profiles.is_admin = true =====
+  const loginForm=document.getElementById('loginForm'), loginBtn=document.getElementById('loginBtn'), loginErr=document.getElementById('loginErr');
+
+  loginForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    loginErr.classList.remove('show');
+    loginBtn.disabled=true; loginBtn.textContent='Memeriksa...';
+    const u=document.getElementById('loginUsername').value.trim();
+    const p=document.getElementById('loginPassword').value;
+    const {data,error}=await supabaseClient.auth.signInWithPassword({email:usernameToEmail(u), password:p});
+    if(error){
+      loginErr.textContent='Username atau kata sandi salah.'; loginErr.classList.add('show');
+      loginBtn.disabled=false; loginBtn.textContent='Masuk';
+      return;
+    }
+    await checkAdminAndEnter();
+  });
+
+  async function checkAdminAndEnter(){
+    const {data:{session}}=await supabaseClient.auth.getSession();
+    if(!session){ return; }
+    const {data:prof,error}=await supabaseClient.from('profiles').select('is_admin, username').eq('id',session.user.id).maybeSingle();
+    if(error || !prof || prof.is_admin!==true){
+      loginErr.textContent='Akun ini tidak punya akses admin.'; loginErr.classList.add('show');
+      loginBtn.disabled=false; loginBtn.textContent='Masuk';
+      await supabaseClient.auth.signOut();
+      return;
+    }
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('adminShell').style.display='flex';
+    loadUsers();
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+    await supabaseClient.auth.signOut();
+    location.reload();
+  });
+
+  // Kalau sudah ada sesi tersimpan (buka ulang tab), langsung cek admin.
+  checkAdminAndEnter();
+
+  // ===== Data pengguna =====
+  const PAGE_SIZE=20;
+  let currentPage=0, currentSearch='', currentFilter='all', totalCount=0;
+
+  async function loadStats(){
+    const {count:total}=await supabaseClient.from('profiles').select('id',{count:'exact',head:true});
+    const {count:banned}=await supabaseClient.from('profiles').select('id',{count:'exact',head:true}).eq('is_banned',true);
+    document.getElementById('statTotal').textContent = total ?? 0;
+    document.getElementById('statBanned').textContent = banned ?? 0;
+    document.getElementById('statActive').textContent = (total??0) - (banned??0);
+  }
+
+  async function loadUsers(){
+    const listEl=document.getElementById('userList');
+    listEl.innerHTML='<div class="loading-state">Memuat data pengguna...</div>';
+    let q=supabaseClient.from('profiles').select('id, username, avatar_url, created_at, is_banned',{count:'exact'});
+    if(currentSearch) q=q.ilike('username', `%${currentSearch}%`);
+    if(currentFilter==='active') q=q.eq('is_banned', false);
+    if(currentFilter==='banned') q=q.eq('is_banned', true);
+    q=q.order('created_at',{ascending:false}).range(currentPage*PAGE_SIZE, currentPage*PAGE_SIZE+PAGE_SIZE-1);
+    const {data,error,count}=await q;
+    if(error){ listEl.innerHTML='<div class="empty-state">Gagal memuat data. Cek koneksi / hak akses admin.</div>'; return; }
+    totalCount=count||0;
+    document.getElementById('pageInfo').textContent=`Halaman ${currentPage+1} dari ${Math.max(1,Math.ceil(totalCount/PAGE_SIZE))}`;
+    document.getElementById('prevBtn').disabled = currentPage===0;
+    document.getElementById('nextBtn').disabled = (currentPage+1)*PAGE_SIZE >= totalCount;
+    if(!data || data.length===0){ listEl.innerHTML='<div class="empty-state">Tidak ada pengguna ditemukan.</div>'; return; }
+    listEl.innerHTML = data.map(u=>{
+      const bg = u.avatar_url ? `background:url(${u.avatar_url}) center/cover no-repeat;` : `background:${colorFor(u.id)};`;
+      const inner = u.avatar_url ? '' : escapeHtml(initials(u.username));
+      const statusBadge = u.is_banned ? '<span class="badge banned">Disuspend</span>' : '<span class="badge active">Aktif</span>';
+      return `
+      <div class="u-row" data-id="${u.id}">
+        <div class="avatar" style="${bg}">${inner}</div>
+        <div class="u-main">
+          <div class="u-name">${escapeHtml(u.username||'Pengguna')} ${statusBadge}</div>
+          <div class="u-meta">Bergabung ${fmtDate(u.created_at)}</div>
+        </div>
+        <div class="u-actions">
+          <button class="detail-btn">Detail</button>
+          <button class="${u.is_banned?'':'warn'} ban-btn">${u.is_banned?'Aktifkan':'Suspend'}</button>
+          <button class="danger delete-btn">Hapus</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    listEl.querySelectorAll('.detail-btn').forEach(btn=>btn.addEventListener('click',(e)=>{
+      const id=e.target.closest('.u-row').dataset.id;
+      const u=data.find(x=>x.id===id);
+      openDetail(u);
+    }));
+    listEl.querySelectorAll('.ban-btn').forEach(btn=>btn.addEventListener('click',async (e)=>{
+      const id=e.target.closest('.u-row').dataset.id;
+      const u=data.find(x=>x.id===id);
+      await toggleBan(u);
+    }));
+    listEl.querySelectorAll('.delete-btn').forEach(btn=>btn.addEventListener('click',async (e)=>{
+      const id=e.target.closest('.u-row').dataset.id;
+      const u=data.find(x=>x.id===id);
+      await deleteUser(u);
+    }));
+
+    loadStats();
+  }
+
+  function openDetail(u){
+    document.getElementById('detailName').textContent = u.username || 'Pengguna';
+    document.getElementById('detailBody').innerHTML = `
+      <div class="detail-row"><div class="k">User ID</div><div class="v">${escapeHtml(u.id)}</div></div>
+      <div class="detail-row"><div class="k">Username</div><div class="v">${escapeHtml(u.username||'-')}</div></div>
+      <div class="detail-row"><div class="k">Bergabung</div><div class="v">${fmtDate(u.created_at)}</div></div>
+      <div class="detail-row"><div class="k">Status</div><div class="v">${u.is_banned?'Disuspend':'Aktif'}</div></div>
+      <div class="detail-row"><div class="k">Verifikasi</div><div class="v" style="color:var(--muted);">Segera hadir</div></div>
+    `;
+    document.getElementById('detailOverlay').classList.add('open');
+  }
+  document.getElementById('detailCloseBtn').addEventListener('click',()=>document.getElementById('detailOverlay').classList.remove('open'));
+
+  async function toggleBan(u){
+    const willBan = !u.is_banned;
+    const ok = await showConfirm(
+      willBan ? 'Suspend pengguna ini?' : 'Aktifkan kembali pengguna ini?',
+      willBan ? `${u.username} tidak akan bisa memakai akunnya sampai diaktifkan kembali.` : `${u.username} akan bisa memakai akunnya lagi seperti biasa.`,
+      willBan ? 'Suspend' : 'Aktifkan',
+      willBan ? 'btn-warn' : 'btn-danger'
+    );
+    if(!ok) return;
+    const {error}=await supabaseClient.from('profiles').update({is_banned: willBan}).eq('id', u.id);
+    if(error){ showToast('Gagal mengubah status: '+error.message); return; }
+    showToast(willBan ? 'Pengguna disuspend.' : 'Pengguna diaktifkan kembali.');
+    loadUsers();
+  }
+
+  async function deleteUser(u){
+    const ok = await showConfirm(
+      'Hapus akun ini?',
+      `Profil ${u.username} akan dihapus permanen dari database. Tindakan ini tidak bisa dibatalkan.`,
+      'Hapus', 'btn-danger'
+    );
+    if(!ok) return;
+    const {error}=await supabaseClient.from('profiles').delete().eq('id', u.id);
+    if(error){ showToast('Gagal menghapus: '+error.message); return; }
+    showToast('Profil pengguna dihapus.');
+    loadUsers();
+  }
+
+  let searchTimer=null;
+  document.getElementById('searchInput').addEventListener('input',(e)=>{
+    clearTimeout(searchTimer);
+    searchTimer=setTimeout(()=>{ currentSearch=e.target.value.trim(); currentPage=0; loadUsers(); }, 350);
+  });
+  document.getElementById('filterSelect').addEventListener('change',(e)=>{
+    currentFilter=e.target.value; currentPage=0; loadUsers();
+  });
+  document.getElementById('prevBtn').addEventListener('click',()=>{ if(currentPage>0){ currentPage--; loadUsers(); } });
+  document.getElementById('nextBtn').addEventListener('click',()=>{ if((currentPage+1)*PAGE_SIZE<totalCount){ currentPage++; loadUsers(); } });
+</script>
+</body>
+</html>
