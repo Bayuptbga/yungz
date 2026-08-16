@@ -367,9 +367,11 @@
       'Hapus', 'btn-danger'
     );
     if(!ok) return;
-    const {error}=await supabaseClient.from('profiles').delete().eq('id', u.id);
+    const {error}=await supabaseClient.rpc('admin_delete_user_full', {target_id: u.id});
     if(error){ showToast('Gagal menghapus: '+error.message); return; }
-    showToast('Profil pengguna dihapus.');
+    // Best effort hapus foto profil di storage (boleh gagal diam-diam, tidak kritikal).
+    try{ await supabaseClient.storage.from('avatars').remove([u.id+'.jpg']); }catch(e){}
+    showToast('Pengguna & seluruh datanya dihapus.');
     loadUsers();
   }
 
