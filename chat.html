@@ -8,6 +8,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Baku Chat - Chat</title>
+<script>
+(function(){
+  function setAppHeight(){
+    var h=(window.visualViewport?window.visualViewport.height:window.innerHeight);
+    document.documentElement.style.setProperty('--app-height', h+'px');
+  }
+  setAppHeight();
+  window.addEventListener('resize', setAppHeight);
+  window.addEventListener('orientationchange', function(){ setTimeout(setAppHeight,50); });
+  window.addEventListener('pageshow', setAppHeight);
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') setAppHeight(); });
+  if(window.visualViewport){ window.visualViewport.addEventListener('resize', setAppHeight); }
+})();
+</script>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#ffffff">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -38,12 +52,12 @@
     overscroll-behavior:none; touch-action:pan-y; user-select:none; -webkit-touch-callout:none;
     margin:0; font-family:'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;
     background:var(--bg); color:var(--ink);
-    position:fixed; inset:0; width:100%; height:100%; overflow:hidden;
-    display:flex; align-items:flex-start; justify-content:center; -webkit-font-smoothing:antialiased;
+    position:fixed; inset:0; width:100%; height:100%; height:100dvh; height:var(--app-height, 100dvh); overflow:hidden;
+    display:flex; align-items:stretch; justify-content:center; -webkit-font-smoothing:antialiased;
   }
   input, textarea{ user-select:text; }
   .phone{
-    width:100%; max-width:420px; height:100%; background:var(--bg);
+    width:100%; max-width:420px; background:var(--bg);
     box-shadow:none; display:flex; flex-direction:column; position:relative; overflow:hidden;
   }
   /* Layar tablet (>=700px) -> kontainer lebih lega, tetap satu kolom */
