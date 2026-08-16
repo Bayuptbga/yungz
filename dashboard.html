@@ -170,6 +170,11 @@
   .dropdown-menu .dd-item svg{ width:18px;height:18px; flex-shrink:0; stroke:var(--ink); }
   .dropdown-menu .dd-sep{ height:1px; background:var(--border); margin:6px 0; }
   .profile-avatar-btn{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:12px; background:var(--bbm-blue); flex-shrink:0; }
+  .chat-search-bar{ display:flex; align-items:center; padding:8px 14px 12px; background:#fff; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .chat-search-bar .csb-wrap{ flex:1; display:flex; align-items:center; gap:10px; background:var(--bg); border-radius:999px; padding:0 14px; height:40px; }
+  .chat-search-bar .csb-wrap svg{ flex-shrink:0; }
+  .chat-search-bar input{ flex:1; min-width:0; border:none; background:transparent; outline:none; font-size:14.5px; color:var(--ink); font-family:inherit; }
+  .chat-search-bar input::placeholder{ color:var(--muted); }
   .pin-modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:60; padding:24px; }
   .pin-modal-overlay.open{ opacity:1; pointer-events:auto; }
   .pin-modal{ background:var(--card-bg); border-radius:14px; padding:26px 22px; width:100%; max-width:300px; text-align:center; border:1px solid var(--border); }
@@ -370,11 +375,17 @@
           <div class="dd-item" id="profileLogoutBtn" style="color:var(--error);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/></svg><span>Keluar</span></div>
         </div>
       </div>
-      <div class="icon-btn" id="searchOpenBtn" title="Cari"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+      <div class="icon-btn" id="searchOpenBtn" title="Cari" style="display:none;"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
     </div>
     <div class="search-bar" id="searchBar">
       <div class="search-close" id="searchCloseBtn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
       <div class="search-wrap"><input type="text" id="searchInput" placeholder="Cari..."></div>
+    </div>
+  </div>
+  <div class="chat-search-bar" id="chatSearchBar">
+    <div class="csb-wrap">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" id="chatSearchInput" placeholder="Cari chat...">
     </div>
   </div>
   <div class="tab-panel active" id="panelChats"><div class="chatlist" id="chatlist"></div><div class="fab" title="Chat baru" id="fabNewChat"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg></div></div>
@@ -888,7 +899,10 @@ function timeAgo(iso){
       if(svg){if(ia){svg.setAttribute('fill',k==='chats'?'var(--ink)':'none');svg.setAttribute('stroke','var(--ink)');}else{svg.setAttribute('fill','none');svg.setAttribute('stroke','var(--muted)');}}
     });
     const h1El=document.querySelector('.appbar h1');h1El.textContent=tabDefs[name].title;h1El.classList.toggle('brand',name==='chats');document.getElementById('fabNewChat').style.display=name==='chats'?'flex':'none';
-    document.getElementById('searchOpenBtn').style.display=(name==='notif')?'none':'flex';
+    document.getElementById('searchOpenBtn').style.display=(name==='notif'||name==='chats')?'none':'flex';
+    document.getElementById('profileBtn').style.display=(name==='chats')?'flex':'none';
+    document.getElementById('chatSearchBar').style.display=(name==='chats')?'flex':'none';
+    document.getElementById('chatSearchInput').value='';
     closeSearch();
     closeAddModal();
     if(name==='kontak')loadContacts();if(name==='notif'){loadNotifications();}if(name==='status')loadStatusTab();if(name==='chats')supabaseClient.auth.getSession().then(({data:{session}})=>{if(session)loadChats(session.user.id);});
@@ -953,6 +967,7 @@ function timeAgo(iso){
   document.getElementById('searchOpenBtn').addEventListener('click',openSearch);
   document.getElementById('searchCloseBtn').addEventListener('click',closeSearch);
   document.getElementById('searchInput').addEventListener('input',(e)=>applySearchFilter(e.target.value));
+  document.getElementById('chatSearchInput').addEventListener('input',(e)=>applySearchFilter(e.target.value));
   // Klik di mana saja di luar kotak input (termasuk area kosong search bar / luar header)
   // otomatis menutup search bar, tidak wajib klik panah kembali.
   document.addEventListener('click',(e)=>{
