@@ -288,16 +288,8 @@
   .status-card .sc-delete:active{ background:rgba(255,255,255,0.06); color:var(--ink); }
   .status-card .sc-delete svg{ width:16px; height:16px; }
   .status-card .sc-divider{ border-top:1px solid var(--border); margin:0 15px; }
-  .status-card .sc-content{ font-size:14.5px; color:var(--ink); line-height:1.6; letter-spacing:.1px; word-break:break-word; white-space:pre-wrap; }
+  .status-card .sc-content{ padding:12px 15px 15px; font-size:14.5px; color:var(--ink); line-height:1.6; letter-spacing:.1px; word-break:break-word; white-space:pre-wrap; }
   .status-card .sc-reactions{ display:flex; align-items:center; justify-content:space-between; padding:9px 8px 9px 15px; gap:8px; }
-  /* ---- Entri status beruntun dari user yang sama, digabung dalam satu card ---- */
-  .sc-entries{ border-top:1px solid var(--border); }
-  .sc-entry{ position:relative; }
-  .sc-entry + .sc-entry{ border-top:1px solid var(--border); }
-  .sc-entry-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; padding:12px 15px 0; }
-  .sc-entry-row .sc-content{ flex:1; min-width:0; }
-  .sc-entry-meta{ font-size:11px; color:var(--muted); padding:4px 15px 0; }
-  .sc-entry .sc-reactions{ padding:9px 8px 12px 15px; }
   .status-card .rx-summary{ display:flex; align-items:center; gap:6px; min-width:0; color:var(--muted); font-size:12.5px; }
   .status-card .rx-summary.empty{ color:var(--muted); }
   .status-card .rx-summary-emojis{ font-size:14px; letter-spacing:-2px; }
@@ -326,13 +318,13 @@
   .composer-icon.send.disabled{ opacity:.5; pointer-events:none; }
   #myStatusMsg{ margin:6px 18px 0; }
   /* ---- Sub-tab Status Saya / Status Kontak ---- */
-  .status-subtabs{ position:relative; display:flex; margin:14px 16px 4px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:4px; gap:2px; }
+  .status-subtabs{ position:relative; display:flex; margin:14px 16px 4px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:4px; }
   .sst-item{ position:relative; z-index:2; flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 8px; border-radius:9px; font-size:12.5px; font-weight:700; color:var(--muted); cursor:pointer; user-select:none; transition:color .25s ease; }
   .sst-item:active{ opacity:.8; }
   .sst-item.active{ color:#04222f; }
   .sst-badge{ display:inline-flex; align-items:center; justify-content:center; min-width:16px; height:16px; padding:0 4px; border-radius:999px; background:rgba(34,216,230,0.18); color:#22d8e6; font-size:10px; font-weight:800; }
   .sst-item.active .sst-badge{ background:rgba(4,34,47,0.18); color:#04222f; }
-  .sst-indicator{ position:absolute; z-index:1; top:4px; left:4px; width:calc(50% - 5px); height:calc(100% - 8px); border-radius:9px; background:linear-gradient(135deg,#22d8e6,#5be8c9); box-shadow:0 2px 10px rgba(34,216,230,0.35); transition:transform .28s cubic-bezier(.4,0,.2,1); }
+  .sst-indicator{ position:absolute; z-index:1; top:4px; left:4px; width:calc(50% - 4px); height:calc(100% - 8px); border-radius:9px; background:linear-gradient(135deg,#22d8e6,#5be8c9); box-shadow:0 2px 10px rgba(34,216,230,0.35); transition:transform .28s cubic-bezier(.4,0,.2,1); }
   .status-subpanel{ display:none; }
   .status-subpanel.active{ display:block; }
 </style>
@@ -605,23 +597,22 @@ function timeAgo(iso){
     const icons=entries.slice(0,3).map(e=>RX_EMOJI[e.t]).join('');
     return `<span class="rx-summary-emojis">${icons}</span><span class="rx-summary-count">${total}</span>`;
   }
-  function groupConsecutiveStatuses(rows){
-    const groups=[];
-    for(const s of rows){
-      const last=groups[groups.length-1];
-      if(last&&last[0].user_id===s.user_id)last.push(s);else groups.push([s]);
-    }
-    return groups;
-  }
-  function statusEntryHTML(s,reactionCountMap,myReactionMap,isMine){
-    const counts=reactionCountMap[s.id]||{},myReaction=myReactionMap[s.id]||null;
+  function statusCardHTML(s,reactionCountMap,myReactionMap,pMap,myId){
+    const counts=reactionCountMap[s.id]||{},myReaction=myReactionMap[s.id]||null,isMine=s.user_id===myId;
+    const sProf=pMap[s.user_id]||{};if(!isMine)contactAvatarMap[s.user_id]=sProf.avatar_url||null;
     const summary=reactionSummaryHTML(counts);
-    return `<div class="sc-entry" data-sid="${escapeHtml(s.id)}" data-counts='${JSON.stringify(counts)}'>
-      <div class="sc-entry-row">
-        <div class="sc-content">${escapeHtml(s.content)}</div>
-        ${isMine?`<div class="sc-delete" data-id="${escapeHtml(s.id)}" onclick="deleteStatus(this)" title="Hapus status"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></div>`:''}
+    return `<div class="status-card" data-sid="${escapeHtml(s.id)}" data-uid="${escapeHtml(s.user_id)}" data-uname="${escapeHtml(sProf.username||'Pengguna')}" data-counts='${JSON.stringify(counts)}'>
+      <div class="sc-head">
+        <div class="sc-avatar-wrap${isMine?'':' ring'}"><div class="sc-avatar" style="${avatarStyle(s.user_id,sProf.avatar_url)}${isMine?'':'cursor:pointer;'}">${avatarInner(sProf.username,sProf.avatar_url)}</div></div>
+        <div class="sc-head-info">
+          <div class="sc-uname">${escapeHtml(sProf.username||'Pengguna')}${isMine?' <span style="color:var(--muted);font-weight:500;">(Anda)</span>':''}</div>
+          <div class="sc-meta">${escapeHtml(timeAgo(s.created_at))}</div>
+        </div>
+        ${isMine?`<div class="sc-delete" data-id="${escapeHtml(s.id)}" onclick="deleteStatus(this)" title="Hapus status"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></div>`:''}
       </div>
-      <div class="sc-entry-meta">${escapeHtml(timeAgo(s.created_at))}</div>
+      <div class="sc-divider"></div>
+      <div class="sc-content">${escapeHtml(s.content)}</div>
+      <div class="sc-divider"></div>
       <div class="sc-reactions">
         <div class="rx-summary${summary?'':' empty'}">${summary||'<span class="rx-summary-empty">Beri reaksi pertama</span>'}</div>
         <div class="rx-toggle${myReaction?' active':''}" data-id="${escapeHtml(s.id)}" data-current="${myReaction||''}">
@@ -629,21 +620,6 @@ function timeAgo(iso){
           <span class="rx-toggle-label">${myReaction?'Bereaksi':'Suka'}</span>
         </div>
       </div>
-    </div>`;
-  }
-  function statusGroupHTML(group,reactionCountMap,myReactionMap,pMap,myId){
-    const first=group[0],isMine=first.user_id===myId;
-    const sProf=pMap[first.user_id]||{};if(!isMine)contactAvatarMap[first.user_id]=sProf.avatar_url||null;
-    const entries=group.map(s=>statusEntryHTML(s,reactionCountMap,myReactionMap,isMine)).join('');
-    return `<div class="status-card" data-uid="${escapeHtml(first.user_id)}" data-uname="${escapeHtml(sProf.username||'Pengguna')}">
-      <div class="sc-head">
-        <div class="sc-avatar-wrap${isMine?'':' ring'}"><div class="sc-avatar" style="${avatarStyle(first.user_id,sProf.avatar_url)}${isMine?'':'cursor:pointer;'}">${avatarInner(sProf.username,sProf.avatar_url)}</div></div>
-        <div class="sc-head-info">
-          <div class="sc-uname">${escapeHtml(sProf.username||'Pengguna')}${isMine?' <span style="color:var(--muted);font-weight:500;">(Anda)</span>':''}</div>
-          <div class="sc-meta">${group.length>1?group.length+' status &middot; ':''}${escapeHtml(timeAgo(first.created_at))}</div>
-        </div>
-      </div>
-      <div class="sc-entries">${entries}</div>
     </div>`;
   }
   const STATUS_EMPTY_MINE='<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Anda belum memposting status.</div>';
@@ -673,8 +649,8 @@ function timeAgo(iso){
     });
     const mineRows=sRows.filter(s=>s.user_id===session.user.id);
     const otherRows=sRows.filter(s=>s.user_id!==session.user.id);
-    pinnedWrap.innerHTML=mineRows.length>0?groupConsecutiveStatuses(mineRows).map(g=>statusGroupHTML(g,reactionCountMap,myReactionMap,pMap,session.user.id)).join(''):STATUS_EMPTY_MINE;
-    sList.innerHTML=otherRows.length>0?groupConsecutiveStatuses(otherRows).map(g=>statusGroupHTML(g,reactionCountMap,myReactionMap,pMap,session.user.id)).join(''):STATUS_EMPTY_KONTAK;
+    pinnedWrap.innerHTML=mineRows.length>0?mineRows.map(s=>statusCardHTML(s,reactionCountMap,myReactionMap,pMap,session.user.id)).join(''):STATUS_EMPTY_MINE;
+    sList.innerHTML=otherRows.length>0?otherRows.map(s=>statusCardHTML(s,reactionCountMap,myReactionMap,pMap,session.user.id)).join(''):STATUS_EMPTY_KONTAK;
     if(mineRows.length>0){myCountBadge.textContent=mineRows.length;myCountBadge.style.display='';}else{myCountBadge.style.display='none';}
     if(otherRows.length>0){kontakCountBadge.textContent=otherRows.length;kontakCountBadge.style.display='';}else{kontakCountBadge.style.display='none';}
     setStatusSubtab(statusSubtab);
@@ -738,34 +714,28 @@ function timeAgo(iso){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
     const statusId=el.dataset.id;if(!statusId)return;
     if(!confirm('Hapus status ini?'))return;
-    const entry=el.closest('.sc-entry'),card=el.closest('.status-card');
+    const card=el.closest('.status-card');
     el.style.pointerEvents='none';
     const {error}=await supabaseClient.from('statuses').delete().eq('id',statusId).eq('user_id',session.user.id);
     if(error){el.style.pointerEvents='';alert('Gagal menghapus status.');return;}
-    if(entry){
-      entry.style.transition='opacity .25s ease';entry.style.opacity='0';
-      setTimeout(()=>{
-        entry.remove();
-        if(card&&!card.querySelector('.sc-entry')){card.style.transition='opacity .2s ease';card.style.opacity='0';setTimeout(()=>card.remove(),200);}
-      },250);
-    }
+    if(card){card.style.transition='opacity .25s ease';card.style.opacity='0';setTimeout(()=>card.remove(),250);}
   };
   // ---- Reaksi status: tap cepat tombol = toggle Suka; tekan-tahan = buka popup pilih emoji ----
   // 1 user cuma boleh punya 1 jenis reaksi aktif per status (upsert menggantikan reaksi lama).
   async function applyReactionChange(btn, newType){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
-    const statusId=btn.dataset.id, entry=btn.closest('.sc-entry');
-    if(!entry||!statusId||entry.dataset.busy==='1')return;
-    entry.dataset.busy='1';
-    const summaryEl=entry.querySelector('.rx-summary');
-    const prevCountsJSON=entry.dataset.counts||'{}';
+    const statusId=btn.dataset.id, card=btn.closest('.status-card');
+    if(!card||!statusId||card.dataset.busy==='1')return;
+    card.dataset.busy='1';
+    const summaryEl=card.querySelector('.rx-summary');
+    const prevCountsJSON=card.dataset.counts||'{}';
     const prevBtnClass=btn.className, prevCurrent=btn.dataset.current||'', prevEmojiHTML=btn.querySelector('.rx-toggle-emoji').innerHTML, prevLabel=btn.querySelector('.rx-toggle-label').textContent;
     const prevSummaryHTML=summaryEl.innerHTML, prevSummaryClass=summaryEl.className;
     // Optimistic update
     const counts=JSON.parse(prevCountsJSON);
     if(prevCurrent)counts[prevCurrent]=Math.max(0,(counts[prevCurrent]||0)-1);
     if(newType)counts[newType]=(counts[newType]||0)+1;
-    entry.dataset.counts=JSON.stringify(counts);
+    card.dataset.counts=JSON.stringify(counts);
     const newSummary=reactionSummaryHTML(counts);
     summaryEl.innerHTML=newSummary||'<span class="rx-summary-empty">Beri reaksi pertama</span>';
     summaryEl.classList.toggle('empty',!newSummary);
@@ -780,13 +750,13 @@ function timeAgo(iso){
       ({error}=await supabaseClient.from('status_likes').upsert({status_id:statusId,user_id:session.user.id,reaction:newType},{onConflict:'status_id,user_id'}));
     }
     if(error){
-      entry.dataset.counts=prevCountsJSON;
+      card.dataset.counts=prevCountsJSON;
       btn.className=prevBtnClass;btn.dataset.current=prevCurrent;
       btn.querySelector('.rx-toggle-emoji').innerHTML=prevEmojiHTML;btn.querySelector('.rx-toggle-label').textContent=prevLabel;
       summaryEl.innerHTML=prevSummaryHTML;summaryEl.className=prevSummaryClass;
       alert('Gagal mengirim reaksi, coba lagi.');
     }
-    entry.dataset.busy='0';
+    card.dataset.busy='0';
   }
   (function(){
     const picker=document.getElementById('rxPicker');
@@ -921,8 +891,8 @@ function timeAgo(iso){
       listSel='#myStatusPinned .status-card, #statusList .status-card';
       matchFn=(el)=>{
         const uname=(el.querySelector('.sc-uname')?.textContent||'').toLowerCase();
-        if(uname.includes(q))return true;
-        return Array.from(el.querySelectorAll('.sc-content')).some(c=>c.textContent.toLowerCase().includes(q));
+        const content=(el.querySelector('.sc-content')?.textContent||'').toLowerCase();
+        return uname.includes(q)||content.includes(q);
       };
     }else return;
     const items=document.querySelectorAll(listSel);
