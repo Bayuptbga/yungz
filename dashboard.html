@@ -81,8 +81,6 @@
   #offlineBanner.show{ max-height:34px; padding:8px 12px; opacity:1; }
   #offlineBanner svg{ flex-shrink:0; }
   .appbar .left{ display:flex; align-items:center; gap:18px; }
-  .appbar .hamburger{ display:flex; flex-direction:column; gap:4px; cursor:pointer; }
-  .appbar .hamburger span{ width:22px; height:2.5px; background:var(--ink); border-radius:2px; }
   .appbar h1{ margin:0; font-size:21px; font-weight:600; color:var(--ink); letter-spacing:.1px; transition:color .15s ease; }
   .appbar h1.brand{ color:var(--bbm-blue); font-weight:800; letter-spacing:.2px; background:linear-gradient(90deg,var(--bbm-blue),var(--bbm-blue-light)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
   .appbar .right{ display:flex; align-items:center; gap:20px; }
@@ -94,24 +92,6 @@
   .search-bar input{ flex:1; background:transparent; border:none; color:#fff; font-size:16.5px; outline:none; font-family:inherit; caret-color:#0564f5; }
   .search-bar input::placeholder{ color:rgba(255,255,255,0.7); }
   .no-results{ padding:40px 24px; text-align:center; color:var(--muted); font-size:13.5px; }
-  .drawer-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:40; }
-  .drawer-overlay.open{ opacity:1; pointer-events:auto; }
-  .drawer{ position:fixed; top:0; bottom:0; left:0; width:78%; max-width:300px; background:var(--card-bg); display:flex; flex-direction:column; transform:translateX(-100%); transition:transform .25s ease; z-index:41; box-shadow:2px 0 24px rgba(16,31,51,0.18); }
-  .drawer.open{ transform:translateX(0); }
-  .drawer-header{ background:#fff; color:var(--ink); padding:calc(24px + env(safe-area-inset-top)) 18px 22px; display:flex; align-items:center; gap:14px; flex-shrink:0; border-bottom:1px solid var(--border); }
-  .drawer-header .d-avatar{ width:50px;height:50px;border-radius:50%; background:var(--bbm-blue); box-shadow:0 0 0 3px rgba(5,100,245,0.15); display:flex;align-items:center;justify-content:center; color:#fff; font-weight:700;font-size:17px; flex-shrink:0; }
-  .drawer-header .d-uname{ font-size:16px; font-weight:700; word-break:break-word; color:var(--ink); }
-  .drawer-header .d-pin{ font-size:11.5px; opacity:0.75; margin-top:3px; font-family:'Courier New',monospace; color:var(--muted); }
-  .drawer-body{ flex:1; overflow-y:auto; padding:10px 0; }
-  .drawer-section-label{ padding:14px 18px 6px; font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--muted); }
-  .drawer-item{ display:flex; align-items:center; gap:16px; padding:13px 18px; cursor:pointer; color:var(--ink); font-size:14.5px; border-radius:10px; margin:0 8px; transition:background-color .15s ease; }
-  .drawer-item:active{ background:var(--bg); }
-  .drawer-item svg{ width:20px;height:20px; flex-shrink:0; stroke:var(--muted); transition:stroke .15s ease; }
-  .drawer-item:active svg{ stroke:var(--bbm-blue); }
-  .drawer-footer{ flex-shrink:0; border-top:1px solid var(--border); padding:8px 0; }
-  .drawer-footer .drawer-item{ color:var(--error); }
-  .drawer-footer .drawer-item svg{ stroke:var(--error); }
-  .drawer-version{ padding:14px 18px calc(14px + env(safe-area-inset-bottom)); text-align:center; font-size:11px; color:var(--muted); }
   .tabbar{
     position:absolute; left:50%; bottom:calc(14px + env(safe-area-inset-bottom)); transform:translateX(-50%);
     display:flex; align-items:center; gap:2px;
@@ -121,7 +101,7 @@
     box-shadow:0 12px 32px rgba(16,31,51,0.18), 0 1px 0 rgba(255,255,255,0.6) inset;
   }
   .tabbar .tabitem{
-    flex:none; width:68px; padding:9px 4px 8px; border-radius:999px;
+    flex:none; width:58px; padding:9px 2px 8px; border-radius:999px;
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
     position:relative; cursor:pointer;
     transition:background .25s ease, transform .15s ease;
@@ -375,25 +355,12 @@
   <div id="authGate"><div class="spinner"></div></div>
   <div id="offlineBanner"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.58 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg><span>Anda sedang offline</span></div>
   <div class="appbar">
-    <div class="left"><div class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></div><div><h1 class="brand">Baku Chat</h1></div></div>
+    <div class="left"><h1 class="brand">Baku Chat</h1></div>
     <div class="right"><div class="icon-btn" id="searchOpenBtn" title="Cari"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div></div>
     <div class="search-bar" id="searchBar">
       <div class="search-close" id="searchCloseBtn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
       <div class="search-wrap"><input type="text" id="searchInput" placeholder="Cari..."></div>
     </div>
-  </div>
-  <div class="drawer-overlay" id="drawerOverlay"></div>
-  <div class="drawer" id="drawer">
-    <div class="drawer-header" id="drawerHeader" style="cursor:pointer;"><div class="d-avatar" id="drawerAvatar">?</div><div><div class="d-uname" id="drawerUname">—</div><div class="d-pin" id="drawerPin">PIN: —</div></div></div>
-    <div class="drawer-body">
-      <div class="drawer-section-label">Akun</div>
-      <div class="drawer-item" id="drawerProfil"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profil</span></div>
-      <div class="drawer-item" id="drawerSetelan"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>Setelan</span></div>
-      <div class="drawer-section-label" id="drawerAppLabel" style="display:none;">Aplikasi</div>
-      <div class="drawer-item" id="drawerInstallApp" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Instal Aplikasi</span></div>
-    </div>
-    <div class="drawer-footer"><div class="drawer-item" id="logoutBtn"><svg viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/></svg><span>Keluar</span></div></div>
-    <div class="drawer-version">Baku Chat &middot; v__VERSION__</div>
   </div>
   <div class="tab-panel active" id="panelChats"><div class="chatlist" id="chatlist"></div><div class="fab" title="Chat baru" id="fabNewChat"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg></div></div>
   <div class="tab-panel" id="panelStatus">
@@ -485,6 +452,7 @@
     <div class="tabitem" id="tabStatus"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 12h.01" stroke-width="3"/></svg><span class="tlabel">Status</span><span class="badge status-newdot" id="tabStatusDot" style="display:none;"></span></div>
     <div class="tabitem" id="tabKontak"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span class="tlabel">Kontak</span></div>
     <div class="tabitem" id="tabNotif"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><span class="tlabel">Notifikasi</span><span class="badge" id="notifBadge" style="display:none;"></span></div>
+    <div class="tabitem" id="tabSetelan"><svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span class="tlabel">Setelan</span></div>
   </div>
 </div>
 <script>
@@ -545,7 +513,7 @@
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session){window.location.replace('index.html');return;}
     const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, pin, avatar_url').eq('id',session.user.id).maybeSingle();
     if(profErr){console.error('Gagal memuat profil:',profErr);}
-    if(prof){currentUserPin=prof.pin;document.getElementById('drawerUname').textContent=prof.username;document.getElementById('drawerPin').textContent='PIN: '+prof.pin;applyAvatarEl(document.getElementById('drawerAvatar'),session.user.id,prof.username,prof.avatar_url);applyAvatarEl(document.getElementById('composerAvatar'),session.user.id,prof.username,prof.avatar_url);}
+    if(prof){currentUserPin=prof.pin;applyAvatarEl(document.getElementById('composerAvatar'),session.user.id,prof.username,prof.avatar_url);}
     initPushNotifications(session.user.id);trackOnlinePresence(session.user.id);
     const {count:pCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('addressee_id',session.user.id).eq('status','pending');
     const {count:uCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('requester_id',session.user.id).in('status',['accepted','declined']).eq('seen_by_requester',false);
@@ -988,7 +956,7 @@ function timeAgo(iso){
     const zone=document.querySelector('.phone');
     let sx=0, sy=0, tracking=false;
     function blocked(){
-      return document.getElementById('drawer').classList.contains('open');
+      return false;
     }
     function currentStep(){
       if(activeTab==='status') return statusSubtab==='kontak' ? 'status-kontak' : 'status-saya';
@@ -1016,13 +984,7 @@ function timeAgo(iso){
       goToStep(order[nextIdx]);
     }, {passive:true});
   })();
-  document.getElementById('logoutBtn').addEventListener('click',async()=>{await supabaseClient.auth.signOut();window.location.replace('index.html');});
-  const drawer=document.getElementById('drawer'),drwOverlay=document.getElementById('drawerOverlay');
-  document.getElementById('hamburgerBtn').addEventListener('click',()=>{drawer.classList.add('open');drwOverlay.classList.add('open');});
-  drwOverlay.addEventListener('click',()=>{drawer.classList.remove('open');drwOverlay.classList.remove('open');});
-  document.getElementById('drawerHeader').addEventListener('click',()=>window.location.href='profil.html');
-  document.getElementById('drawerProfil').addEventListener('click',()=>window.location.href='profil.html');
-  document.getElementById('drawerSetelan').addEventListener('click',()=>window.location.href='setelan.html');
+  document.getElementById('tabSetelan').addEventListener('click',()=>{window.location.href='setelan.html';});
   document.getElementById('fabNewChat').addEventListener('click',openNewChatSheet);
   let ncwAllContacts=[];
   async function openNewChatSheet(){
