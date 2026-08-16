@@ -39,11 +39,9 @@ jobs:
 
           echo "Versi build ini: $VERSION ($BUILD_DATE)"
 
-          # Ganti semua placeholder di file html, css & js jadi nilai asli.
-          # (aman, cuma nyentuh file text .html/.css/.js, gak nyentuh gambar/font)
-          # .css ditambahkan karena css/js sekarang dipisah dari HTML (lihat css/ dan js/)
-          # supaya browser bisa cache tiap file secara independen.
-          grep -rl "__VERSION__\|__BUILD_DATE__" --include="*.html" --include="*.js" --include="*.css" . | \
+          # Ganti semua placeholder di file html & sw.js jadi nilai asli.
+          # (aman, cuma nyentuh file text .html dan .js, gak nyentuh gambar/font)
+          grep -rl "__VERSION__\|__BUILD_DATE__" --include="*.html" --include="*.js" . | \
             xargs -r sed -i "s/__VERSION__/$VERSION/g; s/__BUILD_DATE__/$BUILD_DATE/g"
 
       - name: Setup Pages
