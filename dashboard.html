@@ -296,17 +296,7 @@
   .status-card .sc-delete:active{ background:rgba(255,255,255,0.06); color:var(--ink); }
   .status-card .sc-delete svg{ width:15px; height:15px; }
   .status-card .sc-divider{ border-top:1px solid var(--border); margin:0 14px; }
-  .status-card .sc-content{ position:relative; padding:34px 22px; min-height:130px; display:flex; align-items:center; justify-content:center; text-align:center; background:
-      radial-gradient(1.5px 1.5px at 12% 20%, rgba(255,255,255,0.55), transparent),
-      radial-gradient(1.5px 1.5px at 28% 55%, rgba(255,255,255,0.4), transparent),
-      radial-gradient(1px 1px at 42% 15%, rgba(255,255,255,0.5), transparent),
-      radial-gradient(1.5px 1.5px at 65% 35%, rgba(255,255,255,0.35), transparent),
-      radial-gradient(1px 1px at 78% 60%, rgba(255,255,255,0.45), transparent),
-      radial-gradient(1.5px 1.5px at 90% 22%, rgba(255,255,255,0.4), transparent),
-      radial-gradient(1px 1px at 20% 80%, rgba(255,255,255,0.3), transparent),
-      radial-gradient(1.5px 1.5px at 55% 85%, rgba(255,255,255,0.3), transparent),
-      linear-gradient(165deg, #050b14 0%, #0a1930 45%, #14304f 100%);
-    font-size:19px; font-weight:800; line-height:1.4; color:#fff; letter-spacing:.1px; word-break:break-word; white-space:pre-wrap; text-shadow:0 1px 3px rgba(0,0,0,0.4); }
+  .status-card .sc-content{ padding:34px 22px; min-height:130px; display:flex; align-items:center; justify-content:center; text-align:center; background:#000; font-size:19px; font-weight:800; line-height:1.4; color:#fff; letter-spacing:.1px; word-break:break-word; white-space:pre-wrap; }
   .status-card .sc-reactions{ display:flex; align-items:center; justify-content:space-between; padding:7px 8px 7px 14px; gap:8px; }
   .status-card .rx-summary{ display:flex; align-items:center; gap:6px; min-width:0; color:var(--muted); font-size:12.5px; }
   .status-card .rx-summary.empty{ color:var(--muted); }
@@ -625,7 +615,8 @@ function timeAgo(iso){
   const RX_TYPES=['like','love','laugh','angry'];
   const RX_EMOJI={like:'👍',love:'❤️',laugh:'😂',angry:'😡'};
   const RX_LIKE_ICON=`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 22h-3a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/></svg>`;
-  function rxToggleIconHTML(type){ return type ? RX_EMOJI[type] : RX_LIKE_ICON; }
+  const RX_LIKE_ICON_FILLED=`<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none"><path d="M7 22h-3a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/></svg>`;
+  function rxToggleIconHTML(type){ if(!type)return RX_LIKE_ICON; if(type==='like')return RX_LIKE_ICON_FILLED; return RX_EMOJI[type]; }
   function reactionSummaryHTML(counts){
     const entries=RX_TYPES.map(t=>({t,c:counts[t]||0})).filter(e=>e.c>0).sort((a,b)=>b.c-a.c);
     if(entries.length===0)return '';
@@ -653,7 +644,7 @@ function timeAgo(iso){
         <div class="rx-summary${summary?'':' empty'}">${summary||'<span class="rx-summary-empty">Beri reaksi pertama</span>'}</div>
         <div class="rx-toggle${myReaction?' active':''}" data-id="${escapeHtml(s.id)}" data-current="${myReaction||''}">
           <span class="rx-toggle-emoji">${rxToggleIconHTML(myReaction)}</span>
-          <span class="rx-toggle-label">${myReaction?'Bereaksi':'Suka'}</span>
+          <span class="rx-toggle-label">${myReaction&&myReaction!=='like'?'Bereaksi':'Suka'}</span>
         </div>
       </div>
     </div>`;
@@ -780,7 +771,7 @@ function timeAgo(iso){
     btn.classList.toggle('active',!!newType);
     btn.dataset.current=newType||'';
     btn.querySelector('.rx-toggle-emoji').innerHTML=rxToggleIconHTML(newType);
-    btn.querySelector('.rx-toggle-label').textContent=newType?'Bereaksi':'Suka';
+    btn.querySelector('.rx-toggle-label').textContent=newType&&newType!=='like'?'Bereaksi':'Suka';
     let error;
     if(!newType){
       ({error}=await supabaseClient.from('status_likes').delete().eq('status_id',statusId).eq('user_id',session.user.id));
