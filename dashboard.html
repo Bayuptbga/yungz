@@ -296,7 +296,17 @@
   .status-card .sc-delete:active{ background:rgba(255,255,255,0.06); color:var(--ink); }
   .status-card .sc-delete svg{ width:15px; height:15px; }
   .status-card .sc-divider{ border-top:1px solid var(--border); margin:0 14px; }
-  .status-card .sc-content{ padding:9px 14px 11px; font-size:14px; color:var(--ink); line-height:1.45; letter-spacing:.1px; word-break:break-word; white-space:pre-wrap; }
+  .status-card .sc-content{ position:relative; padding:34px 22px; min-height:130px; display:flex; align-items:center; justify-content:center; text-align:center; background:
+      radial-gradient(1.5px 1.5px at 12% 20%, rgba(255,255,255,0.55), transparent),
+      radial-gradient(1.5px 1.5px at 28% 55%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 42% 15%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1.5px 1.5px at 65% 35%, rgba(255,255,255,0.35), transparent),
+      radial-gradient(1px 1px at 78% 60%, rgba(255,255,255,0.45), transparent),
+      radial-gradient(1.5px 1.5px at 90% 22%, rgba(255,255,255,0.4), transparent),
+      radial-gradient(1px 1px at 20% 80%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1.5px 1.5px at 55% 85%, rgba(255,255,255,0.3), transparent),
+      linear-gradient(165deg, #050b14 0%, #0a1930 45%, #14304f 100%);
+    font-size:19px; font-weight:800; line-height:1.4; color:#fff; letter-spacing:.1px; word-break:break-word; white-space:pre-wrap; text-shadow:0 1px 3px rgba(0,0,0,0.4); }
   .status-card .sc-reactions{ display:flex; align-items:center; justify-content:space-between; padding:7px 8px 7px 14px; gap:8px; }
   .status-card .rx-summary{ display:flex; align-items:center; gap:6px; min-width:0; color:var(--muted); font-size:12.5px; }
   .status-card .rx-summary.empty{ color:var(--muted); }
