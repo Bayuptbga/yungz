@@ -325,6 +325,7 @@
   .composer-icon.send{ background:var(--bbm-blue); }
   .composer-icon.send.disabled{ opacity:.5; pointer-events:none; }
   #myStatusMsg{ margin:0 18px; min-height:0; }
+  .composer-icon.send .icon-spinner{ width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;animation:authSpin .7s linear infinite; }
   #myStatusMsg:empty{ display:none; }
   /* ---- Sub-tab Saya / Kontak: 1 pil, 2 tab (segmented control), di tengah ---- */
   .status-subtabs{ display:flex; justify-content:center; margin:12px 16px 14px; }
@@ -599,16 +600,19 @@ function timeAgo(iso){
     if(tab==='kontak')markStatusKontakSeen();
   }
   document.querySelectorAll('.sst-item').forEach(el=>el.addEventListener('click',()=>setStatusSubtab(el.dataset.sst)));
+  const postStatusBtnDefaultHTML=postStatusBtn.innerHTML;
   postStatusBtn.addEventListener('click',async()=>{
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
     const content=myStatusInput.value.trim();
     if(!content){myStatusMsg.textContent='Status tidak boleh kosong.';myStatusMsg.className='search-msg err';return;}
     postStatusBtn.classList.add('disabled');
+    postStatusBtn.innerHTML='<div class="icon-spinner"></div>';
     const expiresAt=new Date(Date.now()+24*60*60*1000).toISOString();
     const {error}=await supabaseClient.from('statuses').insert({user_id:session.user.id,content,created_at:new Date().toISOString(),expires_at:expiresAt});
     postStatusBtn.classList.remove('disabled');
+    postStatusBtn.innerHTML=postStatusBtnDefaultHTML;
     if(error){myStatusMsg.textContent='Gagal mengirim status.';myStatusMsg.className='search-msg err';return;}
-    myStatusMsg.textContent='Status diperbarui, aktif 24 jam.';myStatusMsg.className='search-msg ok';
+    myStatusMsg.textContent='';myStatusMsg.className='search-msg';
     myStatusInput.value='';
     await loadStatusTab(false);
   });
@@ -945,12 +949,27 @@ function timeAgo(iso){
   },true);
 
   // ---- Geser (swipe) kiri/kanan untuk pindah tab ----
+  // Urutan mengikuh alur visual di layar: Chats -> Status(Saya) -> Status(Kontak) -> Kontak -> Notifikasi.
+  // Sub-tab "Saya"/"Kontak" di dalam Status diperlakukan sebagai langkah sendiri,
+  // jadi geser dari Status:Kontak lanjut ke kanan otomatis masuk ke tab Kontak (kontak list).
   (function(){
-    const order=['chats','status','kontak','notif'];
+    const order=['chats','status-saya','status-kontak','kontak','notif'];
     const zone=document.querySelector('.phone');
     let sx=0, sy=0, tracking=false;
     function blocked(){
       return document.getElementById('drawer').classList.contains('open');
+    }
+    function currentStep(){
+      if(activeTab==='status') return statusSubtab==='kontak' ? 'status-kontak' : 'status-saya';
+      return activeTab;
+    }
+    function goToStep(step){
+      if(step==='status-saya'||step==='status-kontak'){
+        if(activeTab!=='status') switchTab('status');
+        setStatusSubtab(step==='status-kontak'?'kontak':'saya');
+      }else{
+        switchTab(step);
+      }
     }
     zone.addEventListener('touchstart', e=>{
       if(blocked() || e.touches.length!==1){ tracking=false; return; }
@@ -960,10 +979,10 @@ function timeAgo(iso){
       if(!tracking) return; tracking=false;
       const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
       if(Math.abs(dx)<60 || Math.abs(dx) < Math.abs(dy)*1.5) return; // terlalu pendek atau lebih vertikal
-      const idx=order.indexOf(activeTab);
+      const idx=order.indexOf(currentStep());
       const nextIdx = dx<0 ? idx+1 : idx-1;
       if(nextIdx<0 || nextIdx>=order.length) return;
-      switchTab(order[nextIdx]);
+      goToStep(order[nextIdx]);
     }, {passive:true});
   })();
   document.getElementById('logoutBtn').addEventListener('click',async()=>{await supabaseClient.auth.signOut();window.location.replace('index.html');});
