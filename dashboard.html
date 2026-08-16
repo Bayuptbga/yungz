@@ -343,13 +343,14 @@
   #myStatusMsg:empty{ display:none; }
   /* ---- Sub-tab Saya / Kontak: 1 pil, 2 tab (segmented control), di tengah ---- */
   .status-subtabs{ display:flex; justify-content:center; margin:12px 16px 14px; }
-  .status-subtabs-inner{ display:flex; gap:2px; padding:4px; border-radius:999px; background:var(--card-bg); border:1px solid var(--border); }
-  .sst-item{ display:flex; align-items:center; justify-content:center; gap:5px; padding:6px 16px; border-radius:999px; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer; user-select:none; transition:color .2s ease, background .2s ease, box-shadow .2s ease; }
+  .status-subtabs-inner{ display:flex; width:100%; max-width:260px; gap:2px; padding:3px; border-radius:999px; background:var(--card-bg); border:1px solid var(--border); }
+  .sst-item{ position:relative; flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:8px 10px; border-radius:999px; font-size:12.5px; font-weight:700; color:var(--muted); cursor:pointer; user-select:none; transition:color .2s ease, background-color .2s ease, box-shadow .2s ease; }
   .sst-item:active{ opacity:.8; }
-  .sst-item.active{ color:#ffffff; background:linear-gradient(135deg,#0564f5,#5be8c9); box-shadow:0 2px 10px rgba(5,100,245,0.35); }
-  .sst-badge{ display:inline-flex; align-items:center; justify-content:center; min-width:15px; height:15px; padding:0 4px; border-radius:999px; background:rgba(5,100,245,0.18); color:#0564f5; font-size:9.5px; font-weight:800; }
+  .sst-item.active{ color:#ffffff; background:var(--accent); box-shadow:0 2px 8px rgba(5,100,245,0.35); }
+  .sst-badge{ display:inline-flex; align-items:center; justify-content:center; min-width:16px; height:16px; padding:0 5px; border-radius:999px; background:rgba(5,100,245,0.14); color:var(--accent); font-size:10px; font-weight:800; line-height:1; }
   .sst-item.active .sst-badge{ background:rgba(255,255,255,0.25); color:#ffffff; }
-  .sst-dot{ width:6px; height:6px; border-radius:50%; background:#2f6fed; box-shadow:0 0 0 2px rgba(47,111,237,0.25); flex-shrink:0; }
+  .sst-dot{ position:absolute; top:3px; right:10px; width:8px; height:8px; border-radius:50%; background:var(--error); box-shadow:0 0 0 2px var(--card-bg); }
+  .sst-item.active .sst-dot{ box-shadow:0 0 0 2px var(--accent); }
   .status-subpanel{ display:none; }
   .status-subpanel.active{ display:block; }
 </style>
@@ -411,7 +412,7 @@
     <div class="status-subtabs" id="statusSubtabs">
       <div class="status-subtabs-inner">
         <div class="sst-item active" data-sst="saya"><span>Saya</span><span class="sst-badge" id="sstMyCount" style="display:none;"></span></div>
-        <div class="sst-item" data-sst="kontak"><span>Kontak</span><span class="sst-dot" id="sstKontakDot" style="display:none;"></span><span class="sst-badge" id="sstKontakCount" style="display:none;"></span></div>
+        <div class="sst-item" data-sst="kontak"><span>Kontak</span><span class="sst-badge" id="sstKontakCount" style="display:none;"></span><span class="sst-dot" id="sstKontakDot" style="display:none;"></span></div>
       </div>
     </div>
     <div id="myStatusPinned" class="status-subpanel active"></div>
