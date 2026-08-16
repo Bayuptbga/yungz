@@ -340,6 +340,7 @@
   .status-subpanel.active{ display:block; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="offline-db.js?v=__VERSION__"></script>
 <script src="app.js?v=__VERSION__"></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js');});}</script>
 </head>
@@ -483,30 +484,39 @@
   function looksEncrypted(content){try{const o=JSON.parse(content);return !!(o&&(o.e2e===1||o.e2e===2));}catch(e){return false;}}
   async function loadChats(userId){
     const list=document.getElementById('chatlist');list.innerHTML=skeletonRow().repeat(6);
-    const {data:contactRows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
-    const acceptedIds=new Set((contactRows||[]).map(r=>r.requester_id===userId?r.addressee_id:r.requester_id));
-    if(acceptedIds.size===0){render([]);return;}
-    const {data:msgRows}=await supabaseClient.from('messages').select('sender_id, receiver_id, content, created_at, delivered_at, read_at').or(`sender_id.eq.${userId},receiver_id.eq.${userId}`).order('created_at',{ascending:false}).limit(300);
-    const {data:clearRows}=await supabaseClient.from('chat_clears').select('peer_id, cleared_before').eq('user_id',userId);
-    const clearedMap=new Map((clearRows||[]).map(c=>[c.peer_id,c.cleared_before]));
-    const lastByPartner=new Map();
-    (msgRows||[]).forEach(m=>{const p=m.sender_id===userId?m.receiver_id:m.sender_id;if(!acceptedIds.has(p))return;const cutoff=clearedMap.get(p);if(cutoff&&m.created_at<=cutoff)return;if(!lastByPartner.has(p))lastByPartner.set(p,m);});
-    if(lastByPartner.size===0){render([]);return;}
-    const pIds=[...lastByPartner.keys()];const {data:profilesData}=await supabaseClient.from('profiles').select('id, username, public_key, avatar_url').in('id',pIds);
-    const pMap={};(profilesData||[]).forEach(p=>pMap[p.id]=p);
-    const chats=await Promise.all(pIds.map(async pid=>{
-      const m=lastByPartner.get(pid);const mine=m.sender_id===userId;const prof=pMap[pid]||{};
-      let previewText=m.content;
-      if(myPrivateKey){
-        try{previewText=await E2E.decryptMessage(myPrivateKey,m.content,mine,prof.public_key);}catch(e){}
-      }else if(looksEncrypted(m.content)){
-        previewText='🔒 Pesan terenkripsi';
-      }
-      if(previewText==='[INVITE_CALL]') previewText='📞 Panggilan suara';
-      if(previewText==='[CALL_REJECTED]') previewText='📞 Panggilan ditolak';
-      return {uid:pid,uname:prof.username||'Pengguna',avatarUrl:prof.avatar_url||null,preview:(mine?'Kamu: ':'')+previewText,time:m.created_at,mine,deliveredAt:m.delivered_at,readAt:m.read_at,unread:!mine&&!m.read_at};
-    }));
-    render(chats);
+    try{
+      const {data:contactRows,error:cErr}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+      if(cErr) throw cErr;
+      const acceptedIds=new Set((contactRows||[]).map(r=>r.requester_id===userId?r.addressee_id:r.requester_id));
+      if(acceptedIds.size===0){render([]);await OfflineDB.setCache('chats-list',[]);return;}
+      const {data:msgRows,error:mErr}=await supabaseClient.from('messages').select('sender_id, receiver_id, content, created_at, delivered_at, read_at').or(`sender_id.eq.${userId},receiver_id.eq.${userId}`).order('created_at',{ascending:false}).limit(300);
+      if(mErr) throw mErr;
+      const {data:clearRows}=await supabaseClient.from('chat_clears').select('peer_id, cleared_before').eq('user_id',userId);
+      const clearedMap=new Map((clearRows||[]).map(c=>[c.peer_id,c.cleared_before]));
+      const lastByPartner=new Map();
+      (msgRows||[]).forEach(m=>{const p=m.sender_id===userId?m.receiver_id:m.sender_id;if(!acceptedIds.has(p))return;const cutoff=clearedMap.get(p);if(cutoff&&m.created_at<=cutoff)return;if(!lastByPartner.has(p))lastByPartner.set(p,m);});
+      if(lastByPartner.size===0){render([]);await OfflineDB.setCache('chats-list',[]);return;}
+      const pIds=[...lastByPartner.keys()];const {data:profilesData}=await supabaseClient.from('profiles').select('id, username, public_key, avatar_url').in('id',pIds);
+      const pMap={};(profilesData||[]).forEach(p=>pMap[p.id]=p);
+      const chats=await Promise.all(pIds.map(async pid=>{
+        const m=lastByPartner.get(pid);const mine=m.sender_id===userId;const prof=pMap[pid]||{};
+        let previewText=m.content;
+        if(myPrivateKey){
+          try{previewText=await E2E.decryptMessage(myPrivateKey,m.content,mine,prof.public_key);}catch(e){}
+        }else if(looksEncrypted(m.content)){
+          previewText='🔒 Pesan terenkripsi';
+        }
+        if(previewText==='[INVITE_CALL]') previewText='📞 Panggilan suara';
+        if(previewText==='[CALL_REJECTED]') previewText='📞 Panggilan ditolak';
+        return {uid:pid,uname:prof.username||'Pengguna',avatarUrl:prof.avatar_url||null,preview:(mine?'Kamu: ':'')+previewText,time:m.created_at,mine,deliveredAt:m.delivered_at,readAt:m.read_at,unread:!mine&&!m.read_at};
+      }));
+      render(chats);
+      await OfflineDB.setCache('chats-list',chats); // simpan buat ditampilkan kalau nanti dibuka offline
+    }catch(netErr){
+      const cached=await OfflineDB.getCache('chats-list');
+      OfflineBanner.show();
+      if(cached){render(cached);}else{list.innerHTML='<div class="panel-empty">Sedang offline dan belum ada data chat tersimpan.</div>';}
+    }
   }
   async function markInboxDelivered(userId){await supabaseClient.from('messages').update({delivered_at:new Date().toISOString()}).eq('receiver_id',userId).is('delivered_at',null);}
   let presenceTracked=false;function trackOnlinePresence(userId){if(presenceTracked)return;presenceTracked=true;supabaseClient.channel('online-users',{config:{presence:{key:userId}}}).subscribe(async(s)=>{if(s==='SUBSCRIBED')await supabaseClient.channel('online-users').track({online_at:new Date().toISOString()});});}
@@ -553,18 +563,34 @@
     document.getElementById('sendRequestBtn').textContent='Terkirim ✓';searchMsg.className='search-msg ok';
     setTimeout(closeAddModal,1200);
   });
+  function renderContacts(oIds,pMap){
+    const cList=document.getElementById('contactList');const cCount=document.getElementById('contactCount');
+    if(!oIds||oIds.length===0){cList.innerHTML='<div class="panel-empty">Belum ada kontak.</div>';if(cCount)cCount.textContent='0';return;}
+    oIds.forEach(id=>{contactAvatarMap[id]=(pMap[id]&&pMap[id].avatarUrl)||null;});
+    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml((pMap[id]||{}).username)}"><div class="avatar" data-profuid="${escapeHtml(id)}" style="${avatarStyle(id,(pMap[id]||{}).avatarUrl)}">${avatarInner((pMap[id]||{}).username,(pMap[id]||{}).avatarUrl)}</div><div class="uname">${escapeHtml((pMap[id]||{}).username)}</div></div>`).join('');
+    if(cCount)cCount.textContent=oIds.length;
+    document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
+    document.querySelectorAll('.contact-item .avatar').forEach(a=>a.addEventListener('click',e=>{e.stopPropagation();openContactPreview(a.dataset.profuid,a.closest('.contact-item').dataset.uname);}));
+  }
   async function loadContacts(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
     const cList=document.getElementById('contactList');cList.innerHTML=skeletonRow().repeat(4);
     const cCount=document.getElementById('contactCount');if(cCount)cCount.textContent='';
-    const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
-    if(!rows||rows.length===0){cList.innerHTML='<div class="panel-empty">Belum ada kontak.</div>';if(cCount)cCount.textContent='0';return;}
-    const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
-    const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',oIds);const pMap={};(pData||[]).forEach(p=>{pMap[p.id]=p.username;contactAvatarMap[p.id]=p.avatar_url||null;});
-    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml(pMap[id])}"><div class="avatar" data-profuid="${escapeHtml(id)}" style="${avatarStyle(id,contactAvatarMap[id])}">${avatarInner(pMap[id],contactAvatarMap[id])}</div><div class="uname">${escapeHtml(pMap[id])}</div></div>`).join('');
-    if(cCount)cCount.textContent=oIds.length;
-    document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
-    document.querySelectorAll('.contact-item .avatar').forEach(a=>a.addEventListener('click',e=>{e.stopPropagation();openContactPreview(a.dataset.profuid,a.closest('.contact-item').dataset.uname);}));
+    try{
+      const {data:rows,error:rErr}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
+      if(rErr) throw rErr;
+      if(!rows||rows.length===0){renderContacts([],{});await OfflineDB.setCache('contacts-list',{oIds:[],pMap:{}});return;}
+      const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
+      const {data:pData,error:pErr}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',oIds);
+      if(pErr) throw pErr;
+      const pMap={};(pData||[]).forEach(p=>{pMap[p.id]={username:p.username,avatarUrl:p.avatar_url||null};});
+      renderContacts(oIds,pMap);
+      await OfflineDB.setCache('contacts-list',{oIds,pMap});
+    }catch(netErr){
+      const cached=await OfflineDB.getCache('contacts-list');
+      OfflineBanner.show();
+      if(cached){renderContacts(cached.oIds,cached.pMap);}else{cList.innerHTML='<div class="panel-empty">Sedang offline dan belum ada data kontak tersimpan.</div>';if(cCount)cCount.textContent='';}
+    }
   }
 function timeAgo(iso){
     const diffMin=Math.max(0,Math.round((Date.now()-new Date(iso).getTime())/60000));
@@ -655,43 +681,58 @@ function timeAgo(iso){
   }
   const STATUS_EMPTY_MINE='<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Anda belum memposting status.</div>';
   const STATUS_EMPTY_KONTAK='<div class="status-empty"><div class="icon"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="var(--muted)" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg></div>Belum ada pembaruan dari kontak.</div>';
-  async function loadStatusTab(showSkeleton=true){
-    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
+  function renderStatusTab(sRows,pMap,reactionCountMap,myReactionMap,myId){
     const sList=document.getElementById('statusList'),pinnedWrap=document.getElementById('myStatusPinned');
-    if(showSkeleton){sList.innerHTML=skeletonRow().repeat(3);pinnedWrap.innerHTML=skeletonRow().repeat(2);}
-    const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
-    const oIds=(rows||[]).map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
-    const allIds=[session.user.id,...oIds];
-    const {data:sRows}=await supabaseClient.from('statuses').select('id, user_id, content, created_at, expires_at').in('user_id',allIds).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
     const myCountBadge=document.getElementById('sstMyCount'),kontakCountBadge=document.getElementById('sstKontakCount');
     if(!sRows||sRows.length===0){
       pinnedWrap.innerHTML=STATUS_EMPTY_MINE;sList.innerHTML=STATUS_EMPTY_KONTAK;
       myCountBadge.style.display='none';kontakCountBadge.style.display='none';
-      updateStatusNewIndicator([]);
-      setStatusSubtab(statusSubtab);return;
+      updateStatusNewIndicator([]);setStatusSubtab(statusSubtab);return;
     }
-    const uIds=sRows.map(s=>s.user_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',uIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p);
-    const sIds=sRows.map(s=>s.id);const {data:likeRows}=await supabaseClient.from('status_likes').select('status_id, user_id, reaction').in('status_id',sIds);
-    const reactionCountMap={},myReactionMap={};
-    (likeRows||[]).forEach(l=>{
-      const type=l.reaction||'like';
-      if(!reactionCountMap[l.status_id])reactionCountMap[l.status_id]={};
-      reactionCountMap[l.status_id][type]=(reactionCountMap[l.status_id][type]||0)+1;
-      if(l.user_id===session.user.id)myReactionMap[l.status_id]=type;
-    });
-    const mineRows=sRows.filter(s=>s.user_id===session.user.id);
-    const otherRows=sRows.filter(s=>s.user_id!==session.user.id);
-    pinnedWrap.innerHTML=mineRows.length>0?mineRows.map(s=>statusCardHTML(s,reactionCountMap,myReactionMap,pMap,session.user.id)).join(''):STATUS_EMPTY_MINE;
-    sList.innerHTML=otherRows.length>0?otherRows.map(s=>statusCardHTML(s,reactionCountMap,myReactionMap,pMap,session.user.id)).join(''):STATUS_EMPTY_KONTAK;
+    const mineRows=sRows.filter(s=>s.user_id===myId);
+    const otherRows=sRows.filter(s=>s.user_id!==myId);
+    pinnedWrap.innerHTML=mineRows.length>0?mineRows.map(s=>statusCardHTML(s,reactionCountMap,myReactionMap,pMap,myId)).join(''):STATUS_EMPTY_MINE;
+    sList.innerHTML=otherRows.length>0?otherRows.map(s=>statusCardHTML(s,reactionCountMap,myReactionMap,pMap,myId)).join(''):STATUS_EMPTY_KONTAK;
     if(mineRows.length>0){myCountBadge.textContent=mineRows.length;myCountBadge.style.display='';}else{myCountBadge.style.display='none';}
     if(otherRows.length>0){kontakCountBadge.textContent=otherRows.length;kontakCountBadge.style.display='';}else{kontakCountBadge.style.display='none';}
     updateStatusNewIndicator(otherRows);
     setStatusSubtab(statusSubtab);
     document.querySelectorAll('#statusList .status-card .sc-avatar').forEach(a=>{
       const card=a.closest('.status-card');
-      if(!card.dataset.uid||card.dataset.uid===session.user.id)return;
+      if(!card.dataset.uid||card.dataset.uid===myId)return;
       a.addEventListener('click',e=>{e.stopPropagation();openContactPreview(card.dataset.uid,card.dataset.uname);});
     });
+  }
+  async function loadStatusTab(showSkeleton=true){
+    const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;
+    const sList=document.getElementById('statusList'),pinnedWrap=document.getElementById('myStatusPinned');
+    if(showSkeleton){sList.innerHTML=skeletonRow().repeat(3);pinnedWrap.innerHTML=skeletonRow().repeat(2);}
+    try{
+      const {data:rows,error:rErr}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
+      if(rErr) throw rErr;
+      const oIds=(rows||[]).map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
+      const allIds=[session.user.id,...oIds];
+      const {data:sRows,error:sErr}=await supabaseClient.from('statuses').select('id, user_id, content, created_at, expires_at').in('user_id',allIds).gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false});
+      if(sErr) throw sErr;
+      let pMap={},reactionCountMap={},myReactionMap={};
+      if(sRows&&sRows.length>0){
+        const uIds=sRows.map(s=>s.user_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',uIds);(pData||[]).forEach(p=>pMap[p.id]=p);
+        const sIds=sRows.map(s=>s.id);const {data:likeRows}=await supabaseClient.from('status_likes').select('status_id, user_id, reaction').in('status_id',sIds);
+        (likeRows||[]).forEach(l=>{
+          const type=l.reaction||'like';
+          if(!reactionCountMap[l.status_id])reactionCountMap[l.status_id]={};
+          reactionCountMap[l.status_id][type]=(reactionCountMap[l.status_id][type]||0)+1;
+          if(l.user_id===session.user.id)myReactionMap[l.status_id]=type;
+        });
+      }
+      renderStatusTab(sRows||[],pMap,reactionCountMap,myReactionMap,session.user.id);
+      await OfflineDB.setCache('status-tab',{sRows:sRows||[],pMap,reactionCountMap,myReactionMap,myId:session.user.id});
+    }catch(netErr){
+      const cached=await OfflineDB.getCache('status-tab');
+      OfflineBanner.show();
+      if(cached){renderStatusTab(cached.sRows,cached.pMap,cached.reactionCountMap,cached.myReactionMap,cached.myId);}
+      else{pinnedWrap.innerHTML=STATUS_EMPTY_MINE;sList.innerHTML='<div class="panel-empty">Sedang offline dan belum ada data status tersimpan.</div>';}
+    }
   }
   async function loadNotifications(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const nl=document.getElementById('notifList');nl.innerHTML=skeletonRow().repeat(4);
@@ -860,6 +901,7 @@ function timeAgo(iso){
       myPrivateKey=kp.privateKey;
     }catch(e){ console.error('Gagal cek kunci enkripsi:',e); }
     document.getElementById('authGate').style.display='none';
+    OfflineBanner.init(()=>{ loadChats(session.user.id); loadContacts(); if(statusSubtab)loadStatusTab(false); }); // begitu online lagi: muat ulang data terbaru
     refreshNotifBadge();
   }
   boot();
