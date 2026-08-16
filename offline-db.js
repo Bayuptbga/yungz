@@ -11,8 +11,10 @@
 //                storage lokal device. Ini bukan kebocoran baru: private key
 //                E2E kita sendiri juga sudah tersimpan plaintext di localStorage.
 // - "cache"    : cache generik key/value (daftar chat, kontak, status, profil peer, dst.)
-// - "outbox"   : antrian pesan yang GAGAL terkirim (mis. saat offline), untuk
-//                dikirim ulang otomatis begitu koneksi kembali.
+//
+// Ini HANYA cache baca (read-only offline). Tidak ada antrian kirim/outbox --
+// kalau kirim pesan/status gagal karena offline, itu tetap gagal dengan jelas
+// (ditandai merah) supaya user tahu harus kirim ulang, bukan diam-diam ditahan.
 //
 // Semua fungsi di sini "fail-soft": kalau IndexedDB tidak tersedia/gagal
 // (mis. private browsing di beberapa browser), fungsi cukup gagal diam-diam
@@ -40,9 +42,6 @@ const OfflineDB = (function () {
         }
         if (!db.objectStoreNames.contains('cache')) {
           db.createObjectStore('cache', { keyPath: 'key' });
-        }
-        if (!db.objectStoreNames.contains('outbox')) {
-          db.createObjectStore('outbox', { keyPath: 'localId' });
         }
       };
       req.onsuccess = () => resolve(req.result);
@@ -100,39 +99,6 @@ const OfflineDB = (function () {
       if (!s) return null;
       const result = await reqToPromise(s.get(key), null);
       return result ? result.value : null;
-    },
-
-    // ---- Outbox: pesan yang belum berhasil terkirim ----
-    async addOutbox(item) {
-      const s = await store('outbox', 'readwrite');
-      if (!s) return;
-      try { s.put(item); } catch (e) { /* abaikan */ }
-    },
-    async removeOutbox(localId) {
-      const s = await store('outbox', 'readwrite');
-      if (!s) return;
-      try { s.delete(localId); } catch (e) { /* abaikan */ }
-    },
-    async getOutboxFor(cKey) {
-      const s = await store('outbox', 'readonly');
-      if (!s) return [];
-      return new Promise((resolve) => {
-        const out = [];
-        const req = s.openCursor();
-        req.onsuccess = (e) => {
-          const cursor = e.target.result;
-          if (cursor) {
-            if (!cKey || cursor.value.convoKey === cKey) out.push(cursor.value);
-            cursor.continue();
-          } else {
-            resolve(out.sort((a, b) => a.createdAtMs - b.createdAtMs));
-          }
-        };
-        req.onerror = () => resolve([]);
-      });
-    },
-    async getAllOutbox() {
-      return this.getOutboxFor(null);
     }
   };
 })();
