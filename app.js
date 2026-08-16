@@ -290,20 +290,38 @@ async function initPushNotifications(userId) {
       });
     }
 
-    const subJson = subscription.toJSON();
+    await saveSubscriptionToServer(userId, subscription);
 
-    await supabaseClient.from('push_subscriptions').upsert(
-      {
-        user_id: userId,
-        endpoint: subJson.endpoint,
-        p256dh: subJson.keys.p256dh,
-        auth: subJson.keys.auth
-      },
-      { onConflict: 'endpoint' }
-    );
+    // Dengerin pesan dari sw.js kalau ada resubscribe otomatis
+    // (dipicu event 'pushsubscriptionchange' di background). Tanpa ini,
+    // subscription baru cuma nyimpen di browser tapi gak pernah nyampe
+    // ke Supabase -- server masih ngirim ke endpoint lama yang udah mati.
+    navigator.serviceWorker.addEventListener('message', async (event) => {
+      if (event.data?.type === 'PUSH_SUBSCRIPTION_CHANGED') {
+        console.log('Subscription push berubah, menyinkronkan ulang...');
+        await saveSubscriptionToServer(userId, event.data.subscription, true);
+      }
+    });
 
     console.log('Push notification aktif.');
   } catch (err) {
     console.error('Gagal setup push notification:', err);
   }
+}
+
+async function saveSubscriptionToServer(userId, subscription, isRawJson = false) {
+  const subJson = isRawJson ? subscription : subscription.toJSON();
+
+  await supabaseClient.from('push_subscriptions').upsert(
+    {
+      user_id: userId,
+      endpoint: subJson.endpoint,
+      p256dh: subJson.keys.p256dh,
+      auth: subJson.keys.auth,
+      // Dipakai buat bersih-bersih baris basi yang udah lama gak update
+      // (lihat catatan pembersihan berkala di bawah).
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: 'endpoint' }
+  );
 }
