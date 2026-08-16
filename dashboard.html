@@ -74,7 +74,7 @@
   .appbar{ position:relative; background:var(--bg); color:var(--ink); padding:14px 16px; display:flex; align-items:center; justify-content:space-between; }
   #offlineBanner{
     flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:7px;
-    background:var(--error); color:#fff; font-size:12.5px; font-weight:600;
+    background:var(--error); color:#ffffff; font-size:12.5px; font-weight:600;
     padding:0 12px; max-height:0; overflow:hidden; opacity:0;
     transition:max-height .25s ease, opacity .2s ease, padding .25s ease;
   }
@@ -87,9 +87,9 @@
   .appbar .icon-btn{ cursor:pointer; display:flex; align-items:center; justify-content:center; }
   .search-bar{ display:none; align-items:center; gap:10px; background:var(--bbm-blue); padding:14px 16px; flex-shrink:0; position:absolute; inset:0; z-index:5; }
   .search-bar.show{ display:flex; }
-  .search-bar .search-close{ cursor:pointer; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; width:32px; height:32px; }
+  .search-bar .search-close{ cursor:pointer; color:#ffffff; display:flex; align-items:center; justify-content:center; flex-shrink:0; width:32px; height:32px; }
   .search-bar .search-wrap{ flex:1; position:relative; display:flex; align-items:center; background:var(--bbm-blue-light); border-radius:999px; padding:0 16px; height:40px; }
-  .search-bar input{ flex:1; background:transparent; border:none; color:#fff; font-size:16.5px; outline:none; font-family:inherit; caret-color:#0564f5; }
+  .search-bar input{ flex:1; background:transparent; border:none; color:#ffffff; font-size:16.5px; outline:none; font-family:inherit; caret-color:#0564f5; }
   .search-bar input::placeholder{ color:rgba(255,255,255,0.7); }
   .no-results{ padding:40px 24px; text-align:center; color:var(--muted); font-size:13.5px; }
   .tabbar{
@@ -152,12 +152,12 @@
   @media (prefers-reduced-motion:reduce){ .skel-avatar::after,.skel-line::after{animation:none;} }
   .chat-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; cursor:pointer; }
   .chat-item:active{ background:var(--border); }
-  .avatar{ width:52px; height:52px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px; color:#fff; }
+  .avatar{ width:52px; height:52px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px; color:#ffffff; }
   .chat-main{ flex:1; min-width:0; }
   .chat-top{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
   .chat-name{ font-size:16.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .chat-bottom{ display:flex; align-items:center; gap:6px; margin-top:3px; }
-  .status-icon{ width:16px; height:16px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; }
+  .status-icon{ width:16px; height:16px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#ffffff; }
   .status-icon.broadcast{background:none;}
   .chat-msg{ font-size:13.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .fab{ position:absolute; right:18px; bottom:calc(96px + env(safe-area-inset-bottom)); width:56px; height:56px; border-radius:50%; background:var(--bbm-blue); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.5); cursor:pointer; }
@@ -169,7 +169,7 @@
   .dropdown-menu .dd-item:active{ background:var(--border); }
   .dropdown-menu .dd-item svg{ width:18px;height:18px; flex-shrink:0; stroke:var(--ink); }
   .dropdown-menu .dd-sep{ height:1px; background:var(--border); margin:6px 0; }
-  .profile-avatar-btn{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:12px; background:var(--bbm-blue); flex-shrink:0; }
+  .profile-avatar-btn{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#ffffff; font-weight:700; font-size:12px; background:var(--bbm-blue); flex-shrink:0; }
   .chat-search-bar{ display:flex; align-items:center; padding:8px 14px 12px; background:var(--bg); flex-shrink:0; }
   .chat-search-bar .csb-wrap{ flex:1; display:flex; align-items:center; gap:10px; background:var(--card-bg); border-radius:999px; padding:0 14px; height:40px; }
   .chat-search-bar .csb-wrap svg{ flex-shrink:0; }
@@ -183,19 +183,19 @@
   .pin-modal .pm-box{ background:var(--bg); border:1.5px dashed var(--muted); border-radius:12px; padding:16px; margin-bottom:16px; }
   .pin-modal .pm-pin{ font-size:26px; font-weight:800; letter-spacing:4px; color:var(--ink); font-family:'Courier New',monospace; }
   .pin-modal .pm-copy{ font-size:12.5px; color:#0564f5; font-weight:600; background:none; border:none; cursor:pointer; margin-bottom:14px; padding:6px 10px; }
-  .pin-modal .pm-close{ width:100%; padding:11px 0; background:var(--bbm-blue); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
+  .pin-modal .pm-close{ width:100%; padding:11px 0; background:var(--bbm-blue); color:#ffffff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
   .cprev-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:70; padding:24px; }
   .cprev-overlay.open{ opacity:1; pointer-events:auto; }
   .cprev-card{ background:var(--card-bg); border-radius:16px; width:100%; max-width:290px; text-align:center; border:1px solid var(--border); overflow:hidden; }
   .cprev-top{ width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; }
-  .cprev-avatar{ width:100%; height:100%; border-radius:0; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:52px; flex-shrink:0; }
+  .cprev-avatar{ width:100%; height:100%; border-radius:0; display:flex; align-items:center; justify-content:center; color:#ffffff; font-weight:700; font-size:52px; flex-shrink:0; }
   .cprev-body{ padding:18px 22px 20px; }
   .cprev-uname{ font-size:17px; font-weight:700; color:var(--ink); word-break:break-word; }
   .cprev-sub{ font-size:12.5px; color:var(--muted); margin-top:3px; margin-bottom:20px; }
   .cprev-actions{ display:flex; flex-direction:row; gap:10px; }
   .cprev-btn{ flex:1; padding:14px 6px 12px; border-radius:14px; font-size:11.5px; font-weight:700; cursor:pointer; border:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; }
   .cprev-btn svg{ width:18px; height:18px; flex-shrink:0; }
-  .cprev-btn.primary{ background:var(--bbm-blue); color:#fff; }
+  .cprev-btn.primary{ background:var(--bbm-blue); color:#ffffff; }
   .cprev-btn.secondary{ background:var(--bg); color:var(--ink); border:1px solid var(--border); }
   /* ---- Bottom sheet "Chat Baru" (fab di tab Chat) ---- */
   .ncw-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .22s ease; z-index:75; }
@@ -223,12 +223,12 @@
   .add-row{display:flex;gap:8px;}
   .add-row input{ flex:1; background:var(--bg); border:1.5px solid var(--border); color:var(--ink); border-radius:10px; padding:11px 12px; font-size:15px; font-family:'Courier New',monospace; outline:none; }
   .add-row input:focus{border-color:var(--muted);}
-  .add-row button{ padding:0 18px; background:var(--bbm-blue); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
+  .add-row button{ padding:0 18px; background:var(--bbm-blue); color:#ffffff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
   .add-row button:disabled{background:var(--border); color:var(--muted);}
   .search-msg{margin-top:10px;font-size:13px;} .search-msg.err{color:var(--error);} .search-msg.ok{color:var(--ok);}
   .found-card{ display:none; margin-top:16px; background:var(--bbm-blue-light); border:1px solid var(--border); border-radius:12px; padding:12px 14px; align-items:center; gap:12px; }
   .found-card.show{display:flex;}
-  .found-card .avatar{ width:44px;height:44px;border-radius:50%; background:var(--bbm-blue); color:#fff; display:flex;align-items:center;justify-content:center; font-weight:700;font-size:15px; flex-shrink:0; }
+  .found-card .avatar{ width:44px;height:44px;border-radius:50%; background:var(--bbm-blue); color:#ffffff; display:flex;align-items:center;justify-content:center; font-weight:700;font-size:15px; flex-shrink:0; }
   .found-card .info{flex:1;min-width:0;}
   .found-card .info .uname{font-weight:600;font-size:15px; color:var(--ink);}
   .found-card .info .pin-label{font-size:11.5px;color:var(--muted);}
@@ -241,13 +241,13 @@
   .status-toggle.collapsed .status-toggle-arrow{transform:rotate(-90deg);}
   .contact-item{ display:flex; align-items:center; gap:14px; padding:12px 16px; cursor:pointer; transition:background-color .15s ease; }
   .contact-item:active{background:var(--border);}
-  .contact-item .avatar{ width:48px;height:48px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:16px; }
+  .contact-item .avatar{ width:48px;height:48px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#ffffff;font-weight:700;font-size:16px; }
   .contact-item .uname{font-size:15.5px;font-weight:600; color:var(--ink);}
   .addpage{ position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:150; opacity:0; pointer-events:none; transition:opacity .22s ease; display:flex; align-items:flex-end; justify-content:center; }
   .addpage.show{ opacity:1; pointer-events:auto; }
   .addpage-box{ width:100%; max-width:420px; height:56%; max-height:520px; background:var(--bg); border-radius:20px 20px 0 0; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 -10px 30px rgba(0,0,0,0.45); transform:translateY(100%); transition:transform .28s cubic-bezier(.32,.72,0,1); will-change:transform; }
   .addpage.show .addpage-box{ transform:translateY(0); }
-  .addpage-header{ background:var(--bbm-blue); color:#fff; padding:16px 16px 14px; display:flex; align-items:center; gap:18px; flex-shrink:0; border-radius:20px 20px 0 0; }
+  .addpage-header{ background:var(--bbm-blue); color:#ffffff; padding:16px 16px 14px; display:flex; align-items:center; gap:18px; flex-shrink:0; border-radius:20px 20px 0 0; }
   .addpage-header .back-btn{ display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
   .addpage-header h2{ margin:0; font-size:18px; font-weight:600; }
   .addpage-body{ flex:1; overflow-y:auto; padding:20px 18px; }
@@ -263,7 +263,7 @@
   .btn-primary-full{ width:100%; background:#0564f5; color:#ffffff; border:none; border-radius:12px; padding:15px; font-size:15px; font-weight:700; cursor:pointer; transition:opacity .15s ease; }
   .btn-primary-full:disabled{ background:var(--border); color:var(--muted); }
   .req-item, .notif-item{ display:flex; align-items:center; gap:13px; padding:13px 16px; border-bottom:1px solid var(--border); transition:background-color .3s ease, opacity .3s ease; }
-  .req-item .avatar, .notif-item .avatar{ width:46px;height:46px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:15.5px; flex-shrink:0; box-shadow:0 0 0 2px var(--card-bg); }
+  .req-item .avatar, .notif-item .avatar{ width:46px;height:46px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#ffffff;font-weight:700;font-size:15.5px; flex-shrink:0; box-shadow:0 0 0 2px var(--card-bg); }
   .req-item .info, .notif-item .info{flex:1;min-width:0;}
   .req-item .uname, .notif-item .uname{font-size:15px;font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .req-item .sub, .notif-item .sub{font-size:12px;color:var(--muted);margin-top:3px; display:flex; align-items:center; gap:5px;}
@@ -281,7 +281,7 @@
   @keyframes dotPulse{ 0%,100%{box-shadow:0 0 0 3px rgba(5,100,245,0.25);} 50%{box-shadow:0 0 0 5px rgba(5,100,245,0.08);} }
   .req-item.removing, .notif-item.removing{opacity:0; transform:translateX(24px);}
   .status-item{ display:flex; align-items:flex-start; gap:13px; padding:13px 16px; border-bottom:1px solid var(--border); }
-  .status-item .avatar{ width:46px;height:46px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:15.5px; flex-shrink:0; box-shadow:0 0 0 2px var(--ok); }
+  .status-item .avatar{ width:46px;height:46px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#ffffff;font-weight:700;font-size:15.5px; flex-shrink:0; box-shadow:0 0 0 2px var(--ok); }
   .my-status .avatar{box-shadow:none;}
   .status-item .info{flex:1;min-width:0;}
   .status-item .uname{font-size:15px;font-weight:600; color:var(--ink);}
@@ -291,7 +291,7 @@
   .my-status{cursor:pointer; background:var(--card-bg); border-bottom:8px solid var(--bg);}
   .my-status:active{background:var(--border);}
   .avatar-wrap{position:relative; flex-shrink:0;}
-  .my-status-plus{position:absolute; bottom:-2px; right:-2px; width:18px; height:18px; border-radius:50%; background:#0564f5; color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; border:2px solid var(--card-bg); line-height:1;}
+  .my-status-plus{position:absolute; bottom:-2px; right:-2px; width:18px; height:18px; border-radius:50%; background:#0564f5; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; border:2px solid var(--card-bg); line-height:1;}
   .status-item .content.has-status{color:var(--ink);}
   .my-status .content{color:var(--muted);}
   .my-status-editor{padding:0 16px 16px; background:var(--card-bg); border-bottom:8px solid var(--bg);}
@@ -301,7 +301,7 @@
   .status-card .sc-head{ display:flex; align-items:center; gap:10px; padding:11px 14px 9px; }
   .sc-avatar-wrap{ width:38px; height:38px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
   .sc-avatar-wrap.ring{ background:linear-gradient(135deg,#0564f5,#2a7de1); padding:2px; }
-  .status-card .sc-avatar{ width:100%;height:100%;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:13px; flex-shrink:0; box-shadow:0 0 0 2px var(--card-bg); }
+  .status-card .sc-avatar{ width:100%;height:100%;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#ffffff;font-weight:700;font-size:13px; flex-shrink:0; box-shadow:0 0 0 2px var(--card-bg); }
   .sc-avatar-wrap:not(.ring) .sc-avatar{ box-shadow:none; }
   .status-card .sc-head-info{ flex:1; min-width:0; }
   .status-card .sc-uname{ font-size:13.5px; font-weight:700; color:var(--ink); letter-spacing:.1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -310,7 +310,7 @@
   .status-card .sc-delete:active{ background:rgba(16,31,51,0.06); color:var(--ink); }
   .status-card .sc-delete svg{ width:15px; height:15px; }
   .status-card .sc-divider{ border-top:1px solid var(--border); margin:0 14px; }
-  .status-card .sc-content{ padding:34px 22px; min-height:130px; display:flex; align-items:center; justify-content:center; text-align:center; background:#000; font-size:19px; font-weight:800; line-height:1.4; color:#fff; letter-spacing:.1px; word-break:break-word; white-space:pre-wrap; }
+  .status-card .sc-content{ padding:34px 22px; min-height:130px; display:flex; align-items:center; justify-content:center; text-align:center; background:#000; font-size:19px; font-weight:800; line-height:1.4; color:#ffffff; letter-spacing:.1px; word-break:break-word; white-space:pre-wrap; }
   .status-card .sc-reactions{ display:flex; align-items:center; justify-content:space-between; padding:7px 8px 7px 14px; gap:8px; }
   .status-card .rx-summary{ display:flex; align-items:center; gap:6px; min-width:0; color:var(--muted); font-size:12.5px; }
   .status-card .rx-summary.empty{ color:var(--muted); }
@@ -329,7 +329,7 @@
   .rx-picker-item.active{ background:rgba(5,100,245,0.18); }
   .status-composer{ margin:14px 16px 0; background:var(--card-bg); border:1px solid var(--border); border-radius:16px; padding:13px 14px 10px; flex-shrink:0; box-shadow:0 2px 10px rgba(0,0,0,0.25); }
   .composer-top{ display:flex; align-items:center; gap:12px; }
-  .composer-avatar{ width:38px;height:38px;border-radius:50%; display:flex;align-items:center;justify-content:center; font-weight:700;font-size:14px;color:#fff; background:var(--bbm-blue); flex-shrink:0; }
+  .composer-avatar{ width:38px;height:38px;border-radius:50%; display:flex;align-items:center;justify-content:center; font-weight:700;font-size:14px;color:#ffffff; background:var(--bbm-blue); flex-shrink:0; }
   .composer-input{ flex:1; min-width:0; background:transparent; border:none; outline:none; color:var(--ink); font-size:14.5px; font-family:inherit; padding:8px 0; }
   .composer-input::placeholder{ color:var(--muted); }
   .composer-bottom{ display:flex; align-items:center; justify-content:space-between; margin-top:6px; padding-top:8px; border-top:1px solid var(--border); }
@@ -339,7 +339,7 @@
   .composer-icon.send{ background:var(--bbm-blue); }
   .composer-icon.send.disabled{ opacity:.5; pointer-events:none; }
   #myStatusMsg{ margin:0 18px; min-height:0; }
-  .composer-icon.send .icon-spinner{ width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;animation:authSpin .7s linear infinite; }
+  .composer-icon.send .icon-spinner{ width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.35);border-top-color:#ffffff;animation:authSpin .7s linear infinite; }
   #myStatusMsg:empty{ display:none; }
   /* ---- Sub-tab Saya / Kontak: 1 pil, 2 tab (segmented control), di tengah ---- */
   .status-subtabs{ display:flex; justify-content:center; margin:12px 16px 14px; }
@@ -360,7 +360,7 @@
 <body>
 <div class="phone">
   <div id="authGate"><div class="spinner"></div></div>
-  <div id="offlineBanner"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.58 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg><span>Anda sedang offline</span></div>
+  <div id="offlineBanner"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.58 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg><span>Anda sedang offline</span></div>
   <div class="appbar">
     <div class="left"><h1 class="brand">Baku Chat</h1></div>
     <div class="right">
@@ -388,7 +388,7 @@
       <input type="text" id="chatSearchInput" placeholder="Cari chat...">
     </div>
   </div>
-  <div class="tab-panel active" id="panelChats"><div class="chatlist" id="chatlist"></div><div class="fab" title="Chat baru" id="fabNewChat"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg></div></div>
+  <div class="tab-panel active" id="panelChats"><div class="chatlist" id="chatlist"></div><div class="fab" title="Chat baru" id="fabNewChat"><svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M12 8v5M9.5 10.5h5"/></svg></div></div>
   <div class="tab-panel" id="panelStatus">
     <div class="ptr-indicator" id="statusPtr"><div class="ptr-spinner"></div></div>
     <div class="status-composer">
@@ -403,7 +403,7 @@
           </div>
         </div>
         <div class="composer-icon send" id="postStatusBtn" title="Kirim">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </div>
       </div>
     </div>
@@ -418,21 +418,21 @@
     <div id="statusList" class="status-subpanel"></div>
   </div>
   <div class="tab-panel" id="panelKontak">
-    <div class="fab" title="Tambah kontak" id="fabAddContact"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 20c0-4 3-7 7-7s7 3 7 7"/><path d="M17 8h5M19.5 5.5v5"/></svg></div>
+    <div class="fab" title="Tambah kontak" id="fabAddContact"><svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 20c0-4 3-7 7-7s7 3 7 7"/><path d="M17 8h5M19.5 5.5v5"/></svg></div>
     <div class="section-title">Kontak Saya<span id="contactCount" class="count-badge"></span></div><div id="contactList"></div>
   </div>
   <div class="tab-panel" id="panelNotif"><div id="notifList"></div></div>
     <div class="addpage" id="addPanelWrap">
       <div class="addpage-box">
         <div class="addpage-header">
-          <div class="back-btn" id="addBackBtn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
+          <div class="back-btn" id="addBackBtn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
           <h2>Tambah Kontak</h2>
         </div>
         <div class="addpage-body">
           <div class="field-label">PIN Teman (8 karakter)</div>
           <div class="field-row">
             <input type="text" id="pinInput" placeholder="Contoh: 6NK6W7T6" maxlength="8" autocapitalize="characters">
-            <button class="field-search-btn" id="searchBtn" title="Cari"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
+            <button class="field-search-btn" id="searchBtn" title="Cari"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
           </div>
           <div class="field-hint">Masukkan PIN 8 karakter milik teman kamu untuk mencarinya.</div>
           <div class="search-msg" id="searchMsg"></div>
@@ -454,7 +454,7 @@
         <div class="cprev-uname" id="cprevUname">—</div>
         <div class="cprev-sub">Kontak</div>
         <div class="cprev-actions">
-          <button class="cprev-btn primary" id="cprevSendBtn"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg>Kirim Pesan</button>
+          <button class="cprev-btn primary" id="cprevSendBtn"><svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg>Kirim Pesan</button>
           <button class="cprev-btn secondary" id="cprevProfilBtn"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Lihat Profil</button>
         </div>
       </div>

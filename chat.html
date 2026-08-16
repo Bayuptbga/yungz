@@ -66,13 +66,13 @@
   #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:#0564f5; animation:authSpin .75s linear infinite; }
   @keyframes authSpin{ to{ transform:rotate(360deg); } }
   .appbar{
-    background:#fff;
+    background:#ffffff;
     color:var(--ink); padding:calc(12px + env(safe-area-inset-top)) 14px 12px; display:flex; align-items:center; gap:10px;
     flex-shrink:0; box-shadow:0 1px 3px rgba(16,31,51,0.06); border-bottom:1px solid var(--border); position:relative; z-index:10;
   }
   .appbar .back{ cursor:pointer; width:34px;height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s ease; }
   .appbar .back:active{ background:rgba(16,31,51,0.08); }
-  .appbar .avatar{ width:38px;height:38px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#fff;font-weight:700;font-size:14px;flex-shrink:0; box-shadow:0 0 0 2px var(--border); }
+  .appbar .avatar{ width:38px;height:38px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#ffffff;font-weight:700;font-size:14px;flex-shrink:0; box-shadow:0 0 0 2px var(--border); }
   .appbar .who{flex:1;min-width:0;}
   .appbar .uname{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .appbar .sub{font-size:11.5px;opacity:0.82;margin-top:1px;}
@@ -141,7 +141,7 @@
     display:flex; flex-direction:column; align-items:flex-end; max-width:78%; width:fit-content; padding:8px 11px 6px; border-radius:16px;
     font-size:14.5px; line-height:20px; word-wrap:break-word; overflow-wrap:break-word; box-shadow:0 1px 2px rgba(0,0,0,0.2);
   }
-  .bubble-row.mine .bubble{ background:linear-gradient(135deg,#3b6fd6,#1a3f8f); border:1px solid #2f5ec2; border-top-right-radius:4px; color:#fdfeff; }
+  .bubble-row.mine .bubble{ background:linear-gradient(135deg,#3b6fd6,#1a3f8f); border:1px solid #2f5ec2; border-top-right-radius:4px; color:#ffffff; }
   .bubble-row.theirs .bubble{ background:#ffffff; border:1px solid #e3e9ee; border-top-left-radius:4px; color:#101f33; box-shadow:0 1px 3px rgba(0,0,0,0.12); }
   .bubble .txt{ align-self:stretch; min-width:36px; text-align:left; white-space:pre-wrap; word-wrap:break-word; }
   .bubble .meta{ display:flex; align-items:center; gap:4px; margin-top:3px; font-size:10.5px; color:var(--ink-soft); white-space:nowrap; }
@@ -262,8 +262,8 @@
   .kpage-actions{ display:flex; flex-direction:column; gap:10px; padding:16px 22px calc(20px + env(safe-area-inset-bottom)); flex-shrink:0; }
   .kpage-btn-cancel{ width:100%; padding:14px 0; background:var(--card-bg); color:var(--ink); border:1.5px solid var(--border); border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; }
   .kpage-btn-cancel:active{ background:var(--border); }
-  .kpage-btn-danger{ width:100%; padding:14px 0; background:linear-gradient(135deg,#e4394f,#c8394a); color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px; }
-  .kpage-btn-danger .spinner{ width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;animation:spin .7s linear infinite;display:none; }
+  .kpage-btn-danger{ width:100%; padding:14px 0; background:linear-gradient(135deg,#e4394f,#c8394a); color:#ffffff; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .kpage-btn-danger .spinner{ width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.35);border-top-color:#ffffff;animation:spin .7s linear infinite;display:none; }
   .kpage-btn-danger.loading .spinner{ display:inline-block; }
   .kpage-btn-danger:disabled{ opacity:0.85; cursor:default; }
 
@@ -352,7 +352,7 @@
 
   <div class="input-bar">
     <textarea id="msgInput" rows="1" placeholder="Ketik pesan..." enterkeyhint="enter" disabled></textarea>
-    <button class="send-btn" id="sendBtn" disabled><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+    <button class="send-btn" id="sendBtn" disabled><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
   </div>
 </div>
 <script>
