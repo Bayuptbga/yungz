@@ -57,7 +57,7 @@
   .ptr-spinner{ width:22px; height:22px; border-radius:50%; border:2.5px solid var(--border); border-top-color:var(--border); }
   .ptr-indicator.loading .ptr-spinner{ border-top-color:#0564f5; animation:authSpin .7s linear infinite; }
   .appbar,.tabbar{flex-shrink:0;}
-  .appbar{ position:relative; background:var(--bbm-blue); color:#fff; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; }
+  .appbar{ position:relative; background:#fff; color:var(--ink); padding:14px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); box-shadow:0 1px 3px rgba(16,31,51,0.04); }
   #offlineBanner{
     flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:7px;
     background:var(--error); color:#fff; font-size:12.5px; font-weight:600;
@@ -68,8 +68,9 @@
   #offlineBanner svg{ flex-shrink:0; }
   .appbar .left{ display:flex; align-items:center; gap:18px; }
   .appbar .hamburger{ display:flex; flex-direction:column; gap:4px; cursor:pointer; }
-  .appbar .hamburger span{ width:22px; height:2.5px; background:#fff; border-radius:2px; }
-  .appbar h1{ margin:0; font-size:22px; font-weight:500; }
+  .appbar .hamburger span{ width:22px; height:2.5px; background:var(--ink); border-radius:2px; }
+  .appbar h1{ margin:0; font-size:21px; font-weight:600; color:var(--ink); letter-spacing:.1px; transition:color .15s ease; }
+  .appbar h1.brand{ color:var(--bbm-blue); font-weight:800; letter-spacing:.2px; background:linear-gradient(90deg,var(--bbm-blue),var(--bbm-blue-light)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
   .appbar .right{ display:flex; align-items:center; gap:20px; }
   .appbar .icon-btn{ cursor:pointer; display:flex; align-items:center; justify-content:center; }
   .search-bar{ display:none; align-items:center; gap:10px; background:var(--bbm-blue); padding:14px 16px; flex-shrink:0; position:absolute; inset:0; z-index:5; }
@@ -356,8 +357,8 @@
   <div id="authGate"><div class="spinner"></div></div>
   <div id="offlineBanner"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.58 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg><span>Anda sedang offline</span></div>
   <div class="appbar">
-    <div class="left"><div class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></div><div><h1>Baku Chat</h1></div></div>
-    <div class="right"><div class="icon-btn" id="searchOpenBtn" title="Cari"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div></div>
+    <div class="left"><div class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></div><div><h1 class="brand">Baku Chat</h1></div></div>
+    <div class="right"><div class="icon-btn" id="searchOpenBtn" title="Cari"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div></div>
     <div class="search-bar" id="searchBar">
       <div class="search-close" id="searchCloseBtn"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
       <div class="search-wrap"><input type="text" id="searchInput" placeholder="Cari..."></div>
@@ -883,7 +884,7 @@ function timeAgo(iso){
       const svg=t.querySelector('svg');
       if(svg){if(ia){svg.setAttribute('fill',k==='chats'?'var(--ink)':'none');svg.setAttribute('stroke','var(--ink)');}else{svg.setAttribute('fill','none');svg.setAttribute('stroke','var(--muted)');}}
     });
-    document.querySelector('.appbar h1').textContent=tabDefs[name].title;document.getElementById('fabNewChat').style.display=name==='chats'?'flex':'none';
+    const h1El=document.querySelector('.appbar h1');h1El.textContent=tabDefs[name].title;h1El.classList.toggle('brand',name==='chats');document.getElementById('fabNewChat').style.display=name==='chats'?'flex':'none';
     document.getElementById('searchOpenBtn').style.display=(name==='notif')?'none':'flex';
     closeSearch();
     closeAddModal();
