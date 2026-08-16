@@ -61,7 +61,7 @@
   #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent); animation:authSpin .75s linear infinite; }
   @keyframes authSpin{ to{ transform:rotate(360deg); } }
 
-  .appbar{ background:var(--bbm-blue); color:#fff; padding:calc(14px + env(safe-area-inset-top)) 16px 14px; display:flex; gap:16px; align-items:center; flex-shrink:0; }
+  .appbar{ background:#fff; color:var(--ink); padding:calc(14px + env(safe-area-inset-top)) 16px 14px; display:flex; gap:16px; align-items:center; flex-shrink:0; border-bottom:1px solid var(--border); box-shadow:0 1px 3px rgba(16,31,51,0.04); }
   .appbar .back{ cursor:pointer; display:flex; align-items:center; justify-content:center; }
   .appbar .back svg{ width:22px; height:22px; }
   .appbar h1{ margin:0; font-size:19px; font-weight:600; }
@@ -133,7 +133,7 @@
 <div class="phone">
   <div id="authGate"><div class="spinner"></div></div>
   <div class="appbar">
-    <div class="back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+    <div class="back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
     <h1 id="appbarTitle">Setelan</h1>
   </div>
 
