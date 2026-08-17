@@ -810,7 +810,7 @@ function timeAgo(iso){
       <div class="sc-head">
         <div class="sc-avatar-wrap${isMine?'':' ring'}"><div class="sc-avatar" style="${avatarStyle(s.user_id,sProf.avatar_url)}${isMine?'':'cursor:pointer;'}">${avatarInner(sProf.username,sProf.avatar_url)}</div></div>
         <div class="sc-head-info">
-          <div class="sc-uname">${escapeHtml(sProf.username||'Pengguna')}${isMine?' <span style="color:var(--muted);font-weight:500;">(Anda)</span>':''}</div>
+          <div class="sc-uname">${escapeHtml(sProf.username||'Pengguna')}${sProf.is_verified?verifyIcSvg:''}${isMine?' <span style="color:var(--muted);font-weight:500;">(Anda)</span>':''}</div>
           <div class="sc-meta">${escapeHtml(timeAgo(s.created_at))}</div>
         </div>
         ${isMine?`<div class="sc-delete" data-id="${escapeHtml(s.id)}" onclick="deleteStatus(this)" title="Hapus status"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></div>`:''}
@@ -844,7 +844,7 @@ function timeAgo(iso){
       updateStatusNewIndicator([]);
       setStatusSubtab(statusSubtab);return;
     }
-    const uIds=sRows.map(s=>s.user_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',uIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p);
+    const uIds=sRows.map(s=>s.user_id);const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url, is_verified').in('id',uIds);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p);
     const sIds=sRows.map(s=>s.id);const {data:likeRows}=await supabaseClient.from('status_likes').select('status_id, user_id, reaction').in('status_id',sIds);
     const reactionCountMap={},myReactionMap={};
     (likeRows||[]).forEach(l=>{
@@ -1211,11 +1211,15 @@ function timeAgo(iso){
     renderNewChatList(!q?ncwAllContacts:ncwAllContacts.filter(c=>c.username.toLowerCase().includes(q)));
   });
   let cprevUid=null,cprevUname=null;
-  function openContactPreview(uid,uname){
+  async function openContactPreview(uid,uname){
     cprevUid=uid;cprevUname=uname;
     applyAvatarEl(document.getElementById('cprevBanner'),uid,uname,contactAvatarMap[uid]||null);
-    document.getElementById('cprevUname').textContent=uname;
+    document.getElementById('cprevUname').innerHTML=escapeHtml(uname);
     document.getElementById('cprevOverlay').classList.add('open');
+    const {data:vProf}=await supabaseClient.from('profiles').select('is_verified').eq('id',uid).maybeSingle();
+    if(cprevUid===uid && vProf && vProf.is_verified===true){
+      document.getElementById('cprevUname').innerHTML=escapeHtml(uname)+' '+verifyIcSvg;
+    }
   }
   function closeContactPreview(){document.getElementById('cprevOverlay').classList.remove('open');cprevUid=null;cprevUname=null;}
   document.getElementById('cprevSendBtn').addEventListener('click',()=>{if(cprevUid)window.location.href=`chat.html?uid=${cprevUid}&uname=${encodeURIComponent(cprevUname)}`;});
