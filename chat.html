@@ -292,7 +292,7 @@
   <div class="appbar">
     <div class="back" onclick="window.location.href='dashboard.html'"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
     <div class="avatar" id="peerAvatar" style="cursor:pointer;">?</div>
-    <div class="who" id="peerWho" style="cursor:pointer;"><div class="uname"><span id="peerUname">@—</span><span class="status-dot" id="statusDot"></span></div><div class="sub" id="peerSub">-</div></div>
+    <div class="who" id="peerWho" style="cursor:pointer;"><div class="uname"><span id="peerUname">@—</span></div><div class="sub" id="peerSub">-</div></div>
     <div class="e2e-lock" id="e2eLock" title="Pesan di chat ini dienkripsi end-to-end"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#0564f5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
     <div class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="var(--ink)"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
       <div class="chat-menu" id="chatMenu">
@@ -456,14 +456,14 @@
     msgInput.placeholder = 'Menunggu '+(peerUsername||'lawan bicara')+' membuka aplikasi buat aktifkan enkripsi...';
   }
 
-  const peerSubEl=document.getElementById('peerSub'),statusDotEl=document.getElementById('statusDot');let presenceChannel=null;
+  const peerSubEl=document.getElementById('peerSub');let presenceChannel=null;
   function subscribePresence(){
     presenceChannel=supabaseClient.channel('online-users',{config:{presence:{key:currentUserId}}});
     presenceChannel.on('presence',{event:'sync'},updatePeerOnlineStatus).on('presence',{event:'join'},updatePeerOnlineStatus).on('presence',{event:'leave'},updatePeerOnlineStatus).subscribe(async(s)=>{if(s==='SUBSCRIBED')await presenceChannel.track({online_at:new Date().toISOString()});});
   }
   function updatePeerOnlineStatus(){
     if(!presenceChannel)return;const isOnline=!!presenceChannel.presenceState()[peerId];
-    if(isOnline){peerSubEl.textContent='Online';peerSubEl.classList.add('online');statusDotEl.classList.add('online');}else{peerSubEl.textContent='Offline';peerSubEl.classList.remove('online');statusDotEl.classList.remove('online');}
+    if(isOnline){peerSubEl.textContent='Online';peerSubEl.classList.add('online');}else{peerSubEl.textContent='Offline';peerSubEl.classList.remove('online');}
   }
   let clearedBefore=null;
   async function loadMessages(showKeyChangeNotice){
