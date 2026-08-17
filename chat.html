@@ -374,7 +374,7 @@
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const peerId = (rawUid && UUID_RE.test(rawUid)) ? rawUid : null;
   let currentUserId = null; let peerUsername = params.get('uname') || '';
-  let myPrivateKey = null, myPublicKeyB64 = null, peerPublicKeyB64 = null;
+  let myPrivateKey = null, myPublicKeyB64 = null, peerPublicKeyB64 = null, peerLastSeenAt = null;
   const msgArea = document.getElementById('msgArea'), msgInput = document.getElementById('msgInput'), sendBtn = document.getElementById('sendBtn'), peerAvatar = document.getElementById('peerAvatar'), peerUnameEl = document.getElementById('peerUname');
   const replyBar = document.getElementById('replyBar'), rbName = document.getElementById('rbName'), rbText = document.getElementById('rbText'), rbClose = document.getElementById('rbClose');
   const messagesById = new Map(); // id -> {id, sender_id, content}  (buat render kutipan reply)
@@ -418,6 +418,7 @@
       if(sessErr) throw sessErr;
       if(!session){window.location.replace('index.html');return;}
       currentUserId=session.user.id;
+      startLastSeenHeartbeat(currentUserId);
       // Device baru otomatis dapat keypair baru (tidak ada restore/backup PIN,
       // mirip default WhatsApp: chat lama tidak terbaca lagi di device baru).
       let kp=await E2E.ensureKeypair(currentUserId);
@@ -426,10 +427,11 @@
       const {data:rel,error:relErr}=await supabaseClient.from('contacts').select('id, status').or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${peerId}),and(requester_id.eq.${peerId},addressee_id.eq.${currentUserId})`).eq('status','accepted').maybeSingle();
       if(relErr) throw relErr;
       if(!rel){msgArea.innerHTML=`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#66798d" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c0-3.6 3-6.2 6.5-6.2s6.5 2.6 6.5 6.2"/><path d="M18 8v5M15.5 10.5h5"/></svg></div><div class="es-title">Belum berteman</div><span>Tambahkan lewat tab Kontak dulu ya.</span></div>`;return;}
-      const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, public_key, avatar_url, is_verified').eq('id',peerId).maybeSingle();
+      const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, public_key, avatar_url, is_verified, last_seen_at').eq('id',peerId).maybeSingle();
       if(profErr) throw profErr;
       if(!peerUsername) peerUsername=prof?prof.username:'Pengguna';
       peerPublicKeyB64=prof&&prof.public_key?prof.public_key:null;
+      peerLastSeenAt=prof&&prof.last_seen_at?prof.last_seen_at:null;
       document.getElementById('keyChangeInfoText').textContent='Kode keamanan enkripsi kamu dengan '+(peerUsername||'kontak ini')+' sudah berubah sejak percakapan terakhir. Ini biasanya terjadi kalau dia memasang ulang aplikasi, ganti HP, atau menghapus data aplikasi. Kalau ragu, coba konfirmasi lewat cara lain sebelum membagikan info sensitif.';
       // ---- Deteksi kode keamanan berubah sejak percakapan terakhir dibuka ----
       // Bandingkan public key peer yang baru saja diambil dengan yang terakhir
@@ -470,11 +472,29 @@
   const peerSubEl=document.getElementById('peerSub');let presenceChannel=null;
   function subscribePresence(){
     presenceChannel=supabaseClient.channel('online-users',{config:{presence:{key:currentUserId}}});
-    presenceChannel.on('presence',{event:'sync'},updatePeerOnlineStatus).on('presence',{event:'join'},updatePeerOnlineStatus).on('presence',{event:'leave'},updatePeerOnlineStatus).subscribe(async(s)=>{if(s==='SUBSCRIBED')await presenceChannel.track({online_at:new Date().toISOString()});});
+    presenceChannel.on('presence',{event:'sync'},updatePeerOnlineStatus).on('presence',{event:'join'},updatePeerOnlineStatus).on('presence',{event:'leave'},onPeerPresenceLeave).subscribe(async(s)=>{if(s==='SUBSCRIBED')await presenceChannel.track({online_at:new Date().toISOString()});});
+  }
+  // Begitu peer kedeteksi offline, tarik ulang last_seen_at dari server dulu --
+  // nilai di memori (dari saat chat pertama dibuka) bisa sudah basi kalau
+  // percakapan ini dibuka lama sebelum peer akhirnya offline.
+  async function onPeerPresenceLeave(){
+    try{
+      const {data}=await supabaseClient.from('profiles').select('last_seen_at').eq('id',peerId).maybeSingle();
+      if(data&&data.last_seen_at)peerLastSeenAt=data.last_seen_at;
+    }catch(e){ /* biarin, fallback ke nilai lama */ }
+    updatePeerOnlineStatus();
+  }
+  function formatLastSeen(iso){
+    if(!iso)return'Offline';
+    const label=dayLabel(iso); // "Hari ini" / "Kemarin" / "12 Agustus 2026"
+    const jam=timeLabel(iso);
+    if(label==='Hari ini')return'Terakhir dilihat hari ini pukul '+jam;
+    if(label==='Kemarin')return'Terakhir dilihat kemarin pukul '+jam;
+    return'Terakhir dilihat '+label+' pukul '+jam;
   }
   function updatePeerOnlineStatus(){
     if(!presenceChannel)return;const isOnline=!!presenceChannel.presenceState()[peerId];
-    if(isOnline){peerSubEl.textContent='Online';peerSubEl.classList.add('online');}else{peerSubEl.textContent='Offline';peerSubEl.classList.remove('online');}
+    if(isOnline){peerSubEl.textContent='Online';peerSubEl.classList.add('online');}else{peerSubEl.textContent=formatLastSeen(peerLastSeenAt);peerSubEl.classList.remove('online');}
   }
 
   // ---- Gelembung "sedang mengetik..." di area chat (mirip WhatsApp) ----
