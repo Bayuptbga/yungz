@@ -131,6 +131,22 @@
   .e2e-info-close-btn{ width:100%; padding:13px 0; background:rgba(5,100,245,0.14); color:var(--accent); border:1px solid rgba(5,100,245,0.3); border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
   .e2e-info-close-btn:active{ background:rgba(5,100,245,0.22); }
 
+  /* ---- Sheet ajukan verifikasi ---- */
+  .vr-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:flex-end; justify-content:center; z-index:220; opacity:0; pointer-events:none; transition:opacity .2s ease; }
+  .vr-overlay.open{ opacity:1; pointer-events:auto; }
+  .vr-sheet{ width:100%; max-width:420px; background:var(--card-bg); border:1px solid var(--border); border-top-left-radius:22px; border-top-right-radius:22px; padding:10px 22px calc(24px + env(safe-area-inset-bottom)); box-shadow:0 -10px 40px rgba(0,0,0,0.5); transform:translateY(16px); transition:transform .2s ease; }
+  .vr-overlay.open .vr-sheet{ transform:translateY(0); }
+  .vr-grip{ width:36px; height:4px; border-radius:3px; background:var(--border); margin:0 auto 16px; }
+  .vr-sheet h3{ font-size:17px; font-weight:700; color:var(--ink); margin:0 0 6px; text-align:center; }
+  .vr-sheet p{ font-size:12.5px; color:var(--muted); margin:0 0 14px; text-align:center; line-height:1.5; }
+  .vr-sheet textarea{ width:100%; min-height:90px; padding:12px 14px; border:1.5px solid var(--border); border-radius:12px; font-size:13.5px; font-family:inherit; background:var(--bg); color:var(--ink); outline:none; resize:none; margin-bottom:14px; }
+  .vr-sheet textarea:focus{ border-color:var(--accent); }
+  .vr-submit-btn{ width:100%; padding:13px 0; background:var(--accent); color:#ffffff; border:none; border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .vr-submit-btn:disabled{ opacity:.55; }
+  .vr-msg{ font-size:12px; text-align:center; margin-top:10px; min-height:16px; }
+  .vr-msg.err{ color:#e4394f; }
+  .vr-msg.ok{ color:#189a56; }
+
   /* ---- Cropper foto profil: fullscreen ala WhatsApp ---- */
   .crop-overlay{ position:fixed; inset:0; background:#000; z-index:300; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:opacity .16s ease; }
   .crop-overlay.open{ opacity:1; pointer-events:auto; }
@@ -193,6 +209,11 @@
       </div>
     </div>
 
+    <button class="btn" id="verifyReqBtn" style="display:none;">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="#0564f5" stroke="#fff" stroke-width="1"><path d="M12 2l2.4 2.1 3.1-.6.9 3 2.8 1.4-.6 3.1L22.7 12l-2.1 2.4.6 3.1-3 .9-1.4 2.8-3.1-.6L12 22l-2.4-2.1-3.1.6-.9-3-2.8-1.4.6-3.1L1.3 12l2.1-2.4-.6-3.1 3-.9 1.4-2.8 3.1.6L12 2z"/><path d="M8.5 12.2l2.3 2.3 4.7-4.9" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span id="verifyReqBtnLabel">Ajukan Verifikasi</span>
+    </button>
+
     <button class="btn" id="adminBtn" style="display:none; color:var(--accent); border-color:rgba(5,100,245,0.35);">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       <span>Panel Admin</span>
@@ -253,6 +274,17 @@
   </div>
 </div>
 
+<div class="vr-overlay" id="vrOverlay">
+  <div class="vr-sheet">
+    <div class="vr-grip"></div>
+    <h3>Ajukan Verifikasi</h3>
+    <p>Ceritakan singkat kenapa akunmu layak dapat centang biru (misal: akun bisnis, figur publik, dll). Tim admin akan meninjaunya.</p>
+    <textarea id="vrReasonInput" placeholder="Tulis alasanmu di sini..." maxlength="300"></textarea>
+    <button type="button" class="vr-submit-btn" id="vrSubmitBtn">Kirim Pengajuan</button>
+    <div class="vr-msg" id="vrMsg"></div>
+  </div>
+</div>
+
 <div class="crop-overlay" id="cropOverlay">
   <div class="crop-topbar">
     <button class="crop-icon-btn" id="cropCancelBtn" type="button" aria-label="Batal">
@@ -307,6 +339,55 @@
     const bulan=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
     return 'Bergabung sejak '+d.getDate()+' '+bulan[d.getMonth()]+' '+d.getFullYear();
   }
+
+  // ---- Ajukan verifikasi ----
+  async function setupVerifyRequestButton(myUid, isVerified){
+    const btn=document.getElementById('verifyReqBtn');
+    const label=document.getElementById('verifyReqBtnLabel');
+    if(isVerified){ btn.style.display='none'; return; }
+    const {data:pending}=await supabaseClient.from('verification_requests').select('id').eq('user_id',myUid).eq('status','pending').maybeSingle();
+    btn.style.display='flex';
+    if(pending){
+      label.textContent='Menunggu Peninjauan';
+      btn.disabled=true;
+      btn.style.opacity='.6';
+    } else {
+      label.textContent='Ajukan Verifikasi';
+      btn.disabled=false;
+      btn.style.opacity='1';
+      btn.addEventListener('click',openVerifySheet);
+    }
+  }
+  function openVerifySheet(){
+    document.getElementById('vrReasonInput').value='';
+    document.getElementById('vrMsg').textContent='';
+    document.getElementById('vrMsg').className='vr-msg';
+    document.getElementById('vrOverlay').classList.add('open');
+  }
+  function closeVerifySheet(){ document.getElementById('vrOverlay').classList.remove('open'); }
+  document.getElementById('vrOverlay').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeVerifySheet(); });
+  document.getElementById('vrSubmitBtn').addEventListener('click', async ()=>{
+    const reason=document.getElementById('vrReasonInput').value.trim();
+    const msgEl=document.getElementById('vrMsg');
+    if(!reason){ msgEl.textContent='Tulis alasanmu dulu ya.'; msgEl.className='vr-msg err'; return; }
+    const submitBtn=document.getElementById('vrSubmitBtn');
+    submitBtn.disabled=true; submitBtn.textContent='Mengirim...';
+    const {data:{session}}=await supabaseClient.auth.getSession();
+    const {error}=await supabaseClient.from('verification_requests').insert({user_id:session.user.id, reason});
+    if(error){
+      msgEl.textContent = error.code==='23505' ? 'Kamu sudah punya pengajuan yang sedang ditinjau.' : 'Gagal mengirim. Coba lagi.';
+      msgEl.className='vr-msg err';
+      submitBtn.disabled=false; submitBtn.textContent='Kirim Pengajuan';
+      return;
+    }
+    msgEl.textContent='Terkirim! Menunggu peninjauan admin.';
+    msgEl.className='vr-msg ok';
+    setTimeout(async ()=>{
+      closeVerifySheet();
+      submitBtn.disabled=false; submitBtn.textContent='Kirim Pengajuan';
+      await setupVerifyRequestButton(session.user.id, false);
+    }, 1200);
+  });
 
   let currentPin=null;
   let currentUserId=null;
@@ -394,6 +475,7 @@
         adminBtn.style.display='flex';
         adminBtn.addEventListener('click',()=>{ window.location.href='admin.html'; });
       }
+      await setupVerifyRequestButton(myUid, prof.is_verified===true);
     }
     document.getElementById('avatarEditBadge').style.display = 'flex';
     updateAvatarRemoveRow();
