@@ -553,10 +553,11 @@
   }
   function statusIconHTML(chat){if(!chat.mine)return'';return `<span class="status-icon" style="background:none;">${tickSvg(tickStatus(chat.deliveredAt,chat.readAt))}</span>`;}
   const pinIcSvg='<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" stroke="none"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24V16a1 1 0 001 1h12a1 1 0 001-1v-.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V7a1 1 0 011-1 1 1 0 001-1V3a1 1 0 00-1-1H8a1 1 0 00-1 1v2a1 1 0 001 1 1 1 0 011 1z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const verifyIcSvg='<svg viewBox="0 0 24 24" width="14" height="14" fill="#0564f5" stroke="#fff" stroke-width="1"><path d="M12 2l2.4 2.1 3.1-.6.9 3 2.8 1.4-.6 3.1L22.7 12l-2.1 2.4.6 3.1-3 .9-1.4 2.8-3.1-.6L12 22l-2.4-2.1-3.1.6-.9-3-2.8-1.4.6-3.1L1.3 12l2.1-2.4-.6-3.1 3-.9 1.4-2.8 3.1.6L12 2z"/><path d="M8.5 12.2l2.3 2.3 4.7-4.9" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function render(chats){
     const list=document.getElementById('chatlist');if(!chats||chats.length===0){list.innerHTML=`<div class="panel-empty">Belum ada percakapan.</div>`;return;}
     chats.forEach(chat=>{contactAvatarMap[chat.uid]=chat.avatarUrl||null;});
-    list.innerHTML=chats.map(chat=>`<div class="chat-item" data-uid="${escapeHtml(chat.uid)}" data-uname="${escapeHtml(chat.uname)}" data-pinned="${chat.pinned?'1':'0'}"><div class="avatar-wrap"><div class="avatar" style="${avatarStyle(chat.uid,chat.avatarUrl)}">${avatarInner(chat.uname,chat.avatarUrl)}</div><div class="sel-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div></div><div class="chat-main"><div class="chat-top"><div class="chat-name" style="${chat.unread?'font-weight:700;':''}">${chat.pinned?`<span class="pin-ic">${pinIcSvg}</span>`:''}<span class="txt">${escapeHtml(chat.uname)}</span></div><div style="font-size:11.5px;color:var(--muted);flex-shrink:0;">${escapeHtml(timeLabel(chat.time))}</div></div><div class="chat-bottom">${statusIconHTML(chat)}<div class="chat-msg" style="${chat.unread?'color:var(--ink);font-weight:600;':''}">${escapeHtml(chat.preview)}</div></div></div></div>`).join('');
+    list.innerHTML=chats.map(chat=>`<div class="chat-item" data-uid="${escapeHtml(chat.uid)}" data-uname="${escapeHtml(chat.uname)}" data-pinned="${chat.pinned?'1':'0'}"><div class="avatar-wrap"><div class="avatar" style="${avatarStyle(chat.uid,chat.avatarUrl)}">${avatarInner(chat.uname,chat.avatarUrl)}</div><div class="sel-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div></div><div class="chat-main"><div class="chat-top"><div class="chat-name" style="${chat.unread?'font-weight:700;':''}">${chat.pinned?`<span class="pin-ic">${pinIcSvg}</span>`:''}<span class="txt">${escapeHtml(chat.uname)}</span>${chat.verified?verifyIcSvg:''}</div><div style="font-size:11.5px;color:var(--muted);flex-shrink:0;">${escapeHtml(timeLabel(chat.time))}</div></div><div class="chat-bottom">${statusIconHTML(chat)}<div class="chat-msg" style="${chat.unread?'color:var(--ink);font-weight:600;':''}">${escapeHtml(chat.preview)}</div></div></div></div>`).join('');
     document.querySelectorAll('.chat-item').forEach(i=>{
       i.addEventListener('click',()=>{
         if(selMode){toggleSelect(i.dataset.uid);return;}
@@ -659,7 +660,7 @@
     const lastByPartner=new Map();
     (msgRows||[]).forEach(m=>{const p=m.sender_id===userId?m.receiver_id:m.sender_id;if(!acceptedIds.has(p))return;const cutoff=clearedMap.get(p);if(cutoff&&m.created_at<=cutoff)return;if(!lastByPartner.has(p))lastByPartner.set(p,m);});
     if(lastByPartner.size===0){render([]);return;}
-    const pIds=[...lastByPartner.keys()];const {data:profilesData}=await supabaseClient.from('profiles').select('id, username, public_key, avatar_url').in('id',pIds);
+    const pIds=[...lastByPartner.keys()];const {data:profilesData}=await supabaseClient.from('profiles').select('id, username, public_key, avatar_url, is_verified').in('id',pIds);
     const pMap={};(profilesData||[]).forEach(p=>pMap[p.id]=p);
     const chats=await Promise.all(pIds.map(async pid=>{
       const m=lastByPartner.get(pid);const mine=m.sender_id===userId;const prof=pMap[pid]||{};
@@ -671,7 +672,7 @@
       }
       if(previewText==='[INVITE_CALL]') previewText='📞 Panggilan suara';
       if(previewText==='[CALL_REJECTED]') previewText='📞 Panggilan ditolak';
-      return {uid:pid,uname:prof.username||'Pengguna',avatarUrl:prof.avatar_url||null,preview:previewText,time:m.created_at,mine,deliveredAt:m.delivered_at,readAt:m.read_at,unread:!mine&&!m.read_at,pinned:pinnedSet.has(pid)};
+      return {uid:pid,uname:prof.username||'Pengguna',avatarUrl:prof.avatar_url||null,verified:prof.is_verified===true,preview:previewText,time:m.created_at,mine,deliveredAt:m.delivered_at,readAt:m.read_at,unread:!mine&&!m.read_at,pinned:pinnedSet.has(pid)};
     }));
     // Chat yang di-pin selalu tampil paling atas. Sort stabil (bawaan JS modern)
     // menjaga urutan waktu terbaru di dalam masing-masing kelompok (pinned/tidak).
@@ -730,8 +731,8 @@
     const {data:rows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${session.user.id},addressee_id.eq.${session.user.id}`);
     if(!rows||rows.length===0){cList.innerHTML='<div class="panel-empty">Belum ada kontak.</div>';if(cCount)cCount.textContent='0';return;}
     const oIds=rows.map(r=>r.requester_id===session.user.id?r.addressee_id:r.requester_id);
-    const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',oIds);const pMap={};(pData||[]).forEach(p=>{pMap[p.id]=p.username;contactAvatarMap[p.id]=p.avatar_url||null;});
-    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml(pMap[id])}"><div class="avatar" data-profuid="${escapeHtml(id)}" style="${avatarStyle(id,contactAvatarMap[id])}">${avatarInner(pMap[id],contactAvatarMap[id])}</div><div class="uname">${escapeHtml(pMap[id])}</div></div>`).join('');
+    const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url, is_verified').in('id',oIds);const pMap={};const vMap={};(pData||[]).forEach(p=>{pMap[p.id]=p.username;vMap[p.id]=p.is_verified===true;contactAvatarMap[p.id]=p.avatar_url||null;});
+    cList.innerHTML=oIds.map(id=>`<div class="contact-item" data-uid="${escapeHtml(id)}" data-uname="${escapeHtml(pMap[id])}"><div class="avatar" data-profuid="${escapeHtml(id)}" style="${avatarStyle(id,contactAvatarMap[id])}">${avatarInner(pMap[id],contactAvatarMap[id])}</div><div class="uname" style="display:flex;align-items:center;gap:4px;">${escapeHtml(pMap[id])}${vMap[id]?verifyIcSvg:''}</div></div>`).join('');
     if(cCount)cCount.textContent=oIds.length;
     document.querySelectorAll('.contact-item').forEach(i=>i.addEventListener('click',()=>window.location.href=`chat.html?uid=${i.dataset.uid}&uname=${encodeURIComponent(i.dataset.uname)}`));
     document.querySelectorAll('.contact-item .avatar').forEach(a=>a.addEventListener('click',e=>{e.stopPropagation();openContactPreview(a.dataset.profuid,a.closest('.contact-item').dataset.uname);}));
