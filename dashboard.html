@@ -692,7 +692,8 @@
     initPushNotifications(session.user.id);trackOnlinePresence(session.user.id);
     const {count:pCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('addressee_id',session.user.id).eq('status','pending');
     const {count:uCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('requester_id',session.user.id).in('status',['accepted','declined']).eq('seen_by_requester',false);
-    const badge=document.getElementById('notifBadge');const t=(pCount||0)+(uCount||0);
+    const {count:vCount}=await supabaseClient.from('verification_requests').select('id',{count:'exact',head:true}).eq('user_id',session.user.id).in('status',['approved','rejected']).eq('seen_by_requester',false);
+    const badge=document.getElementById('notifBadge');const t=(pCount||0)+(uCount||0)+(vCount||0);
     if(t>0){badge.textContent=t;badge.style.display='flex';}else badge.style.display='none';
     loadChats(session.user.id);markInboxDelivered(session.user.id);
   }
@@ -869,13 +870,15 @@ function timeAgo(iso){
   }
   async function loadNotifications(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session)return;const nl=document.getElementById('notifList');nl.innerHTML=skeletonRow().repeat(4);
-    const [{data:reqRows},{data:updRows}]=await Promise.all([
+    const [{data:reqRows},{data:updRows},{data:vRows}]=await Promise.all([
       supabaseClient.from('contacts').select('id, requester_id').eq('addressee_id',session.user.id).eq('status','pending'),
-      supabaseClient.from('contacts').select('id, addressee_id, status, seen_by_requester').eq('requester_id',session.user.id).in('status',['accepted','declined'])
+      supabaseClient.from('contacts').select('id, addressee_id, status, seen_by_requester').eq('requester_id',session.user.id).in('status',['accepted','declined']),
+      supabaseClient.from('verification_requests').select('id, status, seen_by_requester, reviewed_at').eq('user_id',session.user.id).in('status',['approved','rejected'])
     ]);
     const items=[
       ...(reqRows||[]).map(r=>({kind:'request',id:r.id,uid:r.requester_id})),
-      ...(updRows||[]).map(r=>({kind:'update',id:r.id,uid:r.addressee_id,status:r.status,seen:r.seen_by_requester}))
+      ...(updRows||[]).map(r=>({kind:'update',id:r.id,uid:r.addressee_id,status:r.status,seen:r.seen_by_requester})),
+      ...(vRows||[]).map(r=>({kind:'verify',id:r.id,uid:session.user.id,status:r.status,seen:r.seen_by_requester}))
     ].sort((a,b)=>String(b.id).localeCompare(String(a.id)));
     if(items.length===0){nl.innerHTML='<div class="panel-empty"><div class="icon"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="var(--muted)" stroke-width="1.6"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>Belum ada notifikasi.</div>';return;}
     const uids=[...new Set(items.map(i=>i.uid))];const {data:pData}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',uids);const pMap={};(pData||[]).forEach(p=>pMap[p.id]=p);
@@ -884,9 +887,13 @@ function timeAgo(iso){
       if(it.kind==='request'){
         return `<div class="req-item"><div class="avatar" style="${avatarStyle(it.uid,prof.avatar_url)}">${avatarInner(prof.username,prof.avatar_url)}</div><div class="info"><div class="uname">${escapeHtml(prof.username)}</div><div class="sub">Ingin berteman dengan kamu</div></div><div class="req-actions"><button class="btn-accept" onclick="respondReq('${escapeHtml(it.id)}','accepted',this)">✓ Terima</button><button class="btn-decline" onclick="respondReq('${escapeHtml(it.id)}','declined',this)">Tolak</button></div></div>`;
       }
+      if(it.kind==='verify'){
+        return `<div class="notif-item ${it.seen?'':'unseen'}"><div class="avatar" style="${avatarStyle(it.uid,prof.avatar_url)}">${avatarInner(prof.username,prof.avatar_url)}</div><div class="info"><div class="uname">Verifikasi Akun</div><div class="sub">${it.status==='approved'?'✅ Pengajuan verifikasimu disetujui':'❌ Pengajuan verifikasimu ditolak'}</div></div>${it.seen?'':'<span class="status-dot new"></span>'}</div>`;
+      }
       return `<div class="notif-item ${it.seen?'':'unseen'}"><div class="avatar" style="${avatarStyle(it.uid,prof.avatar_url)}">${avatarInner(prof.username,prof.avatar_url)}</div><div class="info"><div class="uname">${escapeHtml(prof.username)}</div><div class="sub">${it.status==='accepted'?'✅ Diterima':'❌ Ditolak'}</div></div>${it.seen?'':'<span class="status-dot new"></span>'}</div>`;
     }).join('');
     const uIds=items.filter(i=>i.kind==='update'&&!i.seen).map(i=>i.id);if(uIds.length>0){await supabaseClient.from('contacts').update({seen_by_requester:true}).in('id',uIds);refreshNotifBadge();}
+    const vIds=items.filter(i=>i.kind==='verify'&&!i.seen).map(i=>i.id);if(vIds.length>0){await supabaseClient.from('verification_requests').update({seen_by_requester:true}).in('id',vIds);refreshNotifBadge();}
   }
   // ---- Tarik untuk refresh (pull-to-refresh) di tab Status ----
   (function(){
