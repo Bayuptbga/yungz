@@ -325,3 +325,42 @@ async function saveSubscriptionToServer(userId, subscription, isRawJson = false)
     { onConflict: 'endpoint' }
   );
 }
+
+/* ===== "Terakhir dilihat" (last seen) =====
+   Presence channel (online-users) itu REAL-TIME tapi TIDAK PERSISTEN -- begitu
+   tab ditutup/koneksi putus, status "online"-nya hilang seketika tanpa jejak.
+   Untuk bisa nampilin "Terakhir dilihat pukul 14.02" pas kontak lagi offline,
+   kita butuh cap waktu yang TERSIMPAN di server (profiles.last_seen_at), yang
+   di-update lewat heartbeat sederhana selama app dibuka -- bukan lewat event
+   "disconnect" (tidak reliable di browser, terutama pas tab ditutup paksa/HP
+   dikunci mendadak).
+   Dipanggil sekali per halaman (dashboard.html & chat.html) setelah user login,
+   lihat startLastSeenHeartbeat(userId) di boot()/init() masing-masing halaman. */
+let _lastSeenHeartbeatTimer = null;
+async function updateLastSeen(userId) {
+  try {
+    await supabaseClient.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', userId);
+  } catch (e) {
+    console.error('Gagal update last_seen_at:', e);
+  }
+}
+function startLastSeenHeartbeat(userId) {
+  updateLastSeen(userId); // langsung sekali saat halaman dibuka
+  if (_lastSeenHeartbeatTimer) clearInterval(_lastSeenHeartbeatTimer);
+  // Tiap 60 detik selagi tab kelihatan (visible) -- cukup buat granularitas
+  // "terakhir dilihat" yang wajar, tanpa spam request ke database.
+  _lastSeenHeartbeatTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') updateLastSeen(userId);
+  }, 60000);
+  // Begitu user balik ke tab ini (mis. dari app lain / kunci layar), langsung
+  // refresh juga -- biar tidak nunggu sampai 60 detik berikutnya buat "kelihatan
+  // online lagi" di mata kontak yang lagi liat chat.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') updateLastSeen(userId);
+    else updateLastSeen(userId); // tab disembunyikan / app diminimize -> anggap "terakhir dilihat" = sekarang
+  });
+  // Best-effort: browser tidak selalu kasih waktu buat request async selesai
+  // pas tab beneran ditutup, tapi tetap dicoba (kalau gagal, heartbeat 60 detik
+  // terakhir yang jadi acuan -- selisihnya wajar, sama seperti aplikasi chat lain).
+  window.addEventListener('pagehide', () => updateLastSeen(userId));
+}
