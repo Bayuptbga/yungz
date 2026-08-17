@@ -139,6 +139,14 @@
       <button data-val="banned">Disuspend</button>
     </div>
 
+    <div id="vreqSection" style="display:none;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:700;color:var(--ink);">Permintaan Verifikasi</div>
+        <span id="vreqCount" style="font-size:10.5px;font-weight:700;background:rgba(91,147,255,0.16);color:var(--bbm-blue-light);padding:2px 9px;border-radius:999px;"></span>
+      </div>
+      <div class="user-list" id="vreqList"></div>
+    </div>
+
     <div class="user-list" id="userList"><div class="loading-state">Memuat data pengguna...</div></div>
 
     <div class="pager">
@@ -216,6 +224,7 @@
     document.getElementById('gateScreen').style.display='none';
     document.getElementById('adminShell').style.display='flex';
     loadUsers();
+    loadVerifyRequests();
   }
   document.getElementById('logoutBtn').addEventListener('click', async ()=>{
     await supabaseClient.auth.signOut();
@@ -235,6 +244,57 @@
     document.getElementById('statBanned').textContent = banned ?? 0;
     document.getElementById('statVerified').textContent = verified ?? 0;
     document.getElementById('statActive').textContent = (total??0) - (banned??0);
+  }
+
+  async function loadVerifyRequests(){
+    const {data:reqs,error}=await supabaseClient.from('verification_requests').select('id, user_id, reason, created_at').eq('status','pending').order('created_at',{ascending:true});
+    const section=document.getElementById('vreqSection'), listEl=document.getElementById('vreqList'), countEl=document.getElementById('vreqCount');
+    if(error || !reqs || reqs.length===0){ section.style.display='none'; return; }
+    const uIds=[...new Set(reqs.map(r=>r.user_id))];
+    const {data:profs}=await supabaseClient.from('profiles').select('id, username, avatar_url').in('id',uIds);
+    const pMap={}; (profs||[]).forEach(p=>pMap[p.id]=p);
+    section.style.display='block';
+    countEl.textContent=reqs.length;
+    listEl.innerHTML=reqs.map(r=>{
+      const p=pMap[r.user_id]||{};
+      const bg = p.avatar_url ? `background-image:url(${p.avatar_url});` : `background-color:${colorFor(r.user_id)};`;
+      const inner = p.avatar_url ? '' : escapeHtml(initials(p.username));
+      return `
+      <div class="u-card" data-rid="${r.id}" data-uid="${r.user_id}">
+        <div class="u-top">
+          <div class="avatar" style="${bg}">${inner}</div>
+          <div class="u-main">
+            <div class="u-name">${escapeHtml(p.username||'Pengguna')}</div>
+            <div class="u-meta">${escapeHtml(r.reason||'(tanpa alasan)')}</div>
+          </div>
+        </div>
+        <div class="u-actions">
+          <button class="approve-btn" style="color:var(--ok);border-color:rgba(52,193,122,0.35);">Setujui</button>
+          <button class="danger reject-btn">Tolak</button>
+        </div>
+      </div>`;
+    }).join('');
+    listEl.querySelectorAll('.approve-btn').forEach(btn=>btn.addEventListener('click',async(e)=>{
+      const card=e.target.closest('.u-card'); await reviewRequest(card.dataset.rid, true);
+    }));
+    listEl.querySelectorAll('.reject-btn').forEach(btn=>btn.addEventListener('click',async(e)=>{
+      const card=e.target.closest('.u-card'); await reviewRequest(card.dataset.rid, false);
+    }));
+  }
+
+  async function reviewRequest(requestId, approve){
+    const ok = await showConfirm(
+      approve ? 'Setujui verifikasi ini?' : 'Tolak pengajuan ini?',
+      approve ? 'Pengguna akan mendapat centang biru.' : 'Pengguna akan diberi tahu pengajuannya ditolak.',
+      approve ? 'Setujui' : 'Tolak',
+      approve ? 'btn-danger' : 'btn-warn'
+    );
+    if(!ok) return;
+    const {error}=await supabaseClient.rpc('admin_review_verification',{request_id:requestId, approve});
+    if(error){ showToast('Gagal memproses: '+error.message); return; }
+    showToast(approve ? 'Pengguna diverifikasi.' : 'Pengajuan ditolak.');
+    loadVerifyRequests();
+    loadUsers();
   }
 
   async function loadUsers(){
