@@ -211,12 +211,14 @@
   .pin-modal .pm-pin{ font-size:26px; font-weight:800; letter-spacing:4px; color:var(--ink); font-family:'Courier New',monospace; }
   .pin-modal .pm-copy{ font-size:12.5px; color:#0564f5; font-weight:600; background:none; border:none; cursor:pointer; margin-bottom:14px; padding:6px 10px; }
   .pin-modal .pm-close{ width:100%; padding:11px 0; background:var(--bbm-blue); color:#ffffff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
-  .cprev-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:70; padding:24px; }
+  .cprev-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .22s ease; z-index:70; }
   .cprev-overlay.open{ opacity:1; pointer-events:auto; }
-  .cprev-card{ background:var(--card-bg); border-radius:16px; width:100%; max-width:290px; text-align:center; border:1px solid var(--border); overflow:hidden; }
-  .cprev-top{ width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; }
-  .cprev-avatar{ width:100%; height:100%; border-radius:0; display:flex; align-items:center; justify-content:center; color:#ffffff; font-weight:700; font-size:52px; flex-shrink:0; }
-  .cprev-body{ padding:18px 22px 20px; }
+  .cprev-card{ background:var(--card-bg); border:1px solid var(--border); border-top-left-radius:20px; border-top-right-radius:20px; width:100%; max-width:420px; text-align:center; overflow:hidden; transform:translateY(16px); transition:transform .22s ease; box-shadow:0 -10px 40px rgba(0,0,0,0.5); }
+  .cprev-overlay.open .cprev-card{ transform:translateY(0); }
+  .cprev-grip{ width:36px; height:4px; border-radius:3px; background:var(--border); margin:10px auto 4px; }
+  .cprev-top{ width:132px; height:132px; margin:14px auto 0; display:flex; align-items:center; justify-content:center; border-radius:50%; overflow:hidden; }
+  .cprev-avatar{ width:100%; height:100%; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#ffffff; font-weight:700; font-size:44px; flex-shrink:0; }
+  .cprev-body{ padding:14px 22px 26px; }
   .cprev-uname{ font-size:17px; font-weight:700; color:var(--ink); word-break:break-word; }
   .cprev-sub{ font-size:12.5px; color:var(--muted); margin-top:3px; margin-bottom:20px; }
   .cprev-actions{ display:flex; flex-direction:row; gap:10px; }
@@ -493,6 +495,7 @@
   </div>
   <div class="cprev-overlay" id="cprevOverlay">
     <div class="cprev-card">
+      <div class="cprev-grip"></div>
       <div class="cprev-top"><div class="cprev-avatar" id="cprevBanner">?</div></div>
       <div class="cprev-body">
         <div class="cprev-uname" id="cprevUname">—</div>
