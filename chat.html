@@ -79,6 +79,17 @@
   .appbar .uname{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .appbar .sub{font-size:11.5px;opacity:0.82;margin-top:1px;}
   .appbar .sub.online{opacity:1;color:#189a56;font-weight:600;}
+
+  /* ---- Gelembung "Sedang mengetik..." (mirip WhatsApp) ---- */
+  .typing-bubble-row{ display:flex; align-items:flex-end; width:100%; flex-shrink:0; margin:3px 0; justify-content:flex-start; animation:bubbleIn .2s ease both; }
+  .typing-bubble{
+    display:flex; align-items:center; gap:5px; max-width:78%; width:fit-content; padding:11px 14px; border-radius:16px;
+    border-top-left-radius:4px; background:#ffffff; border:1px solid #e3e9ee; box-shadow:0 1px 3px rgba(0,0,0,0.12);
+  }
+  .typing-bubble .dot{ width:6.5px; height:6.5px; border-radius:50%; background:#9aa7b3; animation:typingDot 1.3s ease-in-out infinite; }
+  .typing-bubble .dot:nth-child(2){ animation-delay:.18s; }
+  .typing-bubble .dot:nth-child(3){ animation-delay:.36s; }
+  @keyframes typingDot{ 0%,60%,100%{ transform:translateY(0); opacity:.5; } 30%{ transform:translateY(-4px); opacity:1; } }
   .status-dot{ display:inline-block; width:8px;height:8px; border-radius:50%; margin-left:6px; background:#66798d; vertical-align:middle; box-shadow:0 0 0 2px rgba(255,255,255,0.25); }
   .status-dot.online{ background:#189a56; }
   .e2e-lock{ width:26px;height:26px; border-radius:50%; background:rgba(5,100,245,0.16); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -465,6 +476,36 @@
     if(!presenceChannel)return;const isOnline=!!presenceChannel.presenceState()[peerId];
     if(isOnline){peerSubEl.textContent='Online';peerSubEl.classList.add('online');}else{peerSubEl.textContent='Offline';peerSubEl.classList.remove('online');}
   }
+
+  // ---- Gelembung "sedang mengetik..." di area chat (mirip WhatsApp) ----
+  let peerIsTyping=false, peerTypingTimeout=null;
+  function showTypingBubble(){
+    if(document.getElementById('typingBubbleRow'))return; // sudah tampil, jangan dobel
+    if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';
+    const wasAtBottom = msgArea.scrollHeight - msgArea.scrollTop - msgArea.clientHeight < 60;
+    const row=document.createElement('div');
+    row.className='typing-bubble-row';row.id='typingBubbleRow';
+    row.innerHTML='<div class="typing-bubble"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+    msgArea.appendChild(row);
+    if(wasAtBottom)scrollToBottom();
+  }
+  function hideTypingBubble(){
+    const row=document.getElementById('typingBubbleRow');
+    if(row)row.remove();
+  }
+  function setPeerTyping(isTyping){
+    peerIsTyping=isTyping;
+    clearTimeout(peerTypingTimeout);
+    if(isTyping){
+      showTypingBubble();
+      // Jaring pengaman: kalau sinyal "berhenti mengetik" dari peer entah kenapa
+      // tidak sampai (koneksi putus-putus dsb), gelembung otomatis hilang sendiri
+      // setelah beberapa detik, bukan nyangkut selamanya.
+      peerTypingTimeout=setTimeout(()=>{peerIsTyping=false;hideTypingBubble();},5000);
+    } else {
+      hideTypingBubble();
+    }
+  }
   let clearedBefore=null;
   async function loadMessages(showKeyChangeNotice){
     const {data:clearRow}=await supabaseClient.from('chat_clears').select('cleared_before').eq('user_id',currentUserId).eq('peer_id',peerId).maybeSingle();
@@ -638,9 +679,12 @@
     if(e.target.id==='keyChangeInfoOverlay') document.getElementById('keyChangeInfoOverlay').classList.remove('open');
   });
   async function markIncomingAsRead(){const n=new Date().toISOString();await supabaseClient.from('messages').update({delivered_at:n,read_at:n}).eq('sender_id',peerId).eq('receiver_id',currentUserId).is('read_at',null);}
+  let chatChannel=null;
   function subscribeRealtime(){
-    supabaseClient.channel('chat-'+[currentUserId,peerId].sort().join('-')).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`receiver_id=eq.${currentUserId}`},async(p)=>{
+    chatChannel=supabaseClient.channel('chat-'+[currentUserId,peerId].sort().join('-'));
+    chatChannel.on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`receiver_id=eq.${currentUserId}`},async(p)=>{
       const m=p.new;if(m.sender_id!==peerId)return;m.content=await E2E.decryptMessage(myPrivateKey,m.content,false,peerPublicKeyB64);
+      clearTimeout(peerTypingTimeout);peerIsTyping=false;hideTypingBubble();
       if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';appendBubble(m);scrollToBottom();
       if(m.content==='🔔 PING!!!'&&navigator.vibrate)navigator.vibrate([80,40,80,40,160]);
       const n=new Date().toISOString();if(document.visibilityState==='visible')await supabaseClient.from('messages').update({delivered_at:n,read_at:n}).eq('id',m.id);else await supabaseClient.from('messages').update({delivered_at:n}).eq('id',m.id).is('delivered_at',null);
@@ -666,6 +710,14 @@
       const delId=p.old&&p.old.id;if(delId==null)return;
       const row=msgArea.querySelector(`.bubble-row[data-id="${delId}"]`);if(row)row.remove();
       messagesById.delete(delId);
+    // ---- Indikator "sedang mengetik..." ----
+    // Pakai Realtime Broadcast (bukan tabel DB) -- sinyal ephemeral, tidak
+    // pernah disimpan, tidak makan kuota database/egress storage sama sekali,
+    // dan otomatis hilang kalau tidak ada yang subscribe channel-nya.
+    }).on('broadcast',{event:'typing'},(msg)=>{
+      const p=msg.payload;
+      if(!p||p.from!==peerId)return;
+      setPeerTyping(!!p.typing);
     }).subscribe();
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')markIncomingAsRead();});
   }
@@ -689,7 +741,7 @@
       }).subscribe();
   }
   async function sendMessage(){
-    const text=normalizeText(msgInput.value);if(!text||!myPublicKeyB64||!peerPublicKeyB64)return;msgInput.value='';autoResize();
+    const text=normalizeText(msgInput.value);if(!text||!myPublicKeyB64||!peerPublicKeyB64)return;msgInput.value='';autoResize();handleTypingSignal();
     const replyToId=replyingTo?replyingTo.id:null;cancelReply();
     if(msgArea.querySelector('.empty-state'))msgArea.innerHTML='';const tempId='temp-'+Date.now();
     appendBubble({id:tempId,sender_id:currentUserId,content:text,created_at:new Date().toISOString(),reply_to_id:replyToId},true);scrollToBottom();
@@ -711,7 +763,29 @@
     });
   }
 
-  msgInput.addEventListener('input',()=>{autoResize();sendBtn.disabled=msgInput.value.trim().length===0;});
+  msgInput.addEventListener('input',()=>{autoResize();sendBtn.disabled=msgInput.value.trim().length===0;handleTypingSignal();});
+
+  // ---- Kirim sinyal "sedang mengetik..." ke lawan bicara ----
+  // typingActive melacak apakah kita SUDAH kirim sinyal "typing:true" (biar
+  // tidak kirim broadcast di setiap keystroke, cukup sekali di awal + refresh
+  // timer). Sinyal "typing:false" dikirim begitu berhenti ngetik 3 detik ATAU
+  // input dikosongkan (termasuk pas pesan barusan terkirim).
+  let typingActive=false, typingStopTimer=null;
+  function sendTypingSignal(isTyping){
+    if(!chatChannel)return;
+    chatChannel.send({type:'broadcast',event:'typing',payload:{from:currentUserId,typing:isTyping}});
+  }
+  function handleTypingSignal(){
+    if(!myPublicKeyB64||!peerPublicKeyB64)return; // chat belum siap dipakai, jangan kirim sinyal
+    const hasText=msgInput.value.trim().length>0;
+    clearTimeout(typingStopTimer);
+    if(hasText){
+      if(!typingActive){typingActive=true;sendTypingSignal(true);}
+      typingStopTimer=setTimeout(()=>{typingActive=false;sendTypingSignal(false);},3000);
+    } else if(typingActive){
+      typingActive=false;sendTypingSignal(false);
+    }
+  }
   // Enter/Shift+Enter sama-sama membuat baris baru (perilaku default textarea).
   // Kirim pesan HANYA lewat tombol kirim (sendBtn).
   sendBtn.addEventListener('click',sendMessage);
