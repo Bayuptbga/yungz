@@ -152,6 +152,10 @@
 
     <div class="section-title">Umum</div>
     <div class="card">
+      <div class="setting-row" style="cursor:pointer;" onclick="switchView('username')">
+        <div><div class="s-label">Ubah Username</div><div class="s-sub" id="usernameRowSub">Bisa diganti 1x per 30 hari</div></div>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
       <div class="setting-row" style="cursor:pointer;" onclick="switchView('privasi')">
         <div><div class="s-label">Privasi &amp; Keamanan</div><div class="s-sub">Kata sandi &amp; hapus akun</div></div>
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
@@ -227,6 +231,34 @@
     </div>
   </div>
 
+  <!-- ============ VIEW: UBAH USERNAME ============ -->
+  <div class="content view" id="viewUsername">
+    <div class="section-title">Username Saat Ini</div>
+    <div class="card">
+      <div class="setting-row">
+        <div class="s-label" id="unCurrentValue">@username</div>
+      </div>
+    </div>
+
+    <div class="section-title">Ganti Username</div>
+    <div class="card">
+      <div class="danger-note" id="unCooldownNote" style="display:none;"></div>
+      <form id="unForm">
+        <div class="field">
+          <label>Username Baru</label>
+          <div class="input-wrap"><input type="text" id="unNewUsername" autocomplete="off" maxlength="20"></div>
+          <div class="field-note">3-20 karakter, hanya huruf/angka/underscore</div>
+        </div>
+        <div class="field">
+          <label>Konfirmasi Kata Sandi</label>
+          <div class="input-wrap"><input type="password" id="unPassword" autocomplete="current-password"><span class="toggle-pw" onclick="const p=document.getElementById('unPassword');p.type=p.type==='password'?'text':'password';this.textContent=p.type==='password'?'LIHAT':'SEMBUNYIKAN';">LIHAT</span></div>
+        </div>
+        <div class="hint" id="unHint">Username baru dipakai juga untuk login berikutnya.</div>
+        <button type="submit" class="btn" id="unSubmitBtn"><span class="spinner"></span><span class="btn-label">Simpan Username</span></button>
+      </form>
+    </div>
+  </div>
+
   <!-- ============ VIEW: DATA & PENYIMPANAN (dulu data-penyimpanan.html) ============ -->
   <div class="content view" id="viewData">
     <div class="section-title">Cadangan Chat</div>
@@ -271,9 +303,10 @@
 
   // ---- Navigasi sub-halaman di dalam satu file (menggantikan 3 file lama) ----
   const VIEWS = {
-    main:    { id:'viewMain',    title:'Setelan' },
-    privasi: { id:'viewPrivasi', title:'Privasi & Keamanan' },
-    data:    { id:'viewData',    title:'Data & Penyimpanan' }
+    main:     { id:'viewMain',     title:'Setelan' },
+    username: { id:'viewUsername', title:'Ubah Username' },
+    privasi:  { id:'viewPrivasi',  title:'Privasi & Keamanan' },
+    data:     { id:'viewData',     title:'Data & Penyimpanan' }
   };
   function applyView(name){
     if(!VIEWS[name]) name='main';
@@ -312,14 +345,16 @@
   let currentUsername=null;
   let currentUserId=null;
   let currentAvatarUrl=null;
+  let currentUsernameChangedAt=null;
 
   async function boot(){
     const {data:{session}} = await supabaseClient.auth.getSession();
     if(!session){ window.location.replace('index.html'); return; }
     currentUserId = session.user.id;
-    const {data:prof} = await supabaseClient.from('profiles').select('username, avatar_url').eq('id', session.user.id).maybeSingle();
-    if(prof){ currentUsername = prof.username; currentAvatarUrl = prof.avatar_url || null; }
+    const {data:prof} = await supabaseClient.from('profiles').select('username, avatar_url, username_changed_at').eq('id', session.user.id).maybeSingle();
+    if(prof){ currentUsername = prof.username; currentAvatarUrl = prof.avatar_url || null; currentUsernameChangedAt = prof.username_changed_at || null; }
     renderAvatarPreview();
+    renderUsernameView();
     document.getElementById('authGate').style.display = 'none';
   }
   boot();
@@ -425,6 +460,81 @@
     if(error){ hint.textContent=translatePwError(error.message); hint.className='hint err'; return; }
     hint.textContent='Kata sandi berhasil diperbarui.'; hint.className='hint ok';
     document.getElementById('pwForm').reset();
+  });
+
+  // ---- Ubah Username ----
+  // Cooldown 30 hari dicek juga di server (lihat RPC change_username), pengecekan
+  // di sini cuma UX -- supaya tombol langsung disabled tanpa perlu roundtrip gagal
+  // dulu ke server kalau user memang belum boleh ganti.
+  const USERNAME_COOLDOWN_DAYS = 30;
+  function nextUsernameChangeDate(){
+    if(!currentUsernameChangedAt) return null;
+    const d=new Date(currentUsernameChangedAt);
+    d.setDate(d.getDate()+USERNAME_COOLDOWN_DAYS);
+    return d;
+  }
+  function formatTanggalID(d){
+    const bulan=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    return d.getDate()+' '+bulan[d.getMonth()]+' '+d.getFullYear();
+  }
+  function renderUsernameView(){
+    document.getElementById('unCurrentValue').textContent = currentUsername ? '@'+currentUsername : '-';
+    const note=document.getElementById('unCooldownNote'), form=document.getElementById('unForm');
+    const nextDate=nextUsernameChangeDate();
+    const stillCoolingDown = nextDate && new Date() < nextDate;
+    const sub=document.getElementById('usernameRowSub');
+    if(stillCoolingDown){
+      note.style.display='block';
+      note.textContent='Kamu sudah ganti username baru-baru ini. Bisa ganti lagi mulai '+formatTanggalID(nextDate)+'.';
+      form.querySelectorAll('input,button').forEach(el=>el.disabled=true);
+      if(sub) sub.textContent='Bisa ganti lagi mulai '+formatTanggalID(nextDate);
+    } else {
+      note.style.display='none';
+      form.querySelectorAll('input,button').forEach(el=>el.disabled=false);
+      if(sub) sub.textContent='Bisa diganti 1x per 30 hari';
+    }
+  }
+  function translateUsernameError(msg){
+    const m=(msg||'');
+    if(m.includes('sudah dipakai')) return 'Username sudah dipakai, coba yang lain.';
+    if(m.includes('baru bisa diganti')) return m; // sudah bahasa Indonesia dari server
+    if(m.toLowerCase().includes('rate limit')) return 'Terlalu banyak percobaan, coba lagi sebentar lagi.';
+    return m || 'Gagal menyimpan username, coba lagi.';
+  }
+  document.getElementById('unForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newU=document.getElementById('unNewUsername').value.trim(), pw=document.getElementById('unPassword').value,
+          b=document.getElementById('unSubmitBtn'), hint=document.getElementById('unHint');
+    hint.className='hint';
+    if(!validUsername(newU)){
+      hint.textContent='Username 3-20 karakter, hanya huruf/angka/underscore.'; hint.className='hint err'; return;
+    }
+    if(newU.toLowerCase()===  (currentUsername||'').toLowerCase()){
+      hint.textContent='Itu sudah username kamu sekarang.'; hint.className='hint err'; return;
+    }
+    if(!pw){ hint.textContent='Masukkan kata sandi untuk konfirmasi.'; hint.className='hint err'; return; }
+    if(!currentUsername){ hint.textContent='Gagal memuat data akun, coba muat ulang halaman.'; hint.className='hint err'; return; }
+    b.disabled=true; b.classList.add('loading'); b.querySelector('.btn-label').textContent='Memeriksa...';
+    const {error:reauthErr} = await supabaseClient.auth.signInWithPassword({email: usernameToEmail(currentUsername), password: pw});
+    if(reauthErr){
+      hint.textContent='Kata sandi salah.'; hint.className='hint err';
+      b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan Username';
+      return;
+    }
+    b.querySelector('.btn-label').textContent='Menyimpan...';
+    const {error} = await supabaseClient.rpc('change_username', {new_username: newU});
+    b.disabled=false; b.classList.remove('loading'); b.querySelector('.btn-label').textContent='Simpan Username';
+    if(error){
+      hint.textContent=translateUsernameError(error.message); hint.className='hint err';
+      return;
+    }
+    currentUsername = newU;
+    currentUsernameChangedAt = new Date().toISOString();
+    document.getElementById('unPassword').value='';
+    document.getElementById('unNewUsername').value='';
+    renderAvatarPreview();
+    renderUsernameView();
+    hint.textContent='Username berhasil diperbarui. Pakai username baru untuk login berikutnya.'; hint.className='hint ok';
   });
 </script>
 </body>
