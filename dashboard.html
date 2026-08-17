@@ -684,12 +684,13 @@
   }
   async function markInboxDelivered(userId){await supabaseClient.from('messages').update({delivered_at:new Date().toISOString()}).eq('receiver_id',userId).is('delivered_at',null);}
   let presenceTracked=false;function trackOnlinePresence(userId){if(presenceTracked)return;presenceTracked=true;supabaseClient.channel('online-users',{config:{presence:{key:userId}}}).subscribe(async(s)=>{if(s==='SUBSCRIBED')await supabaseClient.channel('online-users').track({online_at:new Date().toISOString()});});}
+  let lastSeenStarted=false;function startLastSeenHeartbeatOnce(userId){if(lastSeenStarted)return;lastSeenStarted=true;startLastSeenHeartbeat(userId);}
   async function refreshNotifBadge(){
     const {data:{session}}=await supabaseClient.auth.getSession();if(!session){window.location.replace('index.html');return;}
     const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, pin, avatar_url').eq('id',session.user.id).maybeSingle();
     if(profErr){console.error('Gagal memuat profil:',profErr);}
     if(prof){currentUserPin=prof.pin;applyAvatarEl(document.getElementById('composerAvatar'),session.user.id,prof.username,prof.avatar_url);applyAvatarEl(document.getElementById('profileAvatarBtn'),session.user.id,prof.username,prof.avatar_url);}
-    initPushNotifications(session.user.id);trackOnlinePresence(session.user.id);
+    initPushNotifications(session.user.id);trackOnlinePresence(session.user.id);startLastSeenHeartbeatOnce(session.user.id);
     const {count:pCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('addressee_id',session.user.id).eq('status','pending');
     const {count:uCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('requester_id',session.user.id).in('status',['accepted','declined']).eq('seen_by_requester',false);
     const {count:vCount}=await supabaseClient.from('verification_requests').select('id',{count:'exact',head:true}).eq('user_id',session.user.id).in('status',['approved','rejected']).eq('seen_by_requester',false);
