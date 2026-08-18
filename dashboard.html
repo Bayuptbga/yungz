@@ -531,6 +531,7 @@
   let currentUserPin=null,myPrivateKey=null;const colorPalette=['#c77b8c','#3a3f47','#2f6b3a','#5b6b74','#2c2c2c','#7c3f9e','#8a7a4a','#1a7fc2'];
   function colorFor(id){let hash=0;for(let i=0;i<id.length;i++)hash=id.charCodeAt(i)+((hash<<5)-hash);return colorPalette[Math.abs(hash)%colorPalette.length];}
   function initials(u){return(u||'?').slice(0,2).toUpperCase();}
+  function fmtCallDuration(s){const m=Math.floor(s/60),sec=s%60;return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');}
   // Helper foto profil: dipakai di template string (avatarStyle/avatarInner) dan di DOM langsung (applyAvatarEl).
   function avatarStyle(id,avatarUrl){return avatarUrl?`background:url(${avatarUrl}) center/cover no-repeat;`:`background:${colorFor(id)};`;}
   function avatarInner(username,avatarUrl){return avatarUrl?'':escapeHtml(initials(username));}
@@ -675,6 +676,11 @@
       }
       if(previewText==='[INVITE_CALL]') previewText='📞 Panggilan suara';
       if(previewText==='[CALL_REJECTED]') previewText='📞 Panggilan ditolak';
+      if(typeof previewText==='string' && previewText.indexOf('[CALL_LOG]')===0){
+        let info={};try{info=JSON.parse(previewText.slice('[CALL_LOG]'.length));}catch(e){}
+        const map={ended:'📞 Panggilan suara'+(info.duration?' • '+fmtCallDuration(info.duration):''),missed:'📞 Panggilan tak terjawab',rejected:'📞 Panggilan ditolak',cancelled:'📞 Panggilan dibatalkan'};
+        previewText=map[info.status]||'📞 Panggilan suara';
+      }
       return {uid:pid,uname:prof.username||'Pengguna',avatarUrl:prof.avatar_url||null,verified:prof.is_verified===true,preview:previewText,time:m.created_at,mine,deliveredAt:m.delivered_at,readAt:m.read_at,unread:!mine&&!m.read_at,pinned:pinnedSet.has(pid)};
     }));
     // Chat yang di-pin selalu tampil paling atas. Sort stabil (bawaan JS modern)
@@ -683,6 +689,23 @@
     render(chats);
   }
   async function markInboxDelivered(userId){await supabaseClient.from('messages').update({delivered_at:new Date().toISOString()}).eq('receiver_id',userId).is('delivered_at',null);}
+  // ---- Bikin daftar chat REALTIME (mirip WA) -- sebelumnya loadChats() cuma
+  // jalan sekali pas dashboard dibuka/ganti tab, jadi pesan baru baru kelihatan
+  // kalau tab ditutup-buka lagi. Sekarang begitu ada INSERT/UPDATE di tabel
+  // messages yang melibatkan saya (baik sebagai pengirim maupun penerima),
+  // langsung refresh daftar chat. Di-debounce dikit karena beberapa event bisa
+  // datang hampir bersamaan (mis. delivered_at & read_at berubah beruntun).
+  let chatListChannel=null, chatListRefreshTimer=null;
+  function subscribeChatListRealtime(userId){
+    if(chatListChannel)return; // sudah jalan, jangan dobel-subscribe
+    const scheduleRefresh=()=>{clearTimeout(chatListRefreshTimer);chatListRefreshTimer=setTimeout(()=>loadChats(userId),300);};
+    chatListChannel=supabaseClient.channel('dashboard-inbox-'+userId)
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`receiver_id=eq.${userId}`},scheduleRefresh)
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`sender_id=eq.${userId}`},scheduleRefresh)
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:`receiver_id=eq.${userId}`},scheduleRefresh)
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:`sender_id=eq.${userId}`},scheduleRefresh)
+      .subscribe();
+  }
   let presenceTracked=false;function trackOnlinePresence(userId){if(presenceTracked)return;presenceTracked=true;supabaseClient.channel('online-users',{config:{presence:{key:userId}}}).subscribe(async(s)=>{if(s==='SUBSCRIBED')await supabaseClient.channel('online-users').track({online_at:new Date().toISOString()});});}
   let lastSeenStarted=false;function startLastSeenHeartbeatOnce(userId){if(lastSeenStarted)return;lastSeenStarted=true;startLastSeenHeartbeat(userId);}
   async function refreshNotifBadge(){
@@ -690,7 +713,7 @@
     const {data:prof,error:profErr}=await supabaseClient.from('profiles').select('username, pin, avatar_url').eq('id',session.user.id).maybeSingle();
     if(profErr){console.error('Gagal memuat profil:',profErr);}
     if(prof){currentUserPin=prof.pin;applyAvatarEl(document.getElementById('composerAvatar'),session.user.id,prof.username,prof.avatar_url);applyAvatarEl(document.getElementById('profileAvatarBtn'),session.user.id,prof.username,prof.avatar_url);}
-    initPushNotifications(session.user.id);trackOnlinePresence(session.user.id);startLastSeenHeartbeatOnce(session.user.id);initCallSignaling(session.user.id);
+    initPushNotifications(session.user.id);trackOnlinePresence(session.user.id);startLastSeenHeartbeatOnce(session.user.id);initCallSignaling(session.user.id);subscribeChatListRealtime(session.user.id);
     const {count:pCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('addressee_id',session.user.id).eq('status','pending');
     const {count:uCount}=await supabaseClient.from('contacts').select('id',{count:'exact',head:true}).eq('requester_id',session.user.id).in('status',['accepted','declined']).eq('seen_by_requester',false);
     const {count:vCount}=await supabaseClient.from('verification_requests').select('id',{count:'exact',head:true}).eq('user_id',session.user.id).in('status',['approved','rejected']).eq('seen_by_requester',false);
