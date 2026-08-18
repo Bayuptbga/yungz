@@ -141,6 +141,7 @@
   .keychange-notice svg{width:14px;height:14px;flex-shrink:0;stroke:#8a5300;}
   .keychange-notice .e2e-learn{font-weight:700;color:#8a5300;text-decoration:underline;}
 
+  .day-group{ display:flex; flex-direction:column; gap:2px; flex-shrink:0; }
   .day-sep{
     align-self:center; position:sticky; top:6px; background:rgba(255,255,255,0.88); border:1px solid var(--border); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
     color:var(--ink-soft); font-size:11px; font-weight:600; padding:5px 13px; border-radius:20px; margin:12px 0 10px; flex-shrink:0; box-shadow:0 1px 5px rgba(0,0,0,0.2); z-index:3;
@@ -541,9 +542,9 @@
     const {data:rows,error}=await query;
     const banner=`<div class="e2e-banner" id="e2eBanner"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg><span>Pesan terenkripsi secara end-to-end. Hanya orang di obrolan ini yang bisa membaca atau membagikannya. <span class="e2e-learn">Pelajari selengkapnya</span>.</span></div>`;
     const keyNotice=showKeyChangeNotice?keyChangeNoticeHTML(peerUsername):'';
-    if(error||!rows||rows.length===0){msgArea.innerHTML=banner+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#66798d" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`+keyNotice;return;}
+    if(error||!rows||rows.length===0){resetDayGroups();msgArea.innerHTML=banner+`<div class="empty-state"><div class="es-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#66798d" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h13a2 2 0 012 2z"/></svg></div><div class="es-title">Belum ada pesan</div></div>`+keyNotice;return;}
     for(const m of rows){m.content=await E2E.decryptMessage(myPrivateKey,m.content,m.sender_id===currentUserId,peerPublicKeyB64);}
-    msgArea.innerHTML=banner;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});
+    msgArea.innerHTML=banner;resetDayGroups();rows.forEach(m=>appendBubble(m));
     if(keyNotice){const div=document.createElement('div');div.innerHTML=keyNotice;msgArea.appendChild(div.firstElementChild);}
     scrollToBottom(true); // instan -- ini load pertama kali chat dibuka
   }
@@ -581,6 +582,24 @@
 
   function isInviteContent(content) { return content === '[INVITE_CALL]' || content === '[CALL_REJECTED]' || content.indexOf('[CALL_LOG]') === 0; }
 
+  // ---- Kelompokkan bubble per hari dalam wrapper (.day-group) ----
+  // Kenapa perlu wrapper, bukan taruh .day-sep langsung sebagai anak
+  // msg-area: position:sticky di dalam container display:flex punya bug
+  // dikenal -- separator yang lama tidak "keusir" pas separator baru datang,
+  // jadi dua-duanya nyangkut nempel bareng di posisi yang sama (numpuk).
+  // Dengan dibungkus per-hari, sticky-nya jadi dibatasi ke batas wrapper-nya
+  // sendiri -- begitu discroll lewat, otomatis kegusur rapi gantian.
+  let lastDayGroupEl=null, lastDayGroupLabel=null;
+  function resetDayGroups(){ lastDayGroupEl=null; lastDayGroupLabel=null; }
+  function getOrCreateDayGroup(label){
+    if(lastDayGroupEl && lastDayGroupLabel===label) return lastDayGroupEl;
+    const group=document.createElement('div');group.className='day-group';
+    const sep=document.createElement('div');sep.className='day-sep';sep.textContent=label;
+    group.appendChild(sep);
+    msgArea.appendChild(group);
+    lastDayGroupEl=group;lastDayGroupLabel=label;
+    return group;
+  }
   function appendBubble(m,sending){
     const mine=m.sender_id===currentUserId;const locked=isLockedContent(m.content);
     const row=document.createElement('div');row.className='bubble-row '+(mine?'mine':'theirs')+(sending?' sending':'')+(locked?' locked':'');row.dataset.id=m.id;
@@ -598,7 +617,7 @@
       row.querySelector('.txt').textContent=normalizeText(m.content);
     }
     
-    msgArea.appendChild(row);
+    getOrCreateDayGroup(dayLabel(m.created_at)).appendChild(row);
     if(locked)return; // pesan gagal didekripsi: tidak bisa dibalas/di-hold & tidak dijadikan cache kutipan
     if(m.id && !String(m.id).startsWith('temp-')) messagesById.set(m.id,{id:m.id,sender_id:m.sender_id,content:m.content});
     bindBubblePress(row,m);
