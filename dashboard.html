@@ -633,7 +633,7 @@
     const uids=[...selectedUids];const nowIso=new Date().toISOString();
     await Promise.all(uids.map(peerId=>supabaseClient.from('chat_clears').upsert({user_id:session.user.id,peer_id:peerId,cleared_before:nowIso},{onConflict:'user_id,peer_id'})));
     exitSelMode();
-    loadChats(session.user.id);
+    loadChats(session.user.id,false);
   });
   document.getElementById('selPinBtn').addEventListener('click',async()=>{
     if(selectedUids.size===0)return;
@@ -647,12 +647,19 @@
       await supabaseClient.from('chat_pins').upsert(uids.map(peerId=>({user_id:session.user.id,peer_id:peerId,pinned_at:nowIso})),{onConflict:'user_id,peer_id'});
     }
     exitSelMode();
-    loadChats(session.user.id);
+    loadChats(session.user.id,false);
   });
   function skeletonRow(){return `<div class="skel-item"><div class="skel-avatar"></div><div class="skel-lines"><div class="skel-line w60"></div><div class="skel-line w40"></div></div></div>`;}
   function looksEncrypted(content){try{const o=JSON.parse(content);return !!(o&&(o.e2e===1||o.e2e===2));}catch(e){return false;}}
-  async function loadChats(userId){
-    const list=document.getElementById('chatlist');list.innerHTML=skeletonRow().repeat(6);
+  async function loadChats(userId, showSkeleton){
+    if(showSkeleton===undefined) showSkeleton=true;
+    const list=document.getElementById('chatlist');
+    // Skeleton cuma buat load PERTAMA KALI (dashboard baru dibuka/ganti tab).
+    // Refresh yang dipicu realtime (ada pesan baru dsb) TIDAK boleh nampilin
+    // skeleton -- list lama tetap kelihatan sampai data baru siap, baru
+    // di-swap sekali oleh render(), biar tidak kedip-kedip tiap ada pesan
+    // masuk (mirip WA: list ke-update mulus, bukan loading ulang).
+    if(showSkeleton) list.innerHTML=skeletonRow().repeat(6);
     const {data:contactRows}=await supabaseClient.from('contacts').select('requester_id, addressee_id').eq('status','accepted').or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
     const acceptedIds=new Set((contactRows||[]).map(r=>r.requester_id===userId?r.addressee_id:r.requester_id));
     if(acceptedIds.size===0){render([]);return;}
@@ -698,7 +705,7 @@
   let chatListChannel=null, chatListRefreshTimer=null;
   function subscribeChatListRealtime(userId){
     if(chatListChannel)return; // sudah jalan, jangan dobel-subscribe
-    const scheduleRefresh=()=>{clearTimeout(chatListRefreshTimer);chatListRefreshTimer=setTimeout(()=>loadChats(userId),300);};
+    const scheduleRefresh=()=>{clearTimeout(chatListRefreshTimer);chatListRefreshTimer=setTimeout(()=>loadChats(userId,false),300);};
     chatListChannel=supabaseClient.channel('dashboard-inbox-'+userId)
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`receiver_id=eq.${userId}`},scheduleRefresh)
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`sender_id=eq.${userId}`},scheduleRefresh)
