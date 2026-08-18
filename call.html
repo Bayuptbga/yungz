@@ -1,230 +1,313 @@
-// Service Worker - Baku Chat
-//
-// ==== VERSIONING OTOMATIS ====
-// VERSION di bawah ini diisi OTOMATIS oleh GitHub Actions setiap deploy,
-// berdasarkan jumlah commit di repo (jadi selalu naik: 1.0.1, 1.0.2, dst).
-// Lihat .github/workflows/deploy.yml. Jangan edit manual di sini.
-const VERSION = '__VERSION__';
-const CACHE_NAME = `private-chat-${VERSION}`;
-
-// Aset yang nyaris tidak pernah berubah (ikon, font) -> lebih cocok cache-first
-// biar loading-nya cepat, tidak perlu nunggu network tiap kali.
-function isStaticAsset(url) {
-  return url.includes('/icons/') ||
-    url.includes('fonts.googleapis.com') ||
-    url.includes('fonts.gstatic.com');
-}
-
-// File "app shell" yang dicache saat instalasi, biar bisa dibuka offline
-const APP_SHELL = [
-  './',
-  './index.html',
-  './dashboard',
-  './dashboard.html',
-  './chat',
-  './chat.html',
-  './call.html',
-  './setelan',
-  './setelan.html',
-  './akses-ditolak',
-  './akses-ditolak.html',
-  './manifest.json',
-  './device-gate.js?v=__VERSION__',
-  './app.js?v=__VERSION__',
-  './icons/icon-192.png?v=3',
-  './icons/icon-512.png?v=3',
-  './icons/apple-touch-icon.png?v=3'
-];
-
-// Install: cache app shell.
-// Pakai penambahan satu per satu (bukan cache.addAll) supaya kalau satu URL gagal
-// (misal versi extensionless './dashboard' cuma resolve di GitHub Pages, gagal di
-// hosting lain saat testing lokal), instalasi SW tetap lanjut untuk file lainnya.
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      Promise.all(
-        APP_SHELL.map((url) => cache.add(url).catch((err) => console.warn('Gagal cache:', url, err)))
-      )
-    ).then(() => self.skipWaiting())
-  );
-});
-
-// Activate: bersihkan cache versi lama
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
-      )
-    ).then(() => self.clients.claim())
-  );
-});
-
-// Fetch strategy:
-// - Request ke Supabase (data live: pesan, auth, dll) -> selalu network, JANGAN dicache,
-//   biar data chat selalu fresh dan tidak basi.
-// - Ikon & font (jarang berubah) -> cache-first, biar tampil instan tanpa nunggu
-//   network; kalau belum ada di cache baru ambil dari network sekali lalu disimpan.
-// - Sisanya (html, css, js aplikasi) -> stale-while-revalidate: langsung balas dari
-//   cache kalau ada (jadi buka app INSTAN, tidak nunggu network), sambil diam-diam
-//   fetch versi terbaru di background utk dipakai pas load berikutnya. Aman karena
-//   app.js sudah auto-reload sekali saat SW baru ambil alih (lihat controllerchange
-//   listener), jadi user tetap otomatis dapat update terbaru tanpa nunggu di awal.
-self.addEventListener('fetch', (event) => {
-  const url = event.request.url;
-
-  // Jangan pernah cache request ke Supabase (data realtime/dinamis)
-  if (url.includes('supabase.co') || url.includes('supabase.in')) {
-    return; // biarkan browser handle langsung ke network
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<script src="device-gate.js?v=__VERSION__"></script>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Baku Chat - Panggilan</title>
+<script>
+(function(){
+  function setAppHeight(){
+    var h=(window.visualViewport?window.visualViewport.height:window.innerHeight);
+    document.documentElement.style.setProperty('--app-height', h+'px');
   }
-
-  // Hanya tangani GET request untuk aset statis
-  if (event.request.method !== 'GET') return;
-
-  // Resource cross-origin yang dimuat lewat <script src="..."> / <link> TANPA
-  // atribut crossorigin (mis. supabase-js dari jsdelivr, CSS Google Fonts)
-  // direspons browser sebagai "opaque response" -- status-nya SELALU 0, jadi
-  // `response.ok` SELALU false walau request-nya sukses. Kalau syarat nyimpen
-  // ke cache cuma `response.ok`, resource-resource ini TIDAK PERNAH kesimpen
-  // sama sekali (padahal kelihatannya berhasil di-fetch). Opaque tetap valid
-  // & aman buat dicache-ulang (cuma isinya tidak bisa dibaca dari JS, tapi
-  // browser tetap bisa render/eksekusinya normal), jadi kita terima juga.
-  function cacheable(response) {
-    return !!response && (response.ok || response.type === 'opaque');
+  setAppHeight();
+  window.addEventListener('resize', setAppHeight);
+  window.addEventListener('orientationchange', function(){ setTimeout(setAppHeight,50); });
+  window.addEventListener('pageshow', setAppHeight);
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') setAppHeight(); });
+  if(window.visualViewport){ window.visualViewport.addEventListener('resize', setAppHeight); }
+})();
+</script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a1730">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Baku Chat">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bbm-blue:#0564f5; --bbm-blue-dark:#0039f0; }
+  *{box-sizing:border-box;}
+  html{ overscroll-behavior:none; -webkit-tap-highlight-color:transparent; }
+  body{
+    overscroll-behavior:none; touch-action:none; user-select:none; -webkit-touch-callout:none;
+    margin:0; font-family:'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:#0a1730; color:#fff;
+    position:fixed; inset:0; width:100%; height:100%; height:100dvh; height:var(--app-height, 100dvh); overflow:hidden;
+    display:flex; align-items:stretch; justify-content:center; -webkit-font-smoothing:antialiased;
   }
+  .phone{ width:100%; max-width:420px; background:linear-gradient(180deg,#0039f0 0%,#0a1730 55%); display:flex; flex-direction:column; position:relative; overflow:hidden; }
+  @media (min-width:700px){ .phone{ max-width:640px; box-shadow:0 0 40px rgba(0,0,0,0.5); } }
+  #authGate{ position:absolute; inset:0; z-index:200; background:#0a1730; display:flex; align-items:center; justify-content:center; }
+  #authGate .spinner{ width:32px; height:32px; border-radius:50%; border:3px solid rgba(255,255,255,0.2); border-top-color:#fff; animation:authSpin .75s linear infinite; }
+  @keyframes authSpin{ to{ transform:rotate(360deg); } }
 
-  if (isStaticAsset(url)) {
-    // Cache-first: pakai cache kalau ada, network cuma dipanggil sekali di awal
-    // (atau kalau ada versi baru di install, karena CACHE_NAME akan berubah).
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(event.request).then((response) => {
-          if (cacheable(response)) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        }).catch(() => cached);
+  .call-screen{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:space-between; padding:calc(56px + env(safe-area-inset-top)) 24px calc(40px + env(safe-area-inset-bottom)); text-align:center; }
+  .call-top{ margin-top:24px; display:flex; flex-direction:column; align-items:center; }
+  .call-avatar-wrap{ position:relative; width:112px; height:112px; margin-bottom:20px; }
+  .call-avatar{ width:112px; height:112px; border-radius:50%; background:rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; font-size:36px; font-weight:700; position:relative; z-index:2; }
+  .call-avatar-wrap.ringing::before, .call-avatar-wrap.ringing::after{
+    content:''; position:absolute; inset:0; border-radius:50%; border:2px solid rgba(255,255,255,0.55);
+    animation:ringPulse 1.8s ease-out infinite;
+  }
+  .call-avatar-wrap.ringing::after{ animation-delay:.6s; }
+  @keyframes ringPulse{ 0%{ transform:scale(1); opacity:.9; } 100%{ transform:scale(1.55); opacity:0; } }
+  .call-username{ font-size:21px; font-weight:700; }
+  .call-status{ font-size:14px; opacity:.85; margin-top:8px; min-height:18px; letter-spacing:.2px; }
+
+  .call-controls{ display:flex; gap:56px; align-items:center; }
+  .ctrl-col{ display:flex; flex-direction:column; align-items:center; gap:9px; }
+  .ctrl-label{ font-size:11.5px; opacity:.85; }
+  .ctrl-btn{ width:58px; height:58px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; background:rgba(255,255,255,0.16); transition:background .15s ease, transform .1s ease; }
+  .ctrl-btn:active{ transform:scale(0.94); }
+  .ctrl-btn.active{ background:#ffffff; }
+  .ctrl-btn.active svg{ stroke:#0a1730 !important; fill:#0a1730 !important; }
+  .ctrl-btn.end{ background:#e04c4c; box-shadow:0 4px 16px rgba(224,76,76,0.5); }
+
+  .call-hint{ font-size:11.5px; opacity:.6; margin-top:14px; max-width:280px; line-height:1.5; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js?v=__VERSION__"></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js');});}</script>
+</head>
+<body>
+<div class="phone">
+  <div id="authGate"><div class="spinner"></div></div>
+  <div class="call-screen">
+    <div class="call-top">
+      <div class="call-avatar-wrap ringing" id="callAvatarWrap"><div class="call-avatar" id="callAvatar">?</div></div>
+      <div class="call-username" id="callUsername">@—</div>
+      <div class="call-status" id="callStatus">Menghubungkan...</div>
+    </div>
+    <div>
+      <div class="call-controls">
+        <div class="ctrl-col">
+          <button class="ctrl-btn" id="muteBtn"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg></button>
+          <div class="ctrl-label">Mikrofon</div>
+        </div>
+        <div class="ctrl-col">
+          <button class="ctrl-btn end" id="endBtn"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff" style="transform:rotate(135deg);"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.02l-2.2 2.19z"/></svg></button>
+          <div class="ctrl-label">Akhiri</div>
+        </div>
+      </div>
+      <div class="call-hint">Audio dienkripsi otomatis oleh WebRTC (DTLS-SRTP), selaras dengan enkripsi end-to-end chat ini.</div>
+    </div>
+  </div>
+  <audio id="remoteAudio" autoplay playsinline></audio>
+</div>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  const role = params.get('role');           // 'caller' | 'callee'
+  const peerId = params.get('peer');
+  const callId = params.get('callId');
+  let peerUsername = params.get('uname') || params.get('myuname') || '';
+  // Catatan: dari chat.html, caller kirim '&uname=<punya peer>&myuname=<punya saya>'.
+  // Dari overlay panggilan masuk (app.js), callee cuma dikasih '&uname=<punya
+  // penelepon>'. Ambil yang paling relevan tergantung role di bawah.
+  peerUsername = role==='caller' ? (params.get('uname')||'') : (params.get('uname')||'');
+
+  let currentUserId=null, myPublicKeyB64=null, myPrivateKey=null, peerPublicKeyB64=null;
+  let pc=null, localStream=null, callChannel=null;
+  let callStartedAt=null, timerInterval=null, ringTimeout=null, ended=false, muted=false;
+
+  // STUN publik (Google) + TURN publik openrelay.metered.ca UNTUK TESTING SAJA.
+  // Kredensial openrelay ini dipakai bersama oleh banyak developer di internet
+  // -- gampang penuh/di-rate-limit dan TIDAK cocok untuk produksi. Sebelum
+  // rilis ke pengguna beneran, ganti dengan akun TURN sendiri (metered.ca,
+  // Twilio Network Traversal, Cloudflare Calls, atau self-host coturn).
+  const ICE_SERVERS = [
+    { urls: ['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302'] },
+    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+  ];
+
+  function setStatus(t){ document.getElementById('callStatus').textContent=t; }
+  function setRinging(on){ document.getElementById('callAvatarWrap').classList.toggle('ringing',on); }
+  function fmtDuration(s){ const m=Math.floor(s/60), sec=s%60; return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); }
+  function initials(u){ return (u||'?').slice(0,2).toUpperCase(); }
+
+  async function boot(){
+    if(!peerId||!callId){ setStatus('Panggilan tidak valid.'); setTimeout(()=>window.location.href='dashboard.html',1500); return; }
+    const {data:{session}} = await supabaseClient.auth.getSession();
+    if(!session){ window.location.replace('index.html'); return; }
+    currentUserId=session.user.id;
+
+    document.getElementById('callUsername').textContent='@'+(peerUsername||'kontak');
+    document.getElementById('callAvatar').textContent=initials(peerUsername);
+    document.getElementById('authGate').style.display='none';
+
+    // Ambil kunci E2E saya + public key peer terbaru (dipakai buat catat log
+    // panggilan terenkripsi ke chat, BUKAN buat enkripsi audio -- audio WebRTC
+    // sudah dienkripsi sendiri lewat DTLS-SRTP).
+    try{
+      const kp=await E2E.ensureKeypair(currentUserId);
+      myPrivateKey=kp.privateKey; myPublicKeyB64=kp.publicKeyB64;
+      const {data:prof}=await supabaseClient.from('profiles').select('username, public_key').eq('id',peerId).maybeSingle();
+      if(prof){
+        if(prof.username){ peerUsername=prof.username; document.getElementById('callUsername').textContent='@'+peerUsername; document.getElementById('callAvatar').textContent=initials(peerUsername); }
+        peerPublicKeyB64=prof.public_key||null;
+      }
+    }catch(e){ console.error('Gagal ambil profil peer:',e); }
+
+    setStatus('Meminta izin mikrofon...');
+    try{
+      localStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    }catch(e){
+      setStatus('Butuh izin mikrofon untuk menelepon.');
+      setTimeout(()=>leaveToChat(),2000);
+      return;
+    }
+
+    pc=new RTCPeerConnection({iceServers:ICE_SERVERS});
+    localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+    pc.ontrack=(e)=>{ document.getElementById('remoteAudio').srcObject=e.streams[0]; };
+    pc.oniceconnectionstatechange=()=>{
+      if((pc.iceConnectionState==='connected'||pc.iceConnectionState==='completed') && !callStartedAt){
+        onConnected();
+      }
+    };
+    pc.onicecandidate=(e)=>{
+      if(e.candidate && callChannel) callChannel.send({type:'broadcast',event:'call-ice',payload:{candidate:e.candidate}});
+    };
+
+    callChannel=supabaseClient.channel('call-'+callId);
+    callChannel
+      .on('broadcast',{event:'call-ice'},(msg)=>{
+        const c=msg.payload&&msg.payload.candidate;
+        if(c) pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{});
       })
-    );
-    return;
+      .on('broadcast',{event:'call-end'},()=>{ endCall(false); })
+      .on('broadcast',{event:'call-answer'},async (msg)=>{
+        if(role!=='caller'||!msg.payload) return;
+        try{ await pc.setRemoteDescription(new RTCSessionDescription(msg.payload.sdp)); setRinging(false); setStatus('Menghubungkan...'); }catch(e){}
+      })
+      .on('broadcast',{event:'call-reject'},()=>{
+        clearTimeout(ringTimeout); setRinging(false);
+        setStatus('Panggilan ditolak');
+        logCallOutcome('rejected');
+        setTimeout(()=>leaveToChat(),1200);
+      })
+      .subscribe(async (status)=>{
+        if(status!=='SUBSCRIBED') return;
+        if(role==='caller') await startAsCaller();
+        else await startAsCallee();
+      });
   }
 
-  // Halaman HTML (navigasi) sering dibuka dengan query string yang BEDA-BEDA
-  // tiap kali (chat.html?peer=<id kontak>, call.html?callId=<uuid unik tiap
-  // panggilan>, profil.html?uid=...). Kalau di-cache APA ADANYA (lengkap
-  // dengan query), setiap kombinasi baru bikin entry cache BARU -- terutama
-  // call.html yang callId-nya SELALU unik tiap panggilan, cache-nya numpuk
-  // terus-menerus tanpa pernah kepakai ulang sama sekali. Untuk request
-  // navigasi dokumen, cache-key SENGAJA dibuat tanpa query string, supaya
-  // semua chat/panggilan berbagi SATU entry cache (isi HTML shell-nya kan
-  // sama saja, yang beda cuma data yang di-load lewat JS/Supabase setelahnya).
-  const isDocument = event.request.mode === 'navigate' || event.request.destination === 'document';
-  const cacheKey = isDocument ? url.split('?')[0] : event.request;
-
-  event.respondWith(
-    caches.match(cacheKey).then((cached) => {
-      // Fetch terbaru selalu jalan di background buat nyimpen versi baru ke cache,
-      // dipakai kalau ternyata belum ada cache sama sekali (first load / offline).
-      const networkFetch = fetch(event.request)
-        .then((response) => {
-          if (cacheable(response)) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(cacheKey, clone));
-          }
-          return response;
-        })
-        .catch(() => null); // offline / gagal -> biar ditangani lewat fallback di bawah
-
-      if (cached) {
-        // Ada di cache -> balas INSTAN, update terbaru disimpan diam-diam
-        // di background utk dipakai pas request berikutnya.
-        return cached;
+  async function startAsCaller(){
+    setStatus('Memanggil...');
+    setRinging(true);
+    const offer=await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    let myUsername=params.get('myuname')||'';
+    await broadcastToChannel('call-signal-'+peerId,'call-offer',{callId, from:currentUserId, fromUsername:myUsername, sdp:offer});
+    // Kalau 30 detik tidak dijawab, anggap tidak terjawab & berhenti nunggu.
+    ringTimeout=setTimeout(async ()=>{
+      if(!callStartedAt){
+        await broadcastToChannel('call-signal-'+peerId,'call-cancel',{callId});
+        setStatus('Tidak dijawab');
+        logCallOutcome('missed');
+        setTimeout(()=>leaveToChat(),1200);
       }
-
-      // Belum ada di cache (pertama kali) -> harus nunggu network,
-      // fallback ke shell utama kalau ternyata offline.
-      return networkFetch.then((response) => response || caches.match('./'));
-    })
-  );
-});
-
-// Terima push notification dari server (dikirim lewat Supabase Edge Function)
-self.addEventListener('push', (event) => {
-  let payload = { title: 'Baku Chat', body: 'Ada pesan baru', url: './' };
-  try {
-    if (event.data) payload = { ...payload, ...event.data.json() };
-  } catch (e) {
-    // fallback kalau payload bukan JSON
+    },30000);
   }
 
-  event.waitUntil(
-    self.registration.showNotification(payload.title, {
-      body: payload.body,
-      icon: './icons/icon-192.png',
-      badge: './icons/icon-96.png',
-      data: { url: payload.url || './' },
-      vibrate: [200, 100, 200],
-      tag: payload.url, // notif dari peer yang sama akan menumpuk jadi 1
-      renotify: true,
-      silent: false,
-      requireInteraction: false
-    })
-  );
-});
+  async function startAsCallee(){
+    setRinging(false);
+    setStatus('Menghubungkan...');
+    const raw=sessionStorage.getItem('incomingCall_'+callId);
+    const payload=raw?JSON.parse(raw):null;
+    if(!payload||!payload.sdp){ setStatus('Data panggilan tidak ditemukan.'); setTimeout(()=>leaveToChat(),1500); return; }
+    try{
+      await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+      const answer=await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      callChannel.send({type:'broadcast',event:'call-answer',payload:{sdp:answer}});
+      sessionStorage.removeItem('incomingCall_'+callId);
+    }catch(e){
+      console.error('Gagal menjawab panggilan:',e);
+      setStatus('Gagal menyambungkan panggilan.');
+      setTimeout(()=>leaveToChat(),1500);
+    }
+  }
 
-// Waktu notifikasi diklik: fokus/buka tab chat yang relevan
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  const targetUrl = event.notification.data?.url || './';
+  function onConnected(){
+    callStartedAt=Date.now();
+    clearTimeout(ringTimeout);
+    setRinging(false);
+    setStatus('00:00');
+    timerInterval=setInterval(()=>{
+      setStatus(fmtDuration(Math.floor((Date.now()-callStartedAt)/1000)));
+    },1000);
+  }
 
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      for (const client of windowClients) {
-        if (client.url.includes(targetUrl.split('?')[0]) && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
-      }
-    })
-  );
-});
+  // Cuma sisi PENELEPON yang mencatat log panggilan ke chat -- supaya tidak
+  // dobel-catat (kedua sisi share tabel messages yang sama, satu baris cukup
+  // buat merepresentasikan hasil satu panggilan dari kedua sudut pandang).
+  async function logCallOutcome(status){
+    if(role!=='caller') return;
+    if(!myPublicKeyB64||!peerPublicKeyB64) return;
+    const duration=callStartedAt?Math.floor((Date.now()-callStartedAt)/1000):0;
+    const marker='[CALL_LOG]'+JSON.stringify({status,duration});
+    try{
+      const encrypted=await E2E.encryptMessage(myPublicKeyB64,peerPublicKeyB64,marker);
+      await supabaseClient.from('messages').insert({sender_id:currentUserId,receiver_id:peerId,content:encrypted});
+    }catch(e){ console.error('Gagal mencatat log panggilan:',e); }
+  }
 
-// ==== Auto-recovery kalau browser diam-diam ganti/expire subscription ====
-// Ini sering jadi penyebab notif "hilang" tanpa ketahuan: browser rotasi
-// endpoint push, subscription lama jadi mati, tapi app.js gak pernah tau
-// karena event ini kejadian di background, bukan pas app dibuka.
-self.addEventListener('pushsubscriptionchange', (event) => {
-  event.waitUntil(
-    (async () => {
-      try {
-        const applicationServerKey = event.oldSubscription
-          ? event.oldSubscription.options.applicationServerKey
-          : null;
+  function cleanupMedia(){
+    if(localStream){ localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
+    if(pc){ try{pc.close();}catch(e){} pc=null; }
+    if(callChannel){ supabaseClient.removeChannel(callChannel); callChannel=null; }
+  }
 
-        const newSubscription = await self.registration.pushManager.subscribe(
-          applicationServerKey
-            ? { userVisibleOnly: true, applicationServerKey }
-            : { userVisibleOnly: true }
-        );
+  function leaveToChat(){
+    window.location.href='chat.html?uid='+encodeURIComponent(peerId)+'&uname='+encodeURIComponent(peerUsername||'');
+  }
 
-        // Simpan flag + subscription baru, nanti disinkron ke Supabase oleh
-        // app.js begitu halaman dibuka lagi (SW gak punya akses langsung ke
-        // sesi login user).
-        const clientsList = await self.clients.matchAll({ type: 'window' });
-        for (const client of clientsList) {
-          client.postMessage({
-            type: 'PUSH_SUBSCRIPTION_CHANGED',
-            subscription: newSubscription.toJSON()
-          });
-        }
-      } catch (err) {
-        console.warn('Gagal resubscribe otomatis:', err);
-      }
-    })()
-  );
-});
+  function endCall(iInitiated){
+    if(ended) return; ended=true;
+    clearTimeout(ringTimeout); clearInterval(timerInterval);
+    const wasConnected=!!callStartedAt;
+    if(iInitiated && callChannel){ callChannel.send({type:'broadcast',event:'call-end',payload:{}}); }
+    if(wasConnected){
+      setStatus('Panggilan berakhir');
+      logCallOutcome('ended');
+    } else if(role==='caller' && iInitiated){
+      broadcastToChannel('call-signal-'+peerId,'call-cancel',{callId});
+      logCallOutcome('cancelled');
+    }
+    cleanupMedia();
+    setTimeout(()=>leaveToChat(), wasConnected?800:500);
+  }
+
+  document.getElementById('endBtn').addEventListener('click',()=>endCall(true));
+  document.getElementById('muteBtn').addEventListener('click',()=>{
+    muted=!muted;
+    if(localStream) localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
+    document.getElementById('muteBtn').classList.toggle('active',muted);
+  });
+
+  // Best-effort: kalau tab/app ditutup langsung (bukan lewat tombol Akhiri),
+  // tetap coba kasih tau lawan bicara & lepas mic -- tidak selalu berhasil
+  // 100% karena browser tidak selalu kasih waktu buat request async selesai
+  // pas halaman beneran ditutup.
+  window.addEventListener('pagehide',()=>{
+    if(!ended && callChannel){ callChannel.send({type:'broadcast',event:'call-end',payload:{}}); }
+    cleanupMedia();
+  });
+
+  boot();
+</script>
+</body>
+</html>
