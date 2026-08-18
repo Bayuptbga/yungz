@@ -109,7 +109,7 @@
   .ptr-indicator.loading .ptr-spinner{ border-top-color:#0564f5; animation:authSpin .7s linear infinite; }
   .msg-area{
     flex:1; overflow-y:auto; overflow-x:hidden; padding:14px 12px 6px; display:flex; flex-direction:column; gap:2px;
-    background-color:var(--bg); background-image:radial-gradient(circle at 1px 1px, rgba(16,31,51,0.04) 1px, transparent 0); background-size:20px 20px; scroll-behavior:smooth;
+    background-color:var(--bg); background-image:radial-gradient(circle at 1px 1px, rgba(16,31,51,0.04) 1px, transparent 0); background-size:20px 20px;
   }
   .msg-area::-webkit-scrollbar{ width:6px; }
   .msg-area::-webkit-scrollbar-thumb{ background:rgba(16,31,51,0.14); border-radius:3px; }
@@ -545,7 +545,7 @@
     for(const m of rows){m.content=await E2E.decryptMessage(myPrivateKey,m.content,m.sender_id===currentUserId,peerPublicKeyB64);}
     msgArea.innerHTML=banner;let lastDay=null;rows.forEach(m=>{const d=dayLabel(m.created_at);if(d!==lastDay){const sep=document.createElement('div');sep.className='day-sep';sep.textContent=d;msgArea.appendChild(sep);lastDay=d;}appendBubble(m);});
     if(keyNotice){const div=document.createElement('div');div.innerHTML=keyNotice;msgArea.appendChild(div.firstElementChild);}
-    scrollToBottom();
+    scrollToBottom(true); // instan -- ini load pertama kali chat dibuka
   }
   function replyQuoteHTML(replyToId){
     if(!replyToId) return '';
@@ -603,7 +603,12 @@
     if(m.id && !String(m.id).startsWith('temp-')) messagesById.set(m.id,{id:m.id,sender_id:m.sender_id,content:m.content});
     bindBubblePress(row,m);
   }
-  function scrollToBottom(){msgArea.scrollTop=msgArea.scrollHeight;}
+  // instant=true dipakai KHUSUS pas chat pertama kali dibuka (loadMessages),
+  // biar langsung nongol di paling bawah tanpa animasi meluncur dari atas.
+  // Selain itu (pesan baru masuk/kirim) tetap smooth, lebih enak dilihat.
+  function scrollToBottom(instant){
+    msgArea.scrollTo({top:msgArea.scrollHeight, behavior:instant?'auto':'smooth'});
+  }
 
   // ---- Balas pesan: tekan-tahan (long press) bubble untuk mulai membalas ----
   function startReply(m){
