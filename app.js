@@ -381,8 +381,11 @@ function startLastSeenHeartbeat(userId) {
       + ICE candidate lewat channel TERPISAH per-panggilan (`call-<callId>`),
       biar channel personal ini tetap ringan (cuma dipakai buat "notifikasi
       ada panggilan", bukan buat lalu lintas WebRTC yang berat).
-   4. Kalau ditolak/timeout -> kirim balik 'call-reject' ke channel personal
-      SI PENELEPON, biar dia tau harus berhenti nunggu.
+   4. Kalau ditolak/timeout -> kirim balik 'call-reject' ke channel PER-
+      PANGGILAN (`call-<callId>`), bukan channel personal -- karena begitu
+      offer terkirim, sisi penelepon di call.html sudah pasti aktif dengerin
+      channel per-panggilan itu (dibuat SEBELUM offer dikirim), sedangkan dia
+      TIDAK dengerin channel personalnya sendiri selama di layar call.html.
 */
 let _callSignalChannel = null;
 let _incomingCallOverlay = null;
@@ -454,7 +457,11 @@ function showIncomingCallOverlay(payload) {
   if (navigator.vibrate) navigator.vibrate([500, 300, 500, 300, 500, 300, 500]);
 
   ov.querySelector('#declineCallBtn').addEventListener('click', () => {
-    broadcastToChannel('call-signal-' + payload.from, 'call-reject', { callId: payload.callId });
+    // Kirim ke channel PER-PANGGILAN (`call-<callId>`) -- BUKAN channel
+    // personal penelepon -- karena sisi penelepon di call.html cuma dengerin
+    // 'call-reject' di channel per-panggilan itu, yang sudah pasti aktif
+    // sejak sebelum offer ini dikirim ke saya.
+    broadcastToChannel('call-' + payload.callId, 'call-reject', { callId: payload.callId });
     dismissIncomingCallOverlay();
   });
   ov.querySelector('#acceptCallBtn').addEventListener('click', () => {
@@ -467,7 +474,7 @@ function showIncomingCallOverlay(payload) {
   // Jaring pengaman kedua (selain 'call-cancel' dari penelepon): kalau 35
   // detik tidak direspons sama sekali, otomatis dianggap tidak diangkat.
   _incomingCallTimeout = setTimeout(() => {
-    broadcastToChannel('call-signal-' + payload.from, 'call-reject', { callId: payload.callId });
+    broadcastToChannel('call-' + payload.callId, 'call-reject', { callId: payload.callId });
     dismissIncomingCallOverlay();
   }, 35000);
 }
