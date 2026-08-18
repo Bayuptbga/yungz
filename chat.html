@@ -76,6 +76,8 @@
   .appbar .back:active{ background:rgba(16,31,51,0.08); }
   .appbar .avatar{ width:38px;height:38px;border-radius:50%; display:flex;align-items:center;justify-content:center; color:#ffffff;font-weight:700;font-size:14px;flex-shrink:0; box-shadow:0 0 0 2px var(--border); }
   .appbar .who{flex:1;min-width:0;}
+  .call-trigger{ cursor:pointer; width:34px;height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s ease; }
+  .call-trigger:active{ background:rgba(5,100,245,0.1); }
   .appbar .uname{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .appbar .sub{font-size:11.5px;opacity:0.82;margin-top:1px;}
   .appbar .sub.online{opacity:1;color:#189a56;font-weight:600;}
@@ -304,6 +306,7 @@
     <div class="back" onclick="window.location.href='dashboard.html'"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div>
     <div class="avatar" id="peerAvatar" style="cursor:pointer;">?</div>
     <div class="who" id="peerWho" style="cursor:pointer;"><div class="uname"><span id="peerUname">@—</span></div><div class="sub" id="peerSub">-</div></div>
+    <div class="call-trigger" id="callTriggerBtn" title="Panggilan suara"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="var(--bbm-blue)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
     <div class="e2e-lock" id="e2eLock" title="Pesan di chat ini dienkripsi end-to-end"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#0564f5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
     <div class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" width="20" height="20" fill="var(--ink)"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
       <div class="chat-menu" id="chatMenu">
@@ -373,7 +376,7 @@
   const rawUid = params.get('uid');
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const peerId = (rawUid && UUID_RE.test(rawUid)) ? rawUid : null;
-  let currentUserId = null; let peerUsername = params.get('uname') || '';
+  let currentUserId = null; let peerUsername = params.get('uname') || ''; let myUsername = null;
   let myPrivateKey = null, myPublicKeyB64 = null, peerPublicKeyB64 = null, peerLastSeenAt = null;
   const msgArea = document.getElementById('msgArea'), msgInput = document.getElementById('msgInput'), sendBtn = document.getElementById('sendBtn'), peerAvatar = document.getElementById('peerAvatar'), peerUnameEl = document.getElementById('peerUname');
   const replyBar = document.getElementById('replyBar'), rbName = document.getElementById('rbName'), rbText = document.getElementById('rbText'), rbClose = document.getElementById('rbClose');
@@ -419,6 +422,9 @@
       if(!session){window.location.replace('index.html');return;}
       currentUserId=session.user.id;
       startLastSeenHeartbeat(currentUserId);
+      initCallSignaling(currentUserId);
+      const {data:meProf}=await supabaseClient.from('profiles').select('username').eq('id',currentUserId).maybeSingle();
+      myUsername=meProf?meProf.username:null;
       // Device baru otomatis dapat keypair baru (tidak ada restore/backup PIN,
       // mirip default WhatsApp: chat lama tidak terbaca lagi di device baru).
       let kp=await E2E.ensureKeypair(currentUserId);
@@ -554,12 +560,26 @@
           <div style="font-weight:bold; color:#e04c4c; font-size:14px;">📞 Panggilan ditolak</div>
         </div>`;
     }
+    if (m.content.indexOf('[CALL_LOG]') === 0) {
+      let info = {}; try { info = JSON.parse(m.content.slice('[CALL_LOG]'.length)); } catch (e) {}
+      const map = {
+        ended:     { label: '📞 Panggilan suara' + (info.duration ? ' • ' + fmtCallDuration(info.duration) : ''), color: '#189a56' },
+        missed:    { label: '📞 Panggilan tak terjawab', color: '#e04c4c' },
+        rejected:  { label: '📞 Panggilan ditolak', color: '#e04c4c' },
+        cancelled: { label: '📞 Panggilan dibatalkan', color: '#66798d' }
+      };
+      const info2 = map[info.status] || { label: '📞 Panggilan suara', color: '#55697d' };
+      return `<div class="invite-card" style="background:#eef2f8; padding:10px 14px; border-radius:10px; text-align:center; border:1px solid var(--border); min-width:170px; margin-top:4px;">
+          <div style="font-weight:600; color:${info2.color}; font-size:13.5px;">${info2.label}</div>
+        </div>`;
+    }
     return `<div class="invite-card" style="background:#eef2f8; padding:12px; border-radius:10px; text-align:center; border:1px solid var(--border); min-width:180px; margin-top:4px;">
           <div style="font-weight:bold; color:#55697d; font-size:14px;">📞 Fitur panggilan sudah tidak tersedia</div>
         </div>`;
   }
+  function fmtCallDuration(s){ const m=Math.floor(s/60), sec=s%60; return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); }
 
-  function isInviteContent(content) { return content === '[INVITE_CALL]' || content === '[CALL_REJECTED]'; }
+  function isInviteContent(content) { return content === '[INVITE_CALL]' || content === '[CALL_REJECTED]' || content.indexOf('[CALL_LOG]') === 0; }
 
   function appendBubble(m,sending){
     const mine=m.sender_id===currentUserId;const locked=isLockedContent(m.content);
@@ -811,6 +831,18 @@
   sendBtn.addEventListener('click',sendMessage);
   const menuBtn=document.getElementById('menuBtn'),chatMenu=document.getElementById('chatMenu');
   menuBtn.addEventListener('click',(e)=>{e.stopPropagation();chatMenu.classList.toggle('open');});document.addEventListener('click',()=>{chatMenu.classList.remove('open');});
+
+  // ---- Mulai panggilan suara ----
+  document.getElementById('callTriggerBtn').addEventListener('click',()=>{
+    if(!myPublicKeyB64||!peerPublicKeyB64){
+      alert('Tunggu sampai enkripsi siap sebelum bisa menelepon.');
+      return;
+    }
+    const callId=(crypto.randomUUID?crypto.randomUUID():'call-'+Date.now()+'-'+Math.random().toString(36).slice(2));
+    window.location.href='call.html?role=caller&callId='+encodeURIComponent(callId)+
+      '&peer='+encodeURIComponent(peerId)+'&uname='+encodeURIComponent(peerUsername||'')+
+      '&myuname='+encodeURIComponent(myUsername||'');
+  });
   document.getElementById('menuHapusPermanen').addEventListener('click',async(e)=>{
     e.stopPropagation();chatMenu.classList.remove('open');
     const ok=await showConfirm('Hapus Untuk Semua Orang','Semua percakapan ini akan di hapus untuk semua orang','Hapus Permanen');

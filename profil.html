@@ -420,6 +420,7 @@
     const {data:{session}} = await supabaseClient.auth.getSession();
     if(!session){ window.location.replace('index.html'); return; }
     const myUid=session.user.id;
+    initCallSignaling(myUid);
     const rawParam=getParam('uid');
     const viewUid=(rawParam && UUID_RE.test(rawParam) && rawParam!==myUid) ? rawParam : myUid;
     const isOwn = viewUid===myUid;

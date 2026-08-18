@@ -351,6 +351,7 @@
     const {data:{session}} = await supabaseClient.auth.getSession();
     if(!session){ window.location.replace('index.html'); return; }
     currentUserId = session.user.id;
+    initCallSignaling(currentUserId);
     const {data:prof} = await supabaseClient.from('profiles').select('username, avatar_url, username_changed_at').eq('id', session.user.id).maybeSingle();
     if(prof){ currentUsername = prof.username; currentAvatarUrl = prof.avatar_url || null; currentUsernameChangedAt = prof.username_changed_at || null; }
     renderAvatarPreview();

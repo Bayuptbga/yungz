@@ -221,6 +221,7 @@
     if(!session){ window.location.replace('index.html'); return; }
     const {data:prof,error}=await supabaseClient.from('profiles').select('is_admin').eq('id',session.user.id).maybeSingle();
     if(error || !prof || prof.is_admin!==true){ window.location.replace('index.html'); return; }
+    initCallSignaling(session.user.id);
     document.getElementById('gateScreen').style.display='none';
     document.getElementById('adminShell').style.display='flex';
     loadUsers();

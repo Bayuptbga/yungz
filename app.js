@@ -364,3 +364,122 @@ function startLastSeenHeartbeat(userId) {
   // terakhir yang jadi acuan -- selisihnya wajar, sama seperti aplikasi chat lain).
   window.addEventListener('pagehide', () => updateLastSeen(userId));
 }
+
+/* ===== Panggilan Suara (Voice Call) — sinyal global =====
+   Kenapa ditaruh di app.js (bukan cuma di chat.html): supaya "ada yang
+   nelepon saya" bisa terdeteksi dari HALAMAN MANA PUN yang lagi dibuka
+   (dashboard, profil, setelan, dll) -- bukan cuma pas kebetulan lagi buka
+   chat.html dengan orang itu. app.js di-load di semua halaman, jadi cocok
+   jadi tempat listener globalnya.
+
+   Alur singkatnya:
+   1. Penelepon (di call.html) broadcast 'call-offer' ke channel personal
+      PENERIMA: `call-signal-<userId penerima>`.
+   2. Modul ini (aktif di semua halaman penerima) nangkep itu, nampilin
+      overlay "Panggilan Masuk" full-screen di atas halaman apa pun.
+   3. Kalau diterima -> redirect ke call.html yang baru nanganin SDP answer
+      + ICE candidate lewat channel TERPISAH per-panggilan (`call-<callId>`),
+      biar channel personal ini tetap ringan (cuma dipakai buat "notifikasi
+      ada panggilan", bukan buat lalu lintas WebRTC yang berat).
+   4. Kalau ditolak/timeout -> kirim balik 'call-reject' ke channel personal
+      SI PENELEPON, biar dia tau harus berhenti nunggu.
+*/
+let _callSignalChannel = null;
+let _incomingCallOverlay = null;
+let _incomingCallTimeout = null;
+
+// Helper umum: broadcast sekali ke sebuah channel, lalu langsung dilepas.
+// Dipakai baik di sini maupun di call.html. Broadcast BUTUH channel dalam
+// status "SUBSCRIBED" dulu sebelum .send() beneran nyampe ke penerima.
+function broadcastToChannel(channelName, event, payload) {
+  return new Promise((resolve) => {
+    const ch = supabaseClient.channel(channelName);
+    ch.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        ch.send({ type: 'broadcast', event, payload }).finally(() => {
+          supabaseClient.removeChannel(ch);
+          resolve();
+        });
+      }
+    });
+  });
+}
+
+function initCallSignaling(userId) {
+  if (_callSignalChannel) return; // sudah jalan (mis. pindah halaman lain), jangan dobel
+  _callSignalChannel = supabaseClient.channel('call-signal-' + userId);
+  _callSignalChannel
+    .on('broadcast', { event: 'call-offer' }, (msg) => {
+      const p = msg.payload;
+      if (!p || !p.callId) return;
+      showIncomingCallOverlay(p);
+    })
+    .on('broadcast', { event: 'call-cancel' }, (msg) => {
+      const p = msg.payload;
+      if (_incomingCallOverlay && p && _incomingCallOverlay.dataset.callId === p.callId) {
+        dismissIncomingCallOverlay();
+      }
+    })
+    .subscribe();
+}
+
+function showIncomingCallOverlay(payload) {
+  dismissIncomingCallOverlay(); // jaga-jaga kalau ada overlay lama yang nyangkut
+  const ov = document.createElement('div');
+  ov.id = 'globalIncomingCallOverlay';
+  ov.dataset.callId = payload.callId;
+  ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:linear-gradient(180deg,#0039f0,#0a1730);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:64px 24px calc(44px + env(safe-area-inset-bottom));font-family:Inter,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#fff;text-align:center;';
+  const inits = (payload.fromUsername || '?').slice(0, 2).toUpperCase();
+  ov.innerHTML =
+    '<div style="margin-top:36px;">' +
+      '<div style="width:96px;height:96px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;margin:0 auto 18px;">' + inits + '</div>' +
+      '<div style="font-size:20px;font-weight:700;">@' + escapeHtmlGlobal(payload.fromUsername || 'kontak') + '</div>' +
+      '<div style="font-size:13.5px;opacity:0.82;margin-top:6px;">📞 Panggilan suara masuk...</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:64px;align-items:center;">' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:8px;">' +
+        '<button id="declineCallBtn" style="width:58px;height:58px;border-radius:50%;border:none;background:#e04c4c;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(224,76,76,0.45);">' +
+          '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff" style="transform:rotate(135deg);"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.02l-2.2 2.19z"/></svg>' +
+        '</button><span style="font-size:11.5px;opacity:0.85;">Tolak</span>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:8px;">' +
+        '<button id="acceptCallBtn" style="width:58px;height:58px;border-radius:50%;border:none;background:#189a56;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(24,154,86,0.45);">' +
+          '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.02l-2.2 2.19z"/></svg>' +
+        '</button><span style="font-size:11.5px;opacity:0.85;">Terima</span>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(ov);
+  _incomingCallOverlay = ov;
+
+  if (navigator.vibrate) navigator.vibrate([500, 300, 500, 300, 500, 300, 500]);
+
+  ov.querySelector('#declineCallBtn').addEventListener('click', () => {
+    broadcastToChannel('call-signal-' + payload.from, 'call-reject', { callId: payload.callId });
+    dismissIncomingCallOverlay();
+  });
+  ov.querySelector('#acceptCallBtn').addEventListener('click', () => {
+    sessionStorage.setItem('incomingCall_' + payload.callId, JSON.stringify(payload));
+    dismissIncomingCallOverlay();
+    window.location.href = 'call.html?role=callee&callId=' + encodeURIComponent(payload.callId) +
+      '&peer=' + encodeURIComponent(payload.from) + '&uname=' + encodeURIComponent(payload.fromUsername || '');
+  });
+
+  // Jaring pengaman kedua (selain 'call-cancel' dari penelepon): kalau 35
+  // detik tidak direspons sama sekali, otomatis dianggap tidak diangkat.
+  _incomingCallTimeout = setTimeout(() => {
+    broadcastToChannel('call-signal-' + payload.from, 'call-reject', { callId: payload.callId });
+    dismissIncomingCallOverlay();
+  }, 35000);
+}
+
+function dismissIncomingCallOverlay() {
+  clearTimeout(_incomingCallTimeout);
+  if (_incomingCallOverlay) { _incomingCallOverlay.remove(); _incomingCallOverlay = null; }
+  if (navigator.vibrate) navigator.vibrate(0);
+}
+
+// Escape kecil biar aman dari HTML injection lewat username (mestinya sudah
+// tervalidasi format username di server, tapi tetap jaga-jaga di sisi tampilan).
+function escapeHtmlGlobal(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
