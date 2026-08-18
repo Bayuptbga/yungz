@@ -23,6 +23,7 @@ const APP_SHELL = [
   './dashboard.html',
   './chat',
   './chat.html',
+  './call.html',
   './setelan',
   './setelan.html',
   './akses-ditolak',
@@ -81,6 +82,18 @@ self.addEventListener('fetch', (event) => {
   // Hanya tangani GET request untuk aset statis
   if (event.request.method !== 'GET') return;
 
+  // Resource cross-origin yang dimuat lewat <script src="..."> / <link> TANPA
+  // atribut crossorigin (mis. supabase-js dari jsdelivr, CSS Google Fonts)
+  // direspons browser sebagai "opaque response" -- status-nya SELALU 0, jadi
+  // `response.ok` SELALU false walau request-nya sukses. Kalau syarat nyimpen
+  // ke cache cuma `response.ok`, resource-resource ini TIDAK PERNAH kesimpen
+  // sama sekali (padahal kelihatannya berhasil di-fetch). Opaque tetap valid
+  // & aman buat dicache-ulang (cuma isinya tidak bisa dibaca dari JS, tapi
+  // browser tetap bisa render/eksekusinya normal), jadi kita terima juga.
+  function cacheable(response) {
+    return !!response && (response.ok || response.type === 'opaque');
+  }
+
   if (isStaticAsset(url)) {
     // Cache-first: pakai cache kalau ada, network cuma dipanggil sekali di awal
     // (atau kalau ada versi baru di install, karena CACHE_NAME akan berubah).
@@ -88,7 +101,7 @@ self.addEventListener('fetch', (event) => {
       caches.match(event.request).then((cached) => {
         if (cached) return cached;
         return fetch(event.request).then((response) => {
-          if (response.ok) {
+          if (cacheable(response)) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
@@ -99,15 +112,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Halaman HTML (navigasi) sering dibuka dengan query string yang BEDA-BEDA
+  // tiap kali (chat.html?peer=<id kontak>, call.html?callId=<uuid unik tiap
+  // panggilan>, profil.html?uid=...). Kalau di-cache APA ADANYA (lengkap
+  // dengan query), setiap kombinasi baru bikin entry cache BARU -- terutama
+  // call.html yang callId-nya SELALU unik tiap panggilan, cache-nya numpuk
+  // terus-menerus tanpa pernah kepakai ulang sama sekali. Untuk request
+  // navigasi dokumen, cache-key SENGAJA dibuat tanpa query string, supaya
+  // semua chat/panggilan berbagi SATU entry cache (isi HTML shell-nya kan
+  // sama saja, yang beda cuma data yang di-load lewat JS/Supabase setelahnya).
+  const isDocument = event.request.mode === 'navigate' || event.request.destination === 'document';
+  const cacheKey = isDocument ? url.split('?')[0] : event.request;
+
   event.respondWith(
-    caches.match(event.request).then((cached) => {
+    caches.match(cacheKey).then((cached) => {
       // Fetch terbaru selalu jalan di background buat nyimpen versi baru ke cache,
       // dipakai kalau ternyata belum ada cache sama sekali (first load / offline).
       const networkFetch = fetch(event.request)
         .then((response) => {
-          if (response.ok) {
+          if (cacheable(response)) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            caches.open(CACHE_NAME).then((cache) => cache.put(cacheKey, clone));
           }
           return response;
         })
